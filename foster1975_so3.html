@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foster (1975) — Apparent Motion in SO(3)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#08080d;color:#d4d4d8;min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
+header{margin-bottom:20px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:21px;color:#f4f4f5;letter-spacing:-.5px}
+h1 em{font-style:normal;color:#6d8aff}
+.ref{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3f3f46;font-weight:300;margin-top:4px}
+.main{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+/* Panels */
+.panel{background:#0e0e15;border:1px solid #1e1e26;border-radius:10px;overflow:hidden}
+.panel-hdr{padding:10px 14px;border-bottom:1px solid #1a1a22;display:flex;justify-content:space-between;align-items:center}
+.panel-title{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-transform:uppercase;letter-spacing:1.2px}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px}
+.tag.a{background:#6d8aff20;color:#6d8aff}
+.tag.b{background:#f472b620;color:#f472b6}
+.tag.p{background:#6ee7b720;color:#6ee7b7}
+.tag.off{background:#1a1a22;color:#3f3f46}
+canvas{display:block}
+/* Right sidebar */
+.sidebar{display:flex;flex-direction:column;gap:14px}
+.card{background:#0e0e15;border:1px solid #1e1e26;border-radius:10px;padding:14px 16px}
+.card h3{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:#3f3f46;margin-bottom:10px}
+.cond-btn{display:block;width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 10px;border-radius:5px;border:1px solid transparent;background:transparent;color:#52525b;cursor:pointer;margin-bottom:3px;transition:all .15s}
+.cond-btn:hover{border-color:#27272a;color:#a1a1aa}
+.cond-btn.on{border-color:#6d8aff50;color:#6d8aff;background:#6d8aff08}
+.sg{margin-bottom:12px}
+.sg:last-child{margin-bottom:0}
+.sg-row{display:flex;justify-content:space-between;margin-bottom:4px}
+.sg-name{font-size:12px;color:#71717a}
+.sg-val{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#d4d4d8}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:#27272a;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#6d8aff;border:2px solid #18181b}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.leg{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#52525b}
+.leg-ln{width:20px;height:2px;border-radius:1px}
+.leg-dot{width:7px;height:7px;border-radius:50%}
+.info{font-size:11px;line-height:1.7;color:#52525b}
+.info strong{color:#71717a;font-weight:500}
+.mono{font-family:'IBM Plex Mono',monospace}
+.plots-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.hint-bar{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-align:center;padding:6px;background:#0a0a10;border-top:1px solid #1a1a22}
+@media(max-width:900px){.main{grid-template-columns:1fr}.plots-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Foster (1975) — Preferred Paths in <em>SO(3)</em></h1>
+  <div class="ref">Visual Apparent Motion and Some Preferred Paths in the Rotation Group SO(3). <em>Biol. Cybernetics</em> 18, 81–89.</div>
+</header>
+<div class="main">
+<div>
+  <!-- REFERENCE display: 2-flash -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title">Reference — 2 flash (A → σA)</span>
+      <span class="tag off" id="refTag">—</span>
+    </div>
+    <canvas id="refCv"></canvas>
+  </div>
+  <!-- PROBE display: 3-flash, draggable -->
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-hdr">
+      <span class="panel-title">Your probe — 3 flash (A → B → σA)</span>
+      <span class="tag off" id="probeTag">—</span>
+    </div>
+    <canvas id="probeCv" style="cursor:grab"></canvas>
+    <div class="hint-bar" id="hintBar">Click &amp; drag on canvas to set probe: horizontal → θ₃ (rotation), vertical → θ₁ (tilt)</div>
+  </div>
+  <!-- Plots -->
+  <div class="plots-row">
+    <div class="panel">
+      <div class="panel-hdr"><span class="panel-title">θ₁ vs θ₂ path</span></div>
+      <canvas id="p1Cv"></canvas>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr"><span class="panel-title">θ₃ vs θ₂ path</span></div>
+      <canvas id="p2Cv"></canvas>
+    </div>
+  </div>
+</div>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="card">
+    <h3>Condition (σ)</h3>
+    <button class="cond-btn on" data-i="0">A · θ₃ = 45° · θ₂ = −0.012</button>
+    <button class="cond-btn" data-i="1">B · θ₃ = 60° · θ₂ = −0.015</button>
+    <button class="cond-btn" data-i="2">C · θ₃ = 72° · θ₂ = +0.010</button>
+    <button class="cond-btn" data-i="3">D · θ₃ = 52° · θ₂ = −0.006</button>
+  </div>
+  <div class="card">
+    <h3>Experimenter sets θ₂(B)</h3>
+    <div class="sg">
+      <div class="sg-row">
+        <span class="sg-name">θ₂ of probe</span>
+        <span class="sg-val" id="t2Val">−0.006</span>
+      </div>
+      <input type="range" id="slT2" min="0" max="1000" value="500">
+    </div>
+    <div class="info" style="margin-top:6px">As in the paper, the experimenter fixes θ₂ and you adjust θ₁ &amp; θ₃ by dragging the bar.</div>
+  </div>
+  <div class="card">
+    <h3>Your probe</h3>
+    <div class="mono" style="font-size:11px;color:#71717a;line-height:1.8" id="probeInfo">
+      θ₁(B) = 0.000<br>θ₂(B) = −0.006<br>θ₃(B) = 0.000 (0°)
+    </div>
+  </div>
+  <div class="card">
+    <h3>Scheme predictions at this θ₂</h3>
+    <div class="mono" style="font-size:11px;color:#71717a;line-height:1.8" id="predInfo">—</div>
+  </div>
+  <div class="card">
+    <h3>Legend</h3>
+    <div class="legend">
+      <div class="leg"><div class="leg-ln" style="background:repeating-linear-gradient(90deg,#fbbf6e 0,#fbbf6e 3px,transparent 3px,transparent 6px)"></div>Scheme 1</div>
+      <div class="leg"><div class="leg-ln" style="background:#6ee7b7"></div>Scheme 2</div>
+      <div class="leg"><div class="leg-dot" style="background:#f472b6"></div>Your probe</div>
+      <div class="leg"><div class="leg-dot" style="background:#52525b;border:1px solid #71717a"></div>Endpoints</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>About</h3>
+    <div class="info">
+      <strong>Task:</strong> Adjust the probe bar B so the 3-flash motion (A→B→σA) looks identical to the 2-flash reference (A→σA). Compare your setting to the two scheme predictions.<br><br>
+      <strong>Scheme 1:</strong> Geodesic from S² metric — linear path in coordinates.<br>
+      <strong>Scheme 2:</strong> Geodesic from bi-invariant metric on SO(3) — one-parameter subgroup (sinusoidal in coordinates).<br><br>
+      <strong>Result:</strong> 6/8 cases favored Scheme 2.
+    </div>
+  </div>
+</div>
+</div>
+</div>
+<script>
+// ═══ CONDITIONS ═══
+const CONDS = [
+  { t1s:0.015, t2s:-0.012, t3s:Math.PI/4 },     // 45°
+  { t1s:-0.008, t2s:-0.015, t3s:Math.PI/3 },     // 60°
+  { t1s:0.012, t2s:0.010, t3s:1.257 },            // 72°
+  { t1s:-0.012, t2s:-0.006, t3s:0.900 },          // ~52°
+];
+CONDS.forEach(c => {
+  c.p3 = c.t3s;
+  c.p1 = (Math.abs(Math.sin(c.p3)) > 0.001) ? c.t1s * c.p3 / Math.sin(c.p3) : c.t1s;
+  c.p2 = (Math.abs(1 - Math.cos(c.p3)) > 0.001) ? c.t2s * c.p3 / (1 - Math.cos(c.p3)) : c.t2s;
+});
+function s1(t, c) { return { t1: c.t1s*t, t2: c.t2s*t, t3: c.t3s*t }; }
+function s2(t, c) {
+  return {
+    t1: (c.p1/c.p3)*Math.sin(c.p3*t),
+    t2: (c.p2/c.p3)*(1 - Math.cos(c.p3*t)),
+    t3: c.p3*t
+  };
+}
+// Find t parameter for a given θ₂ value
+function tFromT2_s1(t2, c) { return (Math.abs(c.t2s) > 1e-8) ? t2 / c.t2s : 0.5; }
+function tFromT2_s2(t2, c) {
+  // t2 = (p2/p3)(1-cos(p3*t)) → cos(p3*t) = 1 - t2*p3/p2
+  if (Math.abs(c.p2) < 1e-8) return 0.5;
+  const cosVal = 1 - t2 * c.p3 / c.p2;
+  if (cosVal < -1 || cosVal > 1) return 0.5;
+  return Math.acos(cosVal) / c.p3;
+}
+// ═══ STATE ═══
+let ci = 0;
+let probeT1 = 0;
+let probeT3 = 0;
+let probeT2 = 0;     // set by slider
+let t2Frac = 0.5;    // 0..1 fraction through θ₂ range
+let dragging = false;
+function C() { return CONDS[ci]; }
+// ═══ CANVAS HELPERS ═══
+function initCv(id, w, h) {
+  const cv = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = w * dpr; cv.height = h * dpr;
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { cv, ctx, w, h };
+}
+const REF_W = 830, REF_H = 180;
+const PRB_W = 830, PRB_H = 220;
+const PLT_W = 400, PLT_H = 240;
+const ref = initCv('refCv', REF_W, REF_H);
+const prb = initCv('probeCv', PRB_W, PRB_H);
+const pl1 = initCv('p1Cv', PLT_W, PLT_H);
+const pl2 = initCv('p2Cv', PLT_W, PLT_H);
+// ═══ BAR DRAWING ═══
+const BAR_HALF = 0.0075;  // half-length on unit sphere
+const BAR_PX = 5200;      // scale factor to pixels
+const BAR_W = 3.5;
+function rotMat(t1, t2, t3) {
+  const c1=Math.cos(t1),s1=Math.sin(t1),c2=Math.cos(t2),s2=Math.sin(t2),c3=Math.cos(t3),s3=Math.sin(t3);
+  return [[c2*c3,-c2*s3,s2],[s1*s2*c3+c1*s3,c1*c3-s1*s2*s3,-s1*c2],[-c1*s2*c3+s1*s3,s1*c3+c1*s2*s3,c1*c2]];
+}
+function barPts(t1, t2, t3) {
+  const R = rotMat(t1, t2, t3);
+  return [-1,1].map(s => {
+    const py = s * BAR_HALF;
+    return { x: R[0][1]*py + R[0][2], y: R[1][1]*py + R[1][2] };
+  });
+}
+function drawBar(ctx, cx, cy, t1, t2, t3, color, alpha, w) {
+  const pts = barPts(t1, t2, t3);
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = w || BAR_W;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx + pts[0].x * BAR_PX, cy - pts[0].y * BAR_PX);
+  ctx.lineTo(cx + pts[1].x * BAR_PX, cy - pts[1].y * BAR_PX);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+function drawGhostBar(ctx, cx, cy, t1, t2, t3, label) {
+  drawBar(ctx, cx, cy, t1, t2, t3, '#1e1e26', 0.6, 1.5);
+  if (label) {
+    const pts = barPts(t1, t2, t3);
+    const mx = cx + (pts[0].x + pts[1].x)/2 * BAR_PX;
+    const my = cy - (pts[0].y + pts[1].y)/2 * BAR_PX;
+    ctx.font = '9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#27272a';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, mx, my + BAR_HALF * BAR_PX + 14);
+  }
+}
+// ═══ ANIMATION ═══
+const CYCLE = 2000;
+let anim = 0, lastTs = 0;
+function phaseInfo2(t) {
+  // 2-flash: A(300) ISI(200) σA(300) pause(200) → 1000ms half-cycle
+  const half = CYCLE / 2;
+  const th = t % half;
+  if (th < 300) return { phase: 'A', alpha: 1 };
+  if (th < 500) return { phase: 'ISI', alpha: 0 };
+  if (th < 800) return { phase: 'B', alpha: 1 };
+  return { phase: 'ISI', alpha: 0 };
+}
+function phaseInfo3(t) {
+  // 3-flash: A(220) ISI(110) B(220) ISI(110) σA(220) pause(120) → 1000ms half
+  const half = CYCLE / 2;
+  const th = t % half;
+  if (th < 220) return { phase: 'A', alpha: 1 };
+  if (th < 330) return { phase: 'ISI', alpha: 0 };
+  if (th < 550) return { phase: 'PROBE', alpha: 1 };
+  if (th < 660) return { phase: 'ISI', alpha: 0 };
+  if (th < 880) return { phase: 'B', alpha: 1 };
+  return { phase: 'ISI', alpha: 0 };
+}
+// ═══ DRAW REFERENCE ═══
+function drawRef() {
+  const { ctx, w, h } = ref;
+  const c = C();
+  ctx.fillStyle = '#0a0a10';
+  ctx.fillRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2;
+  // Ghost outlines
+  drawGhostBar(ctx, cx, cy, 0, 0, 0, 'A');
+  drawGhostBar(ctx, cx, cy, c.t1s, c.t2s, c.t3s, 'σ(A)');
+  // Animated flash
+  const ph = phaseInfo2(anim);
+  const tag = document.getElementById('refTag');
+  if (ph.phase === 'A') {
+    drawBar(ctx, cx, cy, 0, 0, 0, '#e4e4e7', 0.95);
+    tag.textContent = 'A'; tag.className = 'tag a';
+  } else if (ph.phase === 'B') {
+    drawBar(ctx, cx, cy, c.t1s, c.t2s, c.t3s, '#e4e4e7', 0.95);
+    tag.textContent = 'σ(A)'; tag.className = 'tag b';
+  } else {
+    tag.textContent = 'ISI'; tag.className = 'tag off';
+  }
+}
+// ═══ DRAW PROBE DISPLAY ═══
+function drawProbe() {
+  const { ctx, w, h } = prb;
+  const c = C();
+  ctx.fillStyle = '#0a0a10';
+  ctx.fillRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2;
+  // Ghost outlines
+  drawGhostBar(ctx, cx, cy, 0, 0, 0, 'A');
+  drawGhostBar(ctx, cx, cy, c.t1s, c.t2s, c.t3s, 'σ(A)');
+  // Show probe ghost always (green tint)
+  drawBar(ctx, cx, cy, probeT1, probeT2, probeT3, '#6ee7b7', 0.15, 2);
+  // Scheme prediction ghosts (very faint)
+  const tS1 = tFromT2_s1(probeT2, c);
+  const tS2 = tFromT2_s2(probeT2, c);
+  const pred1 = s1(Math.max(0, Math.min(1, tS1)), c);
+  const pred2 = s2(Math.max(0, Math.min(1, tS2)), c);
+  drawBar(ctx, cx, cy, pred1.t1, pred1.t2, pred1.t3, '#fbbf6e', 0.08, 1.5);
+  drawBar(ctx, cx, cy, pred2.t1, pred2.t2, pred2.t3, '#6ee7b7', 0.08, 1.5);
+  // Animated 3-flash
+  const ph = phaseInfo3(anim);
+  const tag = document.getElementById('probeTag');
+  if (ph.phase === 'A') {
+    drawBar(ctx, cx, cy, 0, 0, 0, '#e4e4e7', 0.95);
+    tag.textContent = 'A'; tag.className = 'tag a';
+  } else if (ph.phase === 'PROBE') {
+    drawBar(ctx, cx, cy, probeT1, probeT2, probeT3, '#6ee7b7', 0.95);
+    tag.textContent = 'B (probe)'; tag.className = 'tag p';
+  } else if (ph.phase === 'B') {
+    drawBar(ctx, cx, cy, c.t1s, c.t2s, c.t3s, '#e4e4e7', 0.95);
+    tag.textContent = 'σ(A)'; tag.className = 'tag b';
+  } else {
+    tag.textContent = 'ISI'; tag.className = 'tag off';
+  }
+  // Drag hint crosshair at probe center
+  if (!dragging) {
+    const pts = barPts(probeT1, probeT2, probeT3);
+    const mx = cx + (pts[0].x + pts[1].x)/2 * BAR_PX;
+    const my = cy - (pts[0].y + pts[1].y)/2 * BAR_PX;
+    ctx.strokeStyle = '#6ee7b730';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3,3]);
+    ctx.beginPath();
+    ctx.moveTo(mx - 12, my); ctx.lineTo(mx + 12, my);
+    ctx.moveTo(mx, my - 12); ctx.lineTo(mx, my + 12);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+// ═══ PLOTS ═══
+function drawPlot(co, xLbl, yLbl, getX1, getY1, getX2, getY2, xEnd, yEnd, probeX, probeY) {
+  const { ctx, w, h } = co;
+  ctx.fillStyle = '#0a0a10';
+  ctx.fillRect(0, 0, w, h);
+  const m = { l: 52, r: 16, t: 12, b: 36 };
+  const pw = w - m.l - m.r, ph = h - m.t - m.b;
+  // Compute ranges
+  let xMin = Math.min(0, xEnd, probeX), xMax = Math.max(0, xEnd, probeX);
+  let yMin = Math.min(0, yEnd, probeY), yMax = Math.max(0, yEnd, probeY);
+  for (let i = 0; i <= 100; i++) {
+    const t = i/100;
+    yMin = Math.min(yMin, getY1(t), getY2(t));
+    yMax = Math.max(yMax, getY1(t), getY2(t));
+    xMin = Math.min(xMin, getX1(t), getX2(t));
+    xMax = Math.max(xMax, getX1(t), getX2(t));
+  }
+  const xPad = (xMax-xMin)*0.18 || 0.002;
+  const yPad = (yMax-yMin)*0.18 || 0.002;
+  xMin -= xPad; xMax += xPad; yMin -= yPad; yMax += yPad;
+  const sx = v => m.l + (v-xMin)/(xMax-xMin)*pw;
+  const sy = v => m.t + ph - (v-yMin)/(yMax-yMin)*ph;
+  // Zero lines
+  ctx.strokeStyle = '#1a1a22'; ctx.lineWidth = 1;
+  if (xMin < 0 && xMax > 0) { ctx.beginPath(); ctx.moveTo(sx(0), m.t); ctx.lineTo(sx(0), m.t+ph); ctx.stroke(); }
+  if (yMin < 0 && yMax > 0) { ctx.beginPath(); ctx.moveTo(m.l, sy(0)); ctx.lineTo(m.l+pw, sy(0)); ctx.stroke(); }
+  // Axes
+  ctx.strokeStyle = '#27272a';
+  ctx.beginPath();
+  ctx.moveTo(m.l, m.t+ph); ctx.lineTo(m.l+pw, m.t+ph);
+  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t+ph);
+  ctx.stroke();
+  // Labels
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#3f3f46';
+  ctx.textAlign = 'center';
+  ctx.fillText(xLbl, m.l+pw/2, h-4);
+  ctx.save();
+  ctx.translate(10, m.t+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLbl, 0, 0);
+  ctx.restore();
+  // Tick labels
+  ctx.font = '8px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#27272a';
+  ctx.textAlign = 'center';
+  [xMin+xPad, (xMin+xMax)/2, xMax-xPad].forEach(v => ctx.fillText(v.toFixed(3), sx(v), m.t+ph+14));
+  ctx.textAlign = 'right';
+  [yMin+yPad, (yMin+yMax)/2, yMax-yPad].forEach(v => ctx.fillText(v.toFixed(3), m.l-4, sy(v)+3));
+  // Scheme 1 (dashed orange)
+  ctx.strokeStyle = '#fbbf6e';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5,4]);
+  ctx.globalAlpha = 0.65;
+  ctx.beginPath();
+  for (let i=0;i<=200;i++){const t=i/200;const x=getX1(t),y=getY1(t);i?ctx.lineTo(sx(x),sy(y)):ctx.moveTo(sx(x),sy(y));}
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+  // Scheme 2 (solid green)
+  ctx.strokeStyle = '#6ee7b7';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i=0;i<=200;i++){const t=i/200;const x=getX2(t),y=getY2(t);i?ctx.lineTo(sx(x),sy(y)):ctx.moveTo(sx(x),sy(y));}
+  ctx.stroke();
+  // Endpoints
+  [0,1].forEach(t => {
+    ctx.fillStyle = '#3f3f46';
+    ctx.beginPath(); ctx.arc(sx(getX1(t)), sy(getY1(t)), 4, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#52525b'; ctx.lineWidth = 1; ctx.stroke();
+  });
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#3f3f46'; ctx.textAlign = 'left';
+  ctx.fillText('I', sx(0)+6, sy(0)-4);
+  ctx.fillText('σ', sx(xEnd)+6, sy(yEnd)-4);
+  // θ₂ probe line (vertical for plot 1, since x=θ₂)
+  ctx.strokeStyle = '#52525b30';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath();
+  ctx.moveTo(sx(probeX), m.t);
+  ctx.lineTo(sx(probeX), m.t+ph);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // User probe dot
+  ctx.fillStyle = '#f472b6';
+  ctx.beginPath();
+  ctx.arc(sx(probeX), sy(probeY), 5, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = '#f472b680';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+function drawPlots() {
+  const c = C();
+  drawPlot(pl1, 'θ₂', 'θ₁',
+    t => s1(t,c).t2, t => s1(t,c).t1,
+    t => s2(t,c).t2, t => s2(t,c).t1,
+    c.t2s, c.t1s, probeT2, probeT1
+  );
+  drawPlot(pl2, 'θ₂', 'θ₃',
+    t => s1(t,c).t2, t => s1(t,c).t3,
+    t => s2(t,c).t2, t => s2(t,c).t3,
+    c.t2s, c.t3s, probeT2, probeT3
+  );
+}
+// ═══ UPDATE INFO ═══
+function updateInfo() {
+  const c = C();
+  const deg = r => (r*180/Math.PI).toFixed(1);
+  document.getElementById('probeInfo').innerHTML =
+    `θ₁(B) = ${probeT1>=0?'+':''}${probeT1.toFixed(4)}<br>` +
+    `θ₂(B) = ${probeT2>=0?'+':''}${probeT2.toFixed(4)}<br>` +
+    `θ₃(B) = ${probeT3.toFixed(3)} (${deg(probeT3)}°)`;
+  // Predictions at this θ₂
+  const tS1 = Math.max(0, Math.min(1, tFromT2_s1(probeT2, c)));
+  const tS2 = Math.max(0, Math.min(1, tFromT2_s2(probeT2, c)));
+  const p1 = s1(tS1, c);
+  const p2 = s2(tS2, c);
+  document.getElementById('predInfo').innerHTML =
+    `<span style="color:#fbbf6e">S1:</span> θ₁=${p1.t1>=0?'+':''}${p1.t1.toFixed(4)}, θ₃=${p1.t3.toFixed(3)} (${deg(p1.t3)}°)<br>` +
+    `<span style="color:#6ee7b7">S2:</span> θ₁=${p2.t1>=0?'+':''}${p2.t1.toFixed(4)}, θ₃=${p2.t3.toFixed(3)} (${deg(p2.t3)}°)<br>` +
+    `<span style="color:#f472b6">You:</span> θ₁=${probeT1>=0?'+':''}${probeT1.toFixed(4)}, θ₃=${probeT3.toFixed(3)} (${deg(probeT3)}°)`;
+}
+// ═══ DRAG INTERACTION ═══
+const probeCv = document.getElementById('probeCv');
+let dragStart = null;
+let dragStartT1 = 0, dragStartT3 = 0;
+probeCv.addEventListener('pointerdown', e => {
+  dragging = true;
+  probeCv.style.cursor = 'grabbing';
+  const rect = probeCv.getBoundingClientRect();
+  dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  dragStartT1 = probeT1;
+  dragStartT3 = probeT3;
+  probeCv.setPointerCapture(e.pointerId);
+});
+probeCv.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const c = C();
+  const rect = probeCv.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const dx = x - dragStart.x;
+  const dy = y - dragStart.y;
+  // Horizontal drag → θ₃ (in-plane rotation): scale so full canvas width ≈ π/2
+  probeT3 = dragStartT3 + dx * (Math.PI/2) / rect.width;
+  probeT3 = Math.max(0, Math.min(c.t3s, probeT3));
+  // Vertical drag → θ₁ (out-of-plane tilt): scale so full canvas height ≈ 0.04 rad
+  probeT1 = dragStartT1 - dy * 0.04 / rect.height;
+  probeT1 = Math.max(-0.025, Math.min(0.025, probeT1));
+  updateInfo();
+  drawPlots();
+});
+probeCv.addEventListener('pointerup', () => {
+  dragging = false;
+  probeCv.style.cursor = 'grab';
+});
+// ═══ θ₂ SLIDER ═══
+const slT2 = document.getElementById('slT2');
+slT2.addEventListener('input', () => {
+  const c = C();
+  t2Frac = +slT2.value / 1000;
+  probeT2 = c.t2s * t2Frac;
+  document.getElementById('t2Val').textContent = probeT2.toFixed(4);
+  updateInfo();
+  drawPlots();
+});
+// ═══ CONDITION BUTTONS ═══
+document.querySelectorAll('.cond-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cond-btn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    ci = +btn.dataset.i;
+    // Reset probe
+    const c = C();
+    probeT1 = 0; probeT3 = c.t3s / 2;
+    probeT2 = c.t2s * t2Frac;
+    document.getElementById('t2Val').textContent = probeT2.toFixed(4);
+    updateInfo();
+    drawPlots();
+  });
+});
+// ═══ INIT ═══
+function init() {
+  const c = C();
+  probeT3 = c.t3s / 2;
+  probeT2 = c.t2s * t2Frac;
+  updateInfo();
+  drawPlots();
+}
+// ═══ MAIN LOOP ═══
+function frame(ts) {
+  const dt = lastTs ? (ts-lastTs) : 16;
+  lastTs = ts;
+  anim = (anim + dt) % CYCLE;
+  drawRef();
+  drawProbe();
+  requestAnimationFrame(frame);
+}
+init();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
