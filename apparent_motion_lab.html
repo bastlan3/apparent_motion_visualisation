@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apparent Motion Lab - Pro Version</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f; color: #e0e0e8; font-family: 'Courier New', monospace;
+    height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+  }
+
+  header {
+    padding: 10px 20px; border-bottom: 1px solid #2a2a3a;
+    display: flex; align-items: baseline; gap: 14px; flex-shrink: 0; background: #12121a;
+  }
+  header h1 { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; color: #6c6cff; }
+  header span { font-size: 11px; color: #55556a; }
+
+  .layout { display: flex; flex: 1; min-height: 0; }
+
+  .sidebar {
+    width: 280px; min-width: 280px; border-right: 1px solid #2a2a3a;
+    background: #12121a; overflow-y: auto; flex-shrink: 0;
+  }
+  .sidebar-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #55556a; padding: 12px 14px 6px;
+  }
+  .exp-item {
+    padding: 8px 14px; cursor: pointer; border-left: 3px solid transparent;
+    transition: all 0.12s ease;
+  }
+  .exp-item:hover { background: #1a1a26; }
+  .exp-item.active { background: rgba(108,108,255,0.12); border-left-color: #6c6cff; }
+  .exp-item .ey { font-size: 10px; color: #55556a; }
+  .exp-item .et { font-size: 12px; color: #e0e0e8; line-height: 1.3; margin-top: 1px; }
+  .exp-item .eg { font-size: 10px; color: #8888a0; margin-top: 2px; }
+  .exp-item.active .et { color: #fff; }
+  .exp-item.active .ey { color: #6c6cff; }
+
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  .canvas-wrap {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: #08080d; position: relative; min-height: 0; overflow: hidden;
+  }
+  canvas { display: block; }
+
+  .overlay-tl { position: absolute; top: 12px; left: 16px; font-size: 11px; color: #55556a; pointer-events: none; }
+  .overlay-tr { position: absolute; top: 12px; right: 16px; font-size: 11px; color: #55556a; pointer-events: none; }
+
+  .controls {
+    padding: 12px 20px; border-top: 1px solid #2a2a3a; background: #12121a; 
+    display: flex; align-items: center; gap: 20px; flex-shrink: 0; flex-wrap: wrap;
+  }
+  
+  #dyn-ctrls { display: flex; gap: 20px; flex-wrap: wrap; border-left: 1px solid #2a2a3a; padding-left: 20px; }
+
+  .cg { display: flex; align-items: center; gap: 8px; }
+  .cl { font-size: 11px; color: #8888a0; white-space: nowrap; }
+  .cv { font-size: 12px; color: #6c6cff; min-width: 35px; text-align: right; }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 90px; height: 4px; background: #2a2a3a; border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: #6c6cff; cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #6c6cff; cursor: pointer; border: none;
+  }
+
+  .btn {
+    font-family: 'Courier New', monospace; font-size: 11px; padding: 5px 12px; 
+    border: 1px solid #2a2a3a; background: #1a1a26; color: #e0e0e8; border-radius: 3px;
+    cursor: pointer; transition: all 0.12s; user-select: none;
+  }
+  .btn:hover { border-color: #6c6cff; background: rgba(108,108,255,0.12); }
+  .btn.on { border-color: #6c6cff; background: #6c6cff; color: #fff; }
+
+  .spacer { flex: 1; }
+
+  .desc {
+    padding: 10px 20px; border-top: 1px solid #2a2a3a;
+    background: #12121a; flex-shrink: 0; max-height: 120px; overflow-y: auto;
+  }
+  .desc h3 { font-size: 12px; color: #6c6cff; margin-bottom: 4px; }
+  .desc p { font-size: 12px; line-height: 1.5; color: #8888a0; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>APPARENT MOTION LAB</h1>
+  <span>Interactive classic experiments (1912-2021)</span>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-label">Experiments</div>
+    <div id="exp-list"></div>
+  </div>
+  <div class="main">
+    <div class="canvas-wrap" id="cwrap">
+      <canvas id="c"></canvas>
+      <div class="overlay-tl" id="olabel"></div>
+      <div class="overlay-tr" id="flab"></div>
+    </div>
+    <div class="controls" id="ctrl">
+      <div class="cg">
+        <button class="btn" id="bpause">PAUSE</button>
+        <button class="btn" id="bpath">SHOW CUES</button>
+      </div>
+      <div class="cg" style="margin-left: 10px;">
+        <span class="cl">SOA</span>
+        <input type="range" id="soa" min="10" max="800" value="300" step="5">
+        <span class="cv" id="soav">300ms</span>
+      </div>
+      
+      <div id="dyn-ctrls"></div> <!-- Container for experiment-specific parameters -->
+      
+      <div class="spacer"></div>
+    </div>
+    <div class="desc" id="dpan"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var soa = 300, paused = false, showPath = false, frame = 0, lastT = 0, sysTime = 0;
+  var cW = 400, cH = 300;
+  var cv = document.getElementById('c');
+  var ctx2d = cv.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var currentIdx = 0;
+
+  var E = [
+    { id:'wertheimer', y:1912, a:'Wertheimer', t:'Beta & Phi Motion',
+      tg:'dots / translation', d:'Two dots alternate positions producing the percept of a single moving dot. At faster rates, you perceive motion without a distinct object (phi).',
+      soa:300, fn:'dWertheimer',
+      params: [ {id:'dist', n:'Distance', min:20, max:200, v:80, step:5} ] },
+      
+    { id:'korte', y:1915, a:'Korte', t:'Distance x Time Laws',
+      tg:'dots / variable separation', d:'Korte laws: SOA proportional to distance. Notice how changing the base separation distance breaks the illusion for the furthest dots first.',
+      soa:250, fn:'dKorte',
+      params: [ {id:'sepMult', n:'Spacing Multiplier', min:50, max:150, v:100, step:10} ] },
+
+    { id:'heider', y:1944, a:'Heider & Simmel', t:'Apparent Behavior',
+      tg:'geometric shapes', d:'Simple geometric shapes evoke strong perceptions of animacy and intention.',
+      soa:400, fn:'dHeider',
+      params: [ {id:'door', n:'Door Open', min:0, max:1, v:1, step:1} ] },
+
+    { id:'wallach', y:1953, a:"Wallach & O'Connell", t:'Kinetic Depth Effect',
+      tg:'wireframe shadow', d:'A 2D projection of a rotating 3D wireframe object instantly produces a vivid 3D percept when in motion.',
+      soa:60, fn:'dWallach',
+      params: [ {id:'rotSpeed', n:'Rotation Speed', min:1, max:45, v:15, step:1} ] },
+
+    { id:'michotte', y:1963, a:'Michotte', t:'Causality (Launching)',
+      tg:'collision', d:'When object A stops adjacent to object B, and B begins moving, we perceive A as "launching" B. The delay destroys the causal illusion.',
+      soa:30, fn:'dMichotte',
+      params: [ {id:'delay', n:'Impact Delay', min:0, max:30, v:0, step:1} ] },
+
+    { id:'johansson', y:1973, a:'Johansson', t:'Biological Motion',
+      tg:'point-light walker', d:'A few dots attached to the joints of a walking person are meaningless when static, but instantly recognizable as a human when moving.',
+      soa:50, fn:'dJohansson',
+      params: [ {id:'speed', n:'Walk Speed', min:1, max:20, v:8, step:1} ] },
+
+    { id:'braddick', y:1974, a:'Braddick', t:'Short-Range RDK',
+      tg:'random dots', d:'Random dot patterns with a displaced central region. Coherent motion perceived only for small displacements.',
+      soa:80, fn:'dBraddick',
+      params: [ {id:'disp', n:'Displacement', min:1, max:20, v:4, step:1} ] },
+
+    { id:'foster', y:1975, a:'Foster', t:'Geodesics on SO(3)',
+      tg:'bar stimulus', d:'A bar alternates between orientations. Perceived rotation follows the shortest path.',
+      soa:250, fn:'dFoster',
+      params: [ {id:'ang', n:'Angle Diff', min:30, max:170, v:90, step:10} ] },
+
+    { id:'shepjudd', y:1976, a:'Shepard & Judd', t:'3D Block Rotation',
+      tg:'depth rotation', d:'Shepard-Metzler blocks. Critical SOA increases linearly with angular disparity.',
+      soa:350, fn:'dShepJudd',
+      params: [ {id:'angle', n:'Rotation Diff', min:30, max:180, v:90, step:10} ] },
+
+    { id:'robins', y:1977, a:'Robins & Shepard', t:'Spatiotemporal Probing',
+      tg:'bar + probe', d:'Bar alternates. Probe dots flashed at intermediate points disrupt or confirm the mental rotation path.',
+      soa:300, fn:'dRobins',
+      params: [ {id:'probe', n:'Show Probes', min:0, max:1, v:1, step:1} ] },
+
+    { id:'farrell', y:1981, a:'Farrell & Shepard', t:'Random Polygon Rotation',
+      tg:'random polygons', d:'Polygons alternate orientations. Symmetric shapes can cause bistable (ambiguous) reverse rotations.',
+      soa:300, fn:'dFarrell',
+      params: [ {id:'verts', n:'Vertices', min:5, max:20, v:18, step:1} ] },
+
+    { id:'shepzare', y:1983, a:'Shepard & Zare', t:'Path-Guided Motion',
+      tg:'dots + faint path', d:'Apparent motion follows a dramatically curved path if a faint path is flashed briefly between them, violating the straight-line rule.',
+      soa:250, fn:'dShepZare',
+      params: [ {id:'curve', n:'Curvature', min:0, max:100, v:50, step:5} ] },
+
+    { id:'freydfinke', y:1984, a:'Freyd & Finke', t:'Representational Momentum',
+      tg:'rotating rectangles', d:'Observers remember the final position of a rotating object as being displaced forward along its path of motion.',
+      soa:400, fn:'dFreydFinke',
+      params: [ {id:'rotStep', n:'Angle Jump', min:5, max:60, v:30, step:5} ] },
+
+    { id:'mcbeath', y:1989, a:'McBeath & Shepard', t:'Curved Paths (Window)',
+      tg:'translation+rotation', d:'Shape alternates on two sides of a wall with a window. Settings show curvature away from straight line.',
+      soa:350, fn:'dMcBeath',
+      params: [ {id:'win', n:'Window Size', min:10, max:80, v:40, step:5} ] },
+
+    { id:'shiffrarfreyd', y:1990, a:'Shiffrar & Freyd', t:'Motor Constraints',
+      tg:'human figure over obstacle', d:'At short SOAs, the limb passes through the object. At long SOAs, the visual system routes the limb around it.',
+      soa:450, fn:'dShiffrar',
+      params: [ {id:'obsH', n:'Obstacle Height', min:10, max:100, v:50, step:10} ] },
+
+    { id:'carlton', y:1990, a:'Carlton & Shepard', t:'SE(3) Screw Displacement',
+      tg:'helical path / 3D', d:'Any rigid displacement is a screw motion. Metric on SE(3) predicts helical paths.',
+      soa:400, fn:'dCarlton',
+      params: [ {id:'sep', n:'Separation', min:20, max:150, v:70, step:5} ] },
+
+    { id:'nijhawan', y:1994, a:'Nijhawan', t:'Flash-Lag Effect',
+      tg:'moving bar + flash', d:'A flashed object perfectly aligned with a moving object is perceived as lagging behind the moving object.',
+      soa:16, fn:'dNijhawan', 
+      params: [ {id:'vel', n:'Velocity', min:2, max:15, v:5, step:1} ] },
+
+    { id:'tse', y:1998, a:'Tse et al.', t:'Transformational AM',
+      tg:'shape morphing', d:'A shape smoothly morphs or unfolds into a new shape based on top-down parsing cues.',
+      soa:350, fn:'dTse',
+      params: [ {id:'width', n:'Morph Width', min:20, max:120, v:80, step:10} ] },
+
+    { id:'liu', y:2021, a:'Liu & Lourenco', t:'Implicit Curved-Path',
+      tg:'Pacman shapes', d:'Pacman shapes alternate at angular disparities. Target detection RTs are impaired along the kinematic curved path.',
+      soa:300, fn:'dLiu',
+      params: [ {id:'gap', n:'Distance', min:30, max:120, v:70, step:5} ] }
+  ];
+
+  var drawFns = {};
+
+  var elist = document.getElementById('exp-list');
+  for(var ei=0;ei<E.length;ei++){
+    (function(i){
+      var e = E[i];
+      var d = document.createElement('div');
+      d.className = 'exp-item' + (i===0?' active':'');
+      d.innerHTML = '<div class="ey">'+e.y+'</div><div class="et">'+e.a+' \u2014 '+e.t+'</div><div class="eg">'+e.tg+'</div>';
+      d.addEventListener('click', function(){ selectExp(i); });
+      elist.appendChild(d);
+    })(ei);
+  }
+
+  var soaEl = document.getElementById('soa');
+  var soavEl = document.getElementById('soav');
+  var bpEl = document.getElementById('bpause');
+  var btEl = document.getElementById('bpath');
+  var dpan = document.getElementById('dpan');
+  var dynCtrls = document.getElementById('dyn-ctrls');
+
+  soaEl.addEventListener('input', function(){
+    soa = parseInt(this.value); soavEl.textContent = soa + 'ms';
+  });
+
+  bpEl.addEventListener('click', function(){
+    paused = !paused; this.textContent = paused ? 'PLAY' : 'PAUSE';
+    if(paused) this.classList.add('on'); else this.classList.remove('on');
+  });
+
+  btEl.addEventListener('click', function(){
+    showPath = !showPath;
+    if(showPath) this.classList.add('on'); else this.classList.remove('on');
+  });
+
+  function selectExp(i){
+    currentIdx = i; var e = E[i];
+    frame = 0; sysTime = 0; lastT = performance.now();
+    soa = e.soa; soaEl.value = String(soa); soavEl.textContent = soa+'ms';
+    showPath = false; btEl.classList.remove('on');
+
+    var items = elist.children;
+    for(var j=0;j<items.length;j++){
+      if(j===i) items[j].classList.add('active'); else items[j].classList.remove('active');
+    }
+    
+    document.getElementById('olabel').textContent = e.a+' ('+e.y+')';
+    dpan.innerHTML = '<h3>'+e.a+' ('+e.y+') \u2014 '+e.t+'</h3><p>'+e.d+'</p>';
+
+    dynCtrls.innerHTML = '';
+    if(e.params) {
+      e.params.forEach(function(p) {
+        var wrap = document.createElement('div'); wrap.className = 'cg';
+        var lab = document.createElement('span'); lab.className = 'cl'; lab.textContent = p.n;
+        var inp = document.createElement('input'); 
+        inp.type = 'range'; inp.min = p.min; inp.max = p.max; inp.value = p.v; inp.step = p.step || 1;
+        var val = document.createElement('span'); val.className = 'cv'; val.textContent = p.v;
+        
+        inp.addEventListener('input', function(){
+          p.v = parseFloat(this.value); val.textContent = this.value;
+        });
+        
+        wrap.appendChild(lab); wrap.appendChild(inp); wrap.appendChild(val);
+        dynCtrls.appendChild(wrap);
+      });
+    }
+  }
+
+  function resize(){
+    var wrap = document.getElementById('cwrap');
+    cW = wrap.clientWidth || 400; cH = wrap.clientHeight || 300;
+    cv.width = Math.round(cW * dpr); cv.height = Math.round(cH * dpr);
+    cv.style.width = cW + 'px'; cv.style.height = cH + 'px';
+    ctx2d.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  selectExp(0); resize(); lastT = performance.now();
+
+  function tick(){
+    var now = performance.now();
+    if(!paused && (now - lastT) >= soa){
+      frame = 1 - frame;
+      lastT = now;
+    }
+    if(!paused) sysTime = now / 16.666; // Smooth time across framerates
+    ctx2d.clearRect(0,0,cW,cH);
+    var e = E[currentIdx];
+    if(drawFns[e.fn]) drawFns[e.fn](ctx2d, cW, cH, frame, showPath, e.params, sysTime);
+    
+    document.getElementById('flab').textContent = 'state '+(frame+1);
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // HELPER DRAWING FUNCS
+  function dot(c,x,y,r,col){ c.beginPath(); c.arc(x,y,r,0,6.283); c.fillStyle = col||'#ffffff'; c.fill(); }
+  function ghost(c,x,y,r){ c.beginPath(); c.arc(x,y,r,0,6.283); c.strokeStyle='rgba(108,108,255,0.4)'; c.lineWidth=1; c.stroke(); }
+  function lbl(c,txt,x,y,col){ c.font='10px monospace'; c.fillStyle=col||'#55556a'; c.fillText(txt,x,y); }
+  function bar(c,bx,by,ang,len,th,col){
+    c.save(); c.translate(bx,by); c.rotate(ang);
+    c.fillStyle=col||'#ffffff'; c.fillRect(-len/2,-th/2,len,th); c.restore();
+  }
+  function arcArr(c,ax,ay,r,a1,a2,col){
+    c.beginPath(); c.arc(ax,ay,r,a1,a2);
+    c.strokeStyle=col||'rgba(108,108,255,0.4)'; c.lineWidth=1.5; c.setLineDash([4,4]); c.stroke(); c.setLineDash([]);
+  }
+  function mkPoly(seed,n,pcx,pcy,br){
+    var s=seed; function rng(){ s=(s*16807)%2147483647; return s/2147483647; }
+    var pts=[];
+    for(var i=0;i<n;i++){ var a=(i/n)*6.283, rv=br*(0.5+0.5*rng()); pts.push([pcx+rv*Math.cos(a), pcy+rv*Math.sin(a)]); }
+    return pts;
+  }
+  function dPoly(c,pts,ang,pcx,pcy,col,lw){
+    c.save(); c.translate(pcx,pcy); c.rotate(ang); c.translate(-pcx,-pcy);
+    c.beginPath(); c.moveTo(pts[0][0],pts[0][1]);
+    for(var i=1;i<pts.length;i++) c.lineTo(pts[i][0],pts[i][1]); c.closePath();
+    c.strokeStyle=col||'#ffffff'; c.lineWidth=lw||2; c.stroke(); c.restore();
+  }
+
+  // EXPERIMENT DRAW FUNCS
+  drawFns.dWertheimer = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, sep=p[0].v;
+    if(sp){ ghost(c,mx-sep,my,12); ghost(c,mx+sep,my,12); }
+    dot(c, f===0 ? mx-sep : mx+sep, my, 12, '#ffffff');
+  };
+
+  drawFns.dKorte = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2;
+    var mult = p[0].v / 100;
+    var seps = [0.08*w*mult, 0.18*w*mult, 0.32*w*mult], offs = [-h*0.22, 0, h*0.22];
+    for(var i=0;i<3;i++){
+      var y=my+offs[i];
+      dot(c, f===0 ? mx-seps[i] : mx+seps[i], y, 8, '#ffffff');
+      if(sp) { c.strokeStyle='rgba(108,108,255,0.2)'; c.beginPath(); c.moveTo(mx-seps[i],y); c.lineTo(mx+seps[i],y); c.stroke(); }
+    }
+  };
+
+  drawFns.dHeider = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2;
+    c.strokeStyle = '#e8e8f0'; c.lineWidth = 2; c.strokeRect(mx+10, my-40, 100, 80); 
+    if(p[0].v === 1) c.clearRect(mx+10, my-20, 5, 30);
+    
+    if(f===0){
+      dot(c, mx-30, my+20, 6, '#e8e8f0'); 
+      c.fillStyle='#e8e8f0'; c.beginPath(); c.moveTo(mx-60,my); c.lineTo(mx-50,my+15); c.lineTo(mx-70,my+15); c.fill();
+    } else {
+      dot(c, mx-10, my-10, 6, '#e8e8f0'); 
+      c.fillStyle='#e8e8f0'; c.beginPath(); c.moveTo(mx-40,my-15); c.lineTo(mx-30,my); c.lineTo(mx-50,my); c.fill();
+    }
+    if(sp) lbl(c, 'Animacy / intention cues', mx-40, my-50, '#6c6cff');
+  };
+
+  drawFns.dWallach = function(c,w,h,f,sp,p,time){
+    var mx=w/2, my=h/2, sz=50;
+    var ang = (time * (p[0].v * 0.002)); 
+    var pts = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1], [-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+    var edges = [[0,1],[1,2],[2,3],[3,0], [4,5],[5,6],[6,7],[7,4], [0,4],[1,5],[2,6],[3,7]];
+    
+    c.strokeStyle = '#ffffff'; c.lineWidth = 2; c.lineJoin = 'round'; c.beginPath();
+    edges.forEach(e => {
+      var p1 = pts[e[0]], p2 = pts[e[1]];
+      var r1x = p1[0]*Math.cos(ang) - p1[2]*Math.sin(ang);
+      var r2x = p2[0]*Math.cos(ang) - p2[2]*Math.sin(ang);
+      c.moveTo(mx + r1x*sz, my + p1[1]*sz); c.lineTo(mx + r2x*sz, my + p2[1]*sz);
+    });
+    c.stroke();
+    if(sp) lbl(c, '2D Shadow of rotating wireframe', mx-80, my+80, '#6c6cff');
+  };
+
+  drawFns.dMichotte = function(c,w,h,f,sp,p,time){
+    var mx=w/2, my=h/2;
+    var t = time % 120;
+    var ax = mx-100, bx = mx;
+    var delay = p[0].v;
+    
+    if(t < 50) { ax += t * 2; } else { ax = mx - 20; }
+    if(t > 50 + delay && t < 100 + delay) { bx += (t - (50+delay)) * 2; }
+
+    dot(c, ax, my, 10, '#ff6b6b'); dot(c, bx, my, 10, '#ffffff');
+    if(sp) lbl(c, delay > 5 ? 'Delay breaks causality' : 'Immediate launch = causality', mx-70, my-30, '#6c6cff');
+  };
+
+  drawFns.dJohansson = function(c,w,h,f,sp,p,time){
+    var mx=w/2, my=h/2;
+    var t = time * p[0].v * 0.01;
+    var hipY = my - 10, footY = my + 60;
+    var leg1 = Math.sin(t) * 30, leg2 = Math.sin(t + Math.PI) * 30;
+    var knee1 = leg1 + Math.cos(t)*15, knee2 = leg2 + Math.cos(t+Math.PI)*15;
+    var arm1 = Math.sin(t + Math.PI)*20, arm2 = Math.sin(t)*20;
+
+    dot(c, mx, my-60, 6); dot(c, mx, my-40, 5); dot(c, mx, hipY, 5);
+    dot(c, mx+knee1, hipY+35, 5); dot(c, mx+leg1, footY, 5);
+    dot(c, mx+knee2, hipY+35, 5); dot(c, mx+leg2, footY, 5);
+    dot(c, mx+arm1, my-10, 4); dot(c, mx+arm2, my-10, 4);
+
+    if(sp) {
+      c.strokeStyle='rgba(108,108,255,0.3)'; c.beginPath();
+      c.moveTo(mx,my-40); c.lineTo(mx,hipY); c.lineTo(mx+knee1,hipY+35); c.lineTo(mx+leg1,footY);
+      c.stroke();
+    }
+  };
+
+  drawFns.dBraddick = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, gW=200, pz=4, cols=gW/pz;
+    var disp= f===0 ? 0 : p[0].v; 
+    var cqSize = 80;
+    var rMin = (gW-cqSize)/2 / pz, rMax = (gW+cqSize)/2 / pz;
+    var sd;
+    for(var r=0;r<cols;r++){
+      for(var co=0;co<cols;co++){
+        sd = r*1000 + co + 42; sd = (sd*16807)%2147483647; sd = (sd*16807)%2147483647;
+        if((sd/2147483647) > 0.5) {
+          var inCenter = (co>=rMin && co<=rMax && r>=rMin && r<=rMax);
+          c.fillStyle = '#ffffff'; c.fillRect((mx-gW/2) + co*pz + (inCenter?disp:0), (my-gW/2) + r*pz, pz, pz);
+        }
+      }
+    }
+    if(sp){ c.strokeStyle='rgba(108,108,255,0.8)'; c.strokeRect((mx-gW/2)+rMin*pz+disp, (my-gW/2)+rMin*pz, cqSize, cqSize); }
+  };
+
+  drawFns.dFoster = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, len=Math.min(w,h)*0.25;
+    var a = (p[0].v/2) * (Math.PI/180);
+    if(sp){ arcArr(c,mx,my,len*0.55,-a,a); }
+    bar(c,mx,my,f===0?-a:a,len,6);
+  };
+
+  drawFns.dShepJudd = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, s=20;
+    var blocks=[[0,0,0],[1,0,0],[2,0,0],[2,1,0],[2,2,0],[2,2,1]];
+    function drawB(ang){
+      var ca=Math.cos(ang), sa=Math.sin(ang);
+      for(var i=0;i<blocks.length;i++){
+        var px = mx + (blocks[i][0]*ca + blocks[i][2]*sa)*s;
+        var py = my + blocks[i][1]*s - (blocks[i][0]*-sa + blocks[i][2]*ca)*s*0.3;
+        c.fillStyle = '#aaa'; c.fillRect(px,py,s-2,s-2);
+      }
+    }
+    drawB(f===0 ? 0 : p[0].v * (Math.PI/180));
+    if(sp) lbl(c, 'Depth rotation disparity: '+p[0].v+' deg', mx-70, my+80, '#6c6cff');
+  };
+
+  drawFns.dRobins = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, len=Math.min(w,h)*0.22;
+    var a2=1.5708;
+    if(p[0].v === 1 && f!==0){
+      var pr=len*0.75, pas=[0.393,0.785,1.178];
+      for(var j=0;j<3;j++){ dot(c,mx+pr*Math.cos(pas[j]), my-pr*Math.sin(pas[j]), 4, 'rgba(255,107,107,0.8)'); }
+    }
+    bar(c,mx,my,f===0?0:a2,len,5);
+  };
+
+  drawFns.dFarrell = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, br=Math.min(w,h)*0.15;
+    var pts=mkPoly(7777,p[0].v,mx,my,br);
+    var a2=1.257;
+    dPoly(c,pts,f===0?0:a2,mx,my);
+  };
+
+  drawFns.dShepZare = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, sep=80;
+    if(f===0 || sp){ 
+       c.beginPath(); var curve = p[0].v; 
+       c.moveTo(mx-sep, my); c.quadraticCurveTo(mx, my-curve*2, mx+sep, my);
+       c.strokeStyle='rgba(150,150,150,0.4)'; c.lineWidth=15; c.stroke();
+    }
+    dot(c, f===0?mx-sep:mx+sep, my, 12, '#ffffff');
+  };
+
+  drawFns.dFreydFinke = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2;
+    var ang = f===0 ? 0 : p[0].v * (Math.PI/180);
+    bar(c, mx, my, ang, 100, 20, '#ffffff');
+    if(sp) ghost(c, mx+40, my+30, 4);
+  };
+
+  drawFns.dMcBeath = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, sep=Math.min(w,h)*0.22;
+    var wallH=Math.min(h*0.55,280), wh=p[0].v;
+    c.fillStyle='rgba(60,60,80,0.5)'; c.fillRect(mx-2,my-wallH/2,4,wallH);
+    c.fillStyle='#08080d'; c.fillRect(mx-3,my-wh/2,6,wh);
+    
+    function tri(tx,ty,ta){
+      c.save(); c.translate(tx,ty); c.rotate(ta);
+      c.beginPath(); c.moveTo(0,-15); c.lineTo(13,8); c.lineTo(-13,8); c.closePath();
+      c.strokeStyle='#ffffff'; c.lineWidth=2; c.stroke(); c.restore();
+    }
+    tri(f===0?mx-sep:mx+sep, my, f===0?-0.5:0.8);
+    if(sp) lbl(c,'Window size: '+wh,mx-30,my+wallH/2+20,'#6c6cff');
+  };
+
+  drawFns.dShiffrar = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, obsH = p[0].v;
+    c.fillStyle = '#445'; c.fillRect(mx-10, my-obsH, 20, obsH*2);
+    
+    c.strokeStyle = '#e8e8f0'; c.lineWidth = 8; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(mx-40, my+60); c.lineTo(mx-40, my-10); c.stroke(); 
+    dot(c, mx-40, my-30, 15); 
+    
+    var a = f===0 ? -1.0 : 0.8;
+    c.save(); c.translate(mx-40, my); c.rotate(a);
+    c.beginPath(); c.moveTo(0,0); c.lineTo(60, 0); c.stroke(); c.restore();
+  };
+
+  drawFns.dCarlton = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, sz=20, sep=p[0].v;
+    var x1=mx-sep, x2=mx+sep, y1=my+sz*1.5, y2=my-sz*1.5;
+    function lsh(lx,ly,la){
+      c.save(); c.translate(lx,ly); c.rotate(la); c.strokeStyle='#ffffff'; c.lineWidth=2.5;
+      c.beginPath(); c.moveTo(-sz,-sz); c.lineTo(-sz,sz); c.lineTo(sz,sz); c.stroke(); c.restore();
+    }
+    lsh(f===0?x1:x2, f===0?y1:y2, f===0?0:1.7);
+    if(sp){
+      c.beginPath(); c.moveTo(x1,y1); c.quadraticCurveTo(mx,my-50,x2,y2);
+      c.strokeStyle='rgba(108,108,255,0.5)'; c.lineWidth=2; c.setLineDash([6,3]); c.stroke(); c.setLineDash([]);
+    }
+  };
+
+  drawFns.dNijhawan = function(c,w,h,f,sp,p,time){
+    var mx=w/2, my=h/2;
+    var t = time % 100;
+    var vx = (t * p[0].v) - 150; 
+    c.fillStyle = '#ffffff'; c.fillRect(mx + vx, my-30, 10, 30);
+    
+    if(t > 45 && t < 55) {
+      c.fillStyle = '#ff6b6b'; c.fillRect(mx, my+10, 10, 30);
+      if(sp) lbl(c, 'Physically perfectly aligned!', mx-60, my+60, '#ff6b6b');
+    }
+  };
+
+  drawFns.dTse = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2;
+    if(f===0){
+      dot(c, mx-40, my, 8); 
+    } else {
+      c.fillStyle = '#ffffff'; c.beginPath();
+      c.arc(mx-40, my, 8, Math.PI/2, Math.PI*1.5);
+      c.arc(mx-40+p[0].v, my, 8, Math.PI*1.5, Math.PI/2);
+      c.fill();
+    }
+  };
+
+  drawFns.dLiu = function(c,w,h,f,sp,p){
+    var mx=w/2, my=h/2, sep=p[0].v, r=20;
+    function pac(px,py,rot,col){
+      c.save(); c.translate(px,py); c.rotate(rot);
+      c.beginPath(); c.moveTo(0,0); c.arc(0,0,r,0.47,5.8); c.closePath(); 
+      c.fillStyle=col; c.fill(); c.restore();
+    }
+    pac(f===0?mx-sep:mx+sep, my, f===0?0:1.7, '#ffe06b');
+    if(sp){
+      c.beginPath(); c.moveTo(mx-sep,my); c.quadraticCurveTo(mx,my-sep*0.35,mx+sep,my);
+      c.strokeStyle='rgba(108,108,255,0.5)'; c.lineWidth=2; c.setLineDash([6,3]); c.stroke(); c.setLineDash([]);
+    }
+  };
+
+})();
+</script>
+</body>
+</html>
