@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apparent Motion — Visual Experiments</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0a0a0f;
+    color: #d4d4d8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 48px 24px 40px;
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #6c6cff;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 600;
+    color: #f4f4f5;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+
+  h1 span {
+    color: #6c6cff;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    font-weight: 300;
+    color: #71717a;
+    max-width: 520px;
+    line-height: 1.6;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 24px;
+    border-top: 1px solid #1e1e2e;
+  }
+
+  /* ── Grid ── */
+  main {
+    flex: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 40px 24px 80px;
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #3f3f5a;
+    margin-bottom: 24px;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: #12121a;
+    border: 1px solid #1e1e2e;
+    border-radius: 10px;
+    padding: 28px 24px 24px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card:hover {
+    border-color: #6c6cff;
+    background: #13131f;
+    transform: translateY(-2px);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top left, rgba(108,108,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .card-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #6c6cff;
+    margin-bottom: 12px;
+  }
+
+  .card h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 17px;
+    font-weight: 600;
+    color: #f4f4f5;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+
+  .card p {
+    font-size: 13px;
+    font-weight: 300;
+    color: #71717a;
+    line-height: 1.6;
+    flex: 1;
+    margin-bottom: 24px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #6c6cff;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+
+  .card:hover .card-footer {
+    opacity: 1;
+  }
+
+  .card-footer svg {
+    transition: transform 0.2s;
+  }
+
+  .card:hover .card-footer svg {
+    transform: translateX(3px);
+  }
+
+  /* ── Coming soon card ── */
+  .card.soon {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .card.soon .card-tag {
+    color: #3f3f5a;
+  }
+
+  .card.soon .card-footer {
+    color: #3f3f5a;
+  }
+
+  /* ── Footer ── */
+  footer {
+    padding: 24px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #2a2a3a;
+    border-top: 1px solid #1e1e2e;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Visual Experiments</p>
+  <h1>Apparent<br><span>Motion</span></h1>
+  <p class="subtitle">Interactive visualisations exploring the perception of motion — from classic psychophysics laws to configurable lab tools.</p>
+</header>
+
+<div class="divider"></div>
+
+<main>
+  <p class="section-label">Experiments</p>
+  <div class="cards">
+
+    <!-- Card 1 -->
+    <a class="card" href="apparent_motion_lab.html">
+      <p class="card-tag">Lab Tool</p>
+      <h2>Apparent Motion Lab</h2>
+      <p>A configurable sandbox for exploring how timing, distance, and stimulus properties give rise to the perception of motion between static flashes.</p>
+      <div class="card-footer">
+        Open lab
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- Card 2 -->
+    <a class="card" href="kortes_law.html">
+      <p class="card-tag">Theory</p>
+      <h2>Korte's Laws</h2>
+      <p>An interactive guide to Korte's three laws of apparent motion — how the relationship between interstimulus interval, distance, and intensity determines perceived motion quality.</p>
+      <div class="card-footer">
+        Explore laws
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- Placeholder card for future pages -->
+    <div class="card soon">
+      <p class="card-tag">Coming Soon</p>
+      <h2>More Experiments</h2>
+      <p>Additional visualisations are on the way. Check back later for new interactive tools and theory pages.</p>
+      <div class="card-footer">
+        Coming soon
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>Apparent Motion Visualisations</footer>
+
+</body>
+</html>
