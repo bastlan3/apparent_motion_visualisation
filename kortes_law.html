@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korte's Laws of Apparent Motion</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0a0a0f;
+    color: #d4d4d8;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 36px 24px 60px;
+  }
+
+  header { margin-bottom: 40px; }
+
+  h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 26px;
+    color: #f4f4f5;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  h1 span { color: #6d8aff; }
+
+  .subtitle {
+    font-size: 13px;
+    color: #52525b;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 300;
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  .canvas-panel {
+    background: #111118;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .canvas-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #1e1e26;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .percept-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+  }
+  .percept-label.simultaneity { background: #2d1b4e; color: #a78bfa; }
+  .percept-label.optimal { background: #1b3a2d; color: #6ee7b7; }
+  .percept-label.succession { background: #3a2a1b; color: #fbbf6e; }
+  .percept-label.partial { background: #1b2d3a; color: #7dd3fc; }
+
+  .canvas-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #3f3f46;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    background: #0d0d14;
+  }
+
+  .controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .control-card {
+    background: #111118;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    padding: 18px;
+  }
+
+  .control-card h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #52525b;
+    margin-bottom: 14px;
+  }
+
+  .param-group { margin-bottom: 16px; }
+  .param-group:last-child { margin-bottom: 0; }
+
+  .param-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .param-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #a1a1aa;
+  }
+
+  .param-name .sym {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    margin-right: 5px;
+  }
+  .sym.d { color: #6d8aff; }
+  .sym.t { color: #f472b6; }
+  .sym.i { color: #fbbf6e; }
+
+  .param-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #e4e4e7;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+    background: #27272a;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid #18181b;
+    cursor: pointer;
+  }
+  .sl-d::-webkit-slider-thumb { background: #6d8aff; }
+  .sl-t::-webkit-slider-thumb { background: #f472b6; }
+  .sl-i::-webkit-slider-thumb { background: #fbbf6e; }
+
+  /* Lock toggle */
+  .lock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #0d0d14;
+    border: 1px solid #27272a;
+    border-radius: 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.2s;
+  }
+  .lock-row:hover { border-color: #3f3f46; }
+  .lock-row.active { border-color: #6ee7b780; background: #0f1a15; }
+
+  .lock-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #a1a1aa;
+  }
+  .lock-row.active .lock-label { color: #6ee7b7; }
+
+  .toggle-track {
+    width: 36px; height: 20px;
+    border-radius: 10px;
+    background: #27272a;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .lock-row.active .toggle-track { background: #166534; }
+
+  .toggle-knob {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #71717a;
+    position: absolute;
+    top: 2px; left: 2px;
+    transition: all 0.2s;
+  }
+  .lock-row.active .toggle-knob { left: 18px; background: #6ee7b7; }
+
+  .lock-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #3f3f46;
+    margin-top: 8px;
+    line-height: 1.5;
+    padding: 0 4px;
+  }
+
+  /* Shape buttons */
+  .shape-row { display: flex; gap: 6px; }
+
+  .shape-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #27272a;
+    background: transparent;
+    color: #71717a;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .shape-btn:hover { border-color: #3f3f46; color: #a1a1aa; }
+  .shape-btn.active { border-color: #6d8aff; color: #6d8aff; background: #6d8aff10; }
+
+  /* Laws */
+  .laws-card {
+    background: #111118;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 16px;
+  }
+  .laws-card h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #52525b;
+    margin-bottom: 10px;
+  }
+
+  .law-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #1e1e26;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .law-item:last-child { border-bottom: none; }
+
+  .law-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #3f3f46;
+    min-width: 16px;
+    padding-top: 1px;
+  }
+  .law-text {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #52525b;
+  }
+  .law-text .hl { color: #a1a1aa; font-weight: 500; }
+
+  .law-item.on .law-num { color: #6d8aff; }
+  .law-item.on .law-text { color: #71717a; }
+  .law-item.on .law-text .hl { color: #e4e4e7; }
+
+  .regime-text {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #52525b;
+  }
+
+  .viewing-info {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #3f3f46;
+    padding: 10px 0 0;
+    border-top: 1px solid #1e1e26;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 820px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Korte's <span>Laws</span></h1>
+    <div class="subtitle">Apparent motion — parameter space explorer</div>
+  </header>
+
+  <div class="main-grid">
+    <div>
+      <div class="canvas-panel">
+        <div class="canvas-header">
+          <span class="percept-label optimal" id="perceptLabel">Optimal Motion</span>
+          <span class="canvas-meta" id="metaInfo">v = 20.0 °/s · cycle 440ms</span>
+        </div>
+        <canvas id="cv" width="720" height="400"></canvas>
+      </div>
+
+      <div class="laws-card">
+        <h3>Korte's Laws (1915)</h3>
+        <div class="law-item" id="law1">
+          <span class="law-num">I</span>
+          <span class="law-text"><span class="hl">↑ d → ↑ t</span> — wider separation requires longer ISI to maintain motion</span>
+        </div>
+        <div class="law-item" id="law2">
+          <span class="law-num">II</span>
+          <span class="law-text"><span class="hl">↑ i → ↑ t</span> — brighter stimuli require longer ISI</span>
+        </div>
+        <div class="law-item" id="law3">
+          <span class="law-num">III</span>
+          <span class="law-text"><span class="hl">↑ d → ↑ i</span> — wider separation requires stronger stimulus</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-panel">
+      <!-- Lock -->
+      <div>
+        <div class="lock-row" id="lockToggle">
+          <span class="lock-label">Optimality lock</span>
+          <div class="toggle-track"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="lock-hint" id="lockHint">Off — all parameters are independent.</div>
+      </div>
+
+      <!-- Parameters -->
+      <div class="control-card">
+        <h3>Parameters</h3>
+
+        <div class="param-group">
+          <div class="param-label">
+            <span class="param-name"><span class="sym d">d</span>Spatial separation</span>
+            <span class="param-value" id="dVal">2.0°</span>
+          </div>
+          <input type="range" class="sl-d" id="slD" min="5" max="100" value="20">
+        </div>
+
+        <div class="param-group">
+          <div class="param-label">
+            <span class="param-name"><span class="sym t">t</span>ISI</span>
+            <span class="param-value" id="tVal">100 ms</span>
+          </div>
+          <input type="range" class="sl-t" id="slT" min="0" max="500" value="100">
+        </div>
+
+        <div class="param-group">
+          <div class="param-label">
+            <span class="param-name"><span class="sym i">i</span>Intensity</span>
+            <span class="param-value" id="iVal">0.80</span>
+          </div>
+          <input type="range" class="sl-i" id="slI" min="10" max="100" value="80">
+        </div>
+
+        <div class="viewing-info">
+          Assumes 57 cm viewing distance<br>
+          1° vis. angle ≈ 1 cm on screen<br>
+          Stimulus: 0.5° diameter, 150 ms on-duration<br>
+          Typical range: d = 0.5–10°, ISI = 0–500 ms
+        </div>
+      </div>
+
+      <!-- Shape -->
+      <div class="control-card">
+        <h3>Stimulus shape</h3>
+        <div class="shape-row">
+          <button class="shape-btn active" data-shape="circle">Circle</button>
+          <button class="shape-btn" data-shape="square">Square</button>
+          <button class="shape-btn" data-shape="diamond">Diamond</button>
+        </div>
+      </div>
+
+      <!-- Regime -->
+      <div class="control-card">
+        <h3>Percept regime</h3>
+        <div class="regime-text" id="regimeDesc">
+          Parameters are in the <span style="color:#6ee7b7;font-weight:500">optimal</span> apparent motion range.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Canvas setup ──
+const canvas = document.getElementById('cv');
+const ctx = canvas.getContext('2d');
+const dpr = window.devicePixelRatio || 1;
+const W = 720, H = 400;
+canvas.width = W * dpr;
+canvas.height = H * dpr;
+canvas.style.width = W + 'px';
+canvas.style.height = H + 'px';
+ctx.scale(dpr, dpr);
+
+// ── Viewing geometry ──
+// 57 cm viewing distance → 1° ≈ 1 cm on screen
+// Canvas represents ~18° horizontally → 40 px/°
+const PX_PER_DEG = 40;
+const STIM_SIZE_DEG = 0.5;   // 0.5° diameter — typical in literature
+const STIM_DUR = 150;        // 150 ms on-duration per flash
+
+// ── State ──
+let d_deg = 2.0;
+let isi_ms = 100;
+let intensity = 0.80;
+let shape = 'circle';
+let lockOn = false;
+
+// ── Optimal ISI model ──
+// Literature basis:
+//   - At d≈2°, optimal ISI ≈ 80–120 ms (Korte 1915 data, Neuhaus 1930)
+//   - Implies preferred speed ≈ 18 °/s for coupling regime
+//   - Gepshtein & Kubovy (2007): coupling at high speeds, tradeoff at low
+//   - Intensity effect (Korte Law II): mild — higher i → slightly higher t
+//   - Model: optimal_t = (d / V_PREF) × 1000 × (0.7 + 0.3 × i)
+const V_PREF = 18; // °/s
+
+function optimalISI(d, i) {
+  return (d / V_PREF) * 1000 * (0.7 + 0.3 * i);
+}
+
+function optimalD(t, i) {
+  return (t / 1000) * V_PREF / (0.7 + 0.3 * i);
+}
+
+// ── Percept classification ──
+function classify(d, t, i) {
+  const tOpt = optimalISI(d, i);
+  const r = t / Math.max(tOpt, 1);
+  if (r < 0.2) return 'simultaneity';
+  if (r < 0.55) return 'partial';
+  if (r < 1.8) return 'optimal';
+  if (r < 3.2) return 'partial';
+  return 'succession';
+}
+
+function perceptInfo(p) {
+  const descs = {
+    simultaneity: 'ISI too short — stimuli appear <span style="color:#a78bfa;font-weight:500">simultaneous</span>. Increase t or decrease d.',
+    optimal: 'Parameters in the <span style="color:#6ee7b7;font-weight:500">optimal</span> range. Preferred speed ≈ ' + V_PREF + ' °/s (Korte 1915, Neuhaus 1930).',
+    succession: 'ISI too long — stimuli appear as <span style="color:#fbbf6e;font-weight:500">discrete succession</span>. Decrease t or increase d.',
+    partial: 'Near boundary — <span style="color:#7dd3fc;font-weight:500">weak or partial</span> motion percept.'
+  };
+  const labels = { simultaneity: 'Simultaneity', optimal: 'Optimal Motion', succession: 'Succession', partial: 'Partial Motion' };
+  return { label: labels[p], cls: p, desc: descs[p] };
+}
+
+// ── DOM ──
+const slD = document.getElementById('slD');
+const slT = document.getElementById('slT');
+const slI = document.getElementById('slI');
+
+function sync() {
+  slD.value = Math.round(d_deg * 10);
+  slT.value = Math.round(isi_ms);
+  slI.value = Math.round(intensity * 100);
+  document.getElementById('dVal').textContent = d_deg.toFixed(1) + '°';
+  document.getElementById('tVal').textContent = Math.round(isi_ms) + ' ms';
+  document.getElementById('iVal').textContent = intensity.toFixed(2);
+}
+
+slD.addEventListener('input', () => {
+  d_deg = +slD.value / 10;
+  if (lockOn) { isi_ms = Math.min(500, Math.max(0, optimalISI(d_deg, intensity))); }
+  sync();
+});
+
+slT.addEventListener('input', () => {
+  isi_ms = +slT.value;
+  if (lockOn) { d_deg = Math.min(10, Math.max(0.5, optimalD(isi_ms, intensity))); }
+  sync();
+});
+
+slI.addEventListener('input', () => {
+  intensity = +slI.value / 100;
+  if (lockOn) { isi_ms = Math.min(500, Math.max(0, optimalISI(d_deg, intensity))); }
+  sync();
+});
+
+document.getElementById('lockToggle').addEventListener('click', () => {
+  lockOn = !lockOn;
+  const el = document.getElementById('lockToggle');
+  el.classList.toggle('active', lockOn);
+  document.getElementById('lockHint').textContent = lockOn
+    ? 'On — changing one parameter adjusts others to stay in optimal regime.'
+    : 'Off — all parameters are independent.';
+  if (lockOn) {
+    isi_ms = Math.min(500, Math.max(0, optimalISI(d_deg, intensity)));
+    sync();
+  }
+});
+
+document.querySelectorAll('.shape-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    shape = btn.dataset.shape;
+  });
+});
+
+// ── Drawing helpers ──
+function drawStim(x, y, alpha) {
+  const r = STIM_SIZE_DEG * PX_PER_DEG / 2;
+  const lum = Math.round(160 + 95 * intensity);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = `rgb(${lum},${lum},${Math.min(255, lum + 15)})`;
+  ctx.shadowColor = `rgba(${lum},${lum},255,${0.2 * alpha})`;
+  ctx.shadowBlur = 10 * intensity;
+
+  if (shape === 'circle') {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  } else if (shape === 'square') {
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x, y - r * 1.2); ctx.lineTo(x + r, y);
+    ctx.lineTo(x, y + r * 1.2); ctx.lineTo(x - r, y);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+}
+
+function drawMarker(x, y, label) {
+  const r = STIM_SIZE_DEG * PX_PER_DEG / 2 + 8;
+  ctx.strokeStyle = '#1e1e26';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#3f3f46';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x, y + r + 14);
+}
+
+function drawBrace(x1, x2, y) {
+  const by = y + STIM_SIZE_DEG * PX_PER_DEG / 2 + 30;
+  ctx.strokeStyle = '#6d8aff30';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x1, by); ctx.lineTo(x2, by);
+  ctx.moveTo(x1, by - 3); ctx.lineTo(x1, by + 3);
+  ctx.moveTo(x2, by - 3); ctx.lineTo(x2, by + 3);
+  ctx.stroke();
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#6d8aff60';
+  ctx.textAlign = 'center';
+  ctx.fillText(d_deg.toFixed(1) + '°', (x1 + x2) / 2, by + 14);
+}
+
+function drawTimeline(t, cyc) {
+  const ty = H - 28, tx = 60, tw = W - 120;
+  ctx.fillStyle = '#18181f';
+  ctx.fillRect(tx, ty, tw, 6);
+
+  const s1 = STIM_DUR / cyc;
+  const ie = (STIM_DUR + isi_ms) / cyc;
+  const s2 = (STIM_DUR * 2 + isi_ms) / cyc;
+
+  ctx.fillStyle = '#6d8aff40'; ctx.fillRect(tx, ty, tw * s1, 6);
+  ctx.fillStyle = '#111118';    ctx.fillRect(tx + tw * s1, ty, tw * (ie - s1), 6);
+  ctx.fillStyle = '#f472b640'; ctx.fillRect(tx + tw * ie, ty, tw * (s2 - ie), 6);
+
+  // Playhead
+  ctx.fillStyle = '#d4d4d8';
+  ctx.fillRect(tx + tw * (t / cyc) - 1, ty - 2, 2, 10);
+
+  // Labels
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#6d8aff80'; ctx.fillText('A on', tx + tw * s1 / 2, ty - 6);
+  ctx.fillStyle = '#52525b';   ctx.fillText(Math.round(isi_ms) + 'ms', tx + tw * (s1 + ie) / 2, ty - 6);
+  ctx.fillStyle = '#f472b680'; ctx.fillText('B on', tx + tw * (ie + s2) / 2, ty - 6);
+}
+
+// ── Main loop ──
+let animTime = 0, lastTs = 0;
+
+function frame(ts) {
+  const dt = lastTs ? (ts - lastTs) : 16;
+  lastTs = ts;
+  const cyc = STIM_DUR + isi_ms + STIM_DUR + 250;
+  animTime = (animTime + dt) % cyc;
+
+  ctx.fillStyle = '#0d0d14';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid dots
+  for (let gx = 20; gx < W; gx += 40)
+    for (let gy = 20; gy < H - 40; gy += 40) {
+      ctx.fillStyle = '#14141c';
+      ctx.fillRect(gx, gy, 1, 1);
+    }
+
+  const cx = W / 2, cy = H / 2 - 20;
+  const half = (d_deg * PX_PER_DEG) / 2;
+  const x1 = cx - half, x2 = cx + half;
+
+  drawMarker(x1, cy, 'A');
+  drawMarker(x2, cy, 'B');
+  if (d_deg >= 1.0) drawBrace(x1, x2, cy);
+
+  // Only discrete flashes — no interpolation
+  let aA = 0, aB = 0;
+  if (animTime < STIM_DUR) aA = intensity;
+  else if (animTime >= STIM_DUR + isi_ms && animTime < STIM_DUR * 2 + isi_ms) aB = intensity;
+
+  if (aA > 0) drawStim(x1, cy, aA);
+  if (aB > 0) drawStim(x2, cy, aB);
+
+  drawTimeline(animTime, cyc);
+
+  // UI updates
+  const p = classify(d_deg, isi_ms, intensity);
+  const info = perceptInfo(p);
+  const lbl = document.getElementById('perceptLabel');
+  lbl.textContent = info.label;
+  lbl.className = 'percept-label ' + info.cls;
+  document.getElementById('regimeDesc').innerHTML = info.desc;
+
+  const spd = isi_ms > 0 ? (d_deg / (isi_ms / 1000)).toFixed(1) : '∞';
+  document.getElementById('metaInfo').textContent = 'v ≈ ' + spd + ' °/s · cycle ' + Math.round(cyc) + 'ms';
+
+  document.getElementById('law1').className = 'law-item' + (d_deg > 2.5 ? ' on' : '');
+  document.getElementById('law2').className = 'law-item' + (intensity > 0.7 ? ' on' : '');
+  document.getElementById('law3').className = 'law-item' + (d_deg > 2.5 && intensity < 0.5 ? ' on' : '');
+
+  requestAnimationFrame(frame);
+}
+
+sync();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
