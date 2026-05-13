@@ -3,84 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transformational Apparent Motion — Classic Paradigms</title>
+<title>Apparent Motion — Participant View</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'DM Sans',sans-serif;background:#08080d;color:#d4d4d8;min-height:100vh}
 a{color:inherit}
-.wrap{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
 
-header{margin-bottom:18px}
-.back{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3f3f46;text-decoration:none;margin-bottom:10px;display:inline-block}
+header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.back{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3f3f46;text-decoration:none}
 .back:hover{color:#6d8aff}
-h1{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;color:#f4f4f5;letter-spacing:-.5px;margin-top:6px}
-h1 em{font-style:normal;color:#6d8aff}
-.intro{font-size:13px;color:#71717a;line-height:1.7;margin-top:8px;max-width:760px}
+.title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#52525b;letter-spacing:1.5px;text-transform:uppercase}
 
-/* ── Tabs ── */
-.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #1e1e26;margin:22px 0 18px}
-.tab{font-family:'IBM Plex Mono',monospace;font-size:11px;background:transparent;border:none;color:#52525b;padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.3px;transition:all .15s}
+/* Tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid #1e1e26;margin-top:18px}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:11px;background:transparent;border:none;color:#52525b;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;letter-spacing:.3px}
 .tab:hover{color:#a1a1aa}
 .tab.on{color:#6d8aff;border-bottom-color:#6d8aff}
-.tab .y{color:#3f3f46;font-weight:300;margin-left:4px}
-.tab.on .y{color:#6d8aff80}
 
-/* ── Panels ── */
-.panel-wrap{display:none}
+.panel-wrap{display:none;padding-top:40px}
 .panel-wrap.on{display:block}
 
-.ref{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#52525b;font-weight:300;margin-bottom:18px;line-height:1.6}
-.ref strong{color:#a1a1aa;font-weight:500}
+.stage{display:flex;justify-content:center;margin-bottom:32px}
+canvas{display:block;background:#08080d}
 
-.main{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+.controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;align-items:flex-end;padding:18px 8px;border-top:1px solid #14141c;border-bottom:1px solid #14141c}
+.control{display:flex;flex-direction:column;gap:6px;min-width:128px}
+.control label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3f3f46;letter-spacing:1.4px;text-transform:uppercase}
+.control .v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a1a1aa;text-align:right;height:14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;background:#27272a;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
 
-.panel{background:#0e0e15;border:1px solid #1e1e26;border-radius:10px;overflow:hidden}
-.panel-hdr{padding:10px 14px;border-bottom:1px solid #1a1a22;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.panel-title{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-transform:uppercase;letter-spacing:1.2px}
-.tag{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px}
-.tag.a{background:#6d8aff20;color:#6d8aff}
-.tag.b{background:#f472b620;color:#f472b6}
-.tag.p{background:#6ee7b720;color:#6ee7b7}
-.tag.off{background:#1a1a22;color:#3f3f46}
-canvas{display:block;background:#0a0a10}
-
-.hint-bar{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-align:center;padding:6px;background:#0a0a10;border-top:1px solid #1a1a22}
-
-.plots-row{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
-
-/* ── Sidebar ── */
-.sidebar{display:flex;flex-direction:column;gap:12px}
-.card{background:#0e0e15;border:1px solid #1e1e26;border-radius:10px;padding:13px 14px}
-.card h3{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:#3f3f46;margin-bottom:10px}
-.sg{margin-bottom:11px}
-.sg:last-child{margin-bottom:0}
-.sg-row{display:flex;justify-content:space-between;margin-bottom:4px}
-.sg-name{font-size:12px;color:#71717a}
-.sg-val{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#d4d4d8}
-input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:#27272a;outline:none;cursor:pointer}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#6d8aff;border:2px solid #18181b}
-input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#6d8aff;border:2px solid #18181b}
-
-.seg{display:flex;gap:4px;flex-wrap:wrap}
-.seg button{flex:1;min-width:60px;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:6px 8px;background:transparent;border:1px solid #27272a;border-radius:5px;color:#52525b;cursor:pointer;transition:all .15s}
+.seg{display:flex;gap:3px}
+.seg button{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 9px;background:transparent;border:1px solid #27272a;border-radius:4px;color:#52525b;cursor:pointer;transition:all .15s}
 .seg button:hover{color:#a1a1aa;border-color:#3f3f46}
 .seg button.on{color:#6d8aff;border-color:#6d8aff50;background:#6d8aff08}
 
-.info{font-size:11.5px;line-height:1.7;color:#52525b}
-.info strong{color:#a1a1aa;font-weight:500}
-.info code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:#1a1a22;padding:1px 5px;border-radius:3px;color:#a1a1aa}
-.mono{font-family:'IBM Plex Mono',monospace}
-.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
-.leg{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#52525b}
-.leg-ln{width:18px;height:2px;border-radius:1px}
-.leg-dot{width:7px;height:7px;border-radius:50%}
-
-.percept-readout{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#a1a1aa;padding:8px 10px;background:#0a0a10;border-radius:6px;border:1px solid #1a1a22;text-align:center;letter-spacing:.5px}
-.percept-readout strong{color:#6ee7b7;font-weight:500}
-.percept-readout em{color:#f472b6;font-style:normal;font-weight:500}
-
-@media(max-width:900px){.main{grid-template-columns:1fr}}
+.cite{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-align:center;margin-top:22px;line-height:1.7}
 </style>
 </head>
 <body>
@@ -88,355 +49,83 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 
 <header>
   <a class="back" href="index.html">← back to experiments</a>
-  <h1>Transformational <em>Apparent Motion</em></h1>
-  <p class="intro">Four classic paradigms that probe how the visual system interpolates between two flashed shapes. When timing is right, observers see a single object transforming — sliding, rotating, growing, curving — rather than two disconnected flashes. Each paradigm pulls apart a different rule governing that interpolation.</p>
+  <span class="title">participant view</span>
 </header>
 
 <nav class="tabs" id="tabs">
-  <button class="tab on" data-tab="quartet">Motion Quartet<span class="y">· Schiller 1933</span></button>
-  <button class="tab" data-tab="shepjudd">3D Rotation<span class="y">· Shepard &amp; Judd 1976</span></button>
-  <button class="tab" data-tab="bundesen">Size + Orientation<span class="y">· Bundesen et al. 1983</span></button>
-  <button class="tab" data-tab="window">Path Curvature<span class="y">· McBeath &amp; Shepard 1989</span></button>
-  <button class="tab" data-tab="foster">Calculus of Paths<span class="y">· Foster 1975/1978</span></button>
+  <button class="tab on" data-tab="quartet">Motion Quartet</button>
+  <button class="tab" data-tab="shepjudd">3-D Rotation</button>
+  <button class="tab" data-tab="bundesen">Size + Orientation</button>
+  <button class="tab" data-tab="window">Window Technique</button>
+  <button class="tab" data-tab="foster">Calculus of Paths</button>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- TAB 1: MOTION QUARTET  (von Schiller 1933) -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 1. Motion Quartet -->
 <div class="panel-wrap on" id="p-quartet">
-  <div class="ref">
-    <strong>von Schiller, P. (1933).</strong> Stroboskopische Alternativversuche. <em>Psychologische Forschung</em>, 17, 179–214.
+  <div class="stage"><canvas id="qCv"></canvas></div>
+  <div class="controls">
+    <div class="control"><label>Aspect ratio (W / H)</label><span class="v" id="qARv">1.00</span><input type="range" id="qAR" min="30" max="300" value="100"></div>
+    <div class="control"><label>Diagonal (px)</label><span class="v" id="qDv">260</span><input type="range" id="qD" min="120" max="360" value="260"></div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="qSOAv">200</span><input type="range" id="qSOA" min="60" max="700" value="200"></div>
+    <div class="control"><label>Flash duration (ms)</label><span class="v" id="qFLv">120</span><input type="range" id="qFL" min="40" max="300" value="120"></div>
   </div>
-  <div class="main">
-    <div>
-      <div class="panel">
-        <div class="panel-hdr">
-          <span class="panel-title">Bistable apparent motion display</span>
-          <span class="tag off" id="qTag">—</span>
-        </div>
-        <canvas id="qCv"></canvas>
-        <div class="hint-bar">Two diagonal pairs of dots alternate. Depending on the rectangle's aspect ratio, observers see horizontal or vertical motion.</div>
-      </div>
-      <div class="plots-row">
-        <div class="panel">
-          <div class="panel-hdr"><span class="panel-title">Predicted percept vs. aspect ratio</span></div>
-          <canvas id="qPlot"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="sidebar">
-      <div class="card">
-        <h3>Stimulus geometry</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Aspect ratio (W / H)</span><span class="sg-val" id="qARv">1.00</span></div>
-          <input type="range" id="qAR" min="30" max="300" value="100">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Diagonal size</span><span class="sg-val" id="qDv">220 px</span></div>
-          <input type="range" id="qD" min="120" max="320" value="220">
-        </div>
-      </div>
-      <div class="card">
-        <h3>Timing</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">SOA (frame ↔ frame)</span><span class="sg-val" id="qSOAv">200 ms</span></div>
-          <input type="range" id="qSOA" min="60" max="700" value="200">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Flash duration</span><span class="sg-val" id="qFLv">120 ms</span></div>
-          <input type="range" id="qFL" min="40" max="300" value="120">
-        </div>
-      </div>
-      <div class="card">
-        <h3>Predicted percept</h3>
-        <div class="percept-readout" id="qPercept">— vertical motion</div>
-        <div class="info" style="margin-top:8px">
-          A correspondence-by-proximity rule (Korte's <em>law of distance</em>) predicts that motion is seen along the <strong>shorter</strong> diagonal-pair distance. With a vertical bias of ≈ <code>0.85</code> on the aspect ratio (a known asymmetry in the human display), the cross-over from horizontal to vertical percept happens just below AR = 1.
-        </div>
-      </div>
-      <div class="card">
-        <h3>About this paradigm</h3>
-        <div class="info">
-          Four dots sit on the corners of a rectangle. The <span style="color:#6d8aff">NW + SE</span> diagonal flashes, then the <span style="color:#f472b6">NE + SW</span> diagonal, alternating. The visual system <strong>must</strong> match each dot to a partner in the next frame, but two matchings are geometrically valid: <em>horizontal</em> pairing (NW→NE &amp; SE→SW) or <em>vertical</em> pairing (NW→SW &amp; NE→SE).<br><br>
-          Schiller showed the percept is governed by the inter-flash distance: the shorter pair wins. With a square layout the display is bistable and alternates spontaneously. The paradigm became a cornerstone of the <strong>correspondence problem</strong> in motion vision.
-        </div>
-      </div>
-    </div>
-  </div>
+  <span class="cite">Schiller (1933) · Psychologische Forschung, 17, 179–214.</span>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- TAB 2: SHEPARD & JUDD (1976) -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 2. Shepard & Judd -->
 <div class="panel-wrap" id="p-shepjudd">
-  <div class="ref">
-    <strong>Shepard, R. N., &amp; Judd, S. A. (1976).</strong> Perceptual illusion of rotation of three-dimensional objects. <em>Science</em>, 191(4230), 952–954.
+  <div class="stage"><canvas id="sjCv"></canvas></div>
+  <div class="controls">
+    <div class="control"><label>Rotation axis</label><span class="v">&nbsp;</span><div class="seg" id="sjAxis"><button class="on" data-v="plane">in-plane</button><button data-v="depth">in-depth</button></div></div>
+    <div class="control"><label>Angular disparity</label><span class="v" id="sjAv">60°</span><input type="range" id="sjA" min="0" max="180" value="60"></div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="sjSOAv">400</span><input type="range" id="sjSOA" min="80" max="1200" value="400"></div>
+    <div class="control"><label>Flash duration (ms)</label><span class="v" id="sjFLv">200</span><input type="range" id="sjFL" min="50" max="500" value="200"></div>
   </div>
-  <div class="main">
-    <div>
-      <div class="panel">
-        <div class="panel-hdr">
-          <span class="panel-title">Two views of a rigid 3-D object, alternating</span>
-          <span class="tag off" id="sjTag">—</span>
-        </div>
-        <canvas id="sjCv"></canvas>
-        <div class="hint-bar">When the SOA is long enough, observers report rigid rotation. The threshold SOA grows linearly with angular disparity — equally fast for depth and picture-plane rotations.</div>
-      </div>
-      <div class="plots-row">
-        <div class="panel">
-          <div class="panel-hdr"><span class="panel-title">Critical SOA vs. angular disparity</span></div>
-          <canvas id="sjPlot"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="sidebar">
-      <div class="card">
-        <h3>Rotation axis</h3>
-        <div class="seg" id="sjAxis">
-          <button class="on" data-v="plane">in-plane</button>
-          <button data-v="depth">in-depth</button>
-        </div>
-        <div class="info" style="margin-top:8px">Picture-plane and depth rotations yield <strong>the same slope</strong> in this paradigm — a key result of Shepard &amp; Judd.</div>
-      </div>
-      <div class="card">
-        <h3>Stimulus</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Angular disparity</span><span class="sg-val" id="sjAv">60°</span></div>
-          <input type="range" id="sjA" min="0" max="180" value="60">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">SOA</span><span class="sg-val" id="sjSOAv">400 ms</span></div>
-          <input type="range" id="sjSOA" min="80" max="1200" value="400">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Flash duration</span><span class="sg-val" id="sjFLv">200 ms</span></div>
-          <input type="range" id="sjFL" min="50" max="500" value="200">
-        </div>
-      </div>
-      <div class="card">
-        <h3>Percept readout</h3>
-        <div class="percept-readout" id="sjPercept">— rigid rotation</div>
-        <div class="info" style="margin-top:8px">
-          Empirical relation (Shepard &amp; Judd, 1976, Fig. 2):<br>
-          <code>SOA<sub>min</sub> ≈ 165 + 1.9·θ</code> (ms; θ in degrees), giving a rotation rate near <strong>525 °/s</strong> at threshold. Compare with mental rotation at ~60 °/s.
-        </div>
-      </div>
-      <div class="card">
-        <h3>About this paradigm</h3>
-        <div class="info">
-          A small asymmetric 3-D object is shown alternately in two orientations differing by θ. With short SOA the two views appear as separate flashes; with long SOA the visual system bridges them with a perceived <strong>rigid rotation</strong>. Plotting the minimum SOA that still yields rigid rotation against θ gives a <strong>straight line</strong> with essentially identical slopes for in-depth and in-plane rotations. This linearity was the empirical lift-off for treating apparent motion as a kinematic interpolation.
-        </div>
-      </div>
-    </div>
-  </div>
+  <span class="cite">Shepard &amp; Judd (1976) · Science, 191, 952–954.</span>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- TAB 3: BUNDESEN, LARSEN & FARRELL (1983) -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 3. Bundesen, Larsen & Farrell -->
 <div class="panel-wrap" id="p-bundesen">
-  <div class="ref">
-    <strong>Bundesen, C., Larsen, A., &amp; Farrell, J. E. (1983).</strong> Visual apparent movement: Transformations of size and orientation. <em>Perception &amp; Psychophysics</em>, 34(3), 218–224.
+  <div class="stage"><canvas id="blfCv"></canvas></div>
+  <div class="controls">
+    <div class="control"><label>Shape</label><span class="v">&nbsp;</span><div class="seg" id="blfShape"><button class="on" data-v="L">L</button><button data-v="arrow">arrow</button><button data-v="tri">tri</button></div></div>
+    <div class="control"><label>Size ratio s</label><span class="v" id="blfSv">1.80</span><input type="range" id="blfS" min="100" max="400" value="180"></div>
+    <div class="control"><label>Orientation Δ</label><span class="v" id="blfVv">45°</span><input type="range" id="blfV" min="0" max="180" value="45"></div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="blfSOAv">500</span><input type="range" id="blfSOA" min="100" max="1500" value="500"></div>
+    <div class="control"><label>Flash duration (ms)</label><span class="v" id="blfFLv">220</span><input type="range" id="blfFL" min="50" max="500" value="220"></div>
   </div>
-  <div class="main">
-    <div>
-      <div class="panel">
-        <div class="panel-hdr">
-          <span class="panel-title">Same shape, two sizes &amp; orientations — what motion do you see?</span>
-          <span class="tag off" id="blfTag">—</span>
-        </div>
-        <canvas id="blfCv"></canvas>
-        <div class="hint-bar">Size ratio drives apparent translation in depth; angular difference drives apparent rotation; both add into a single 3-D rigid motion.</div>
-      </div>
-      <div class="plots-row">
-        <div class="panel">
-          <div class="panel-hdr"><span class="panel-title">Minimum SOA for rigid motion (model)</span></div>
-          <canvas id="blfPlot"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="sidebar">
-      <div class="card">
-        <h3>Transformation</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Size ratio s (B / A)</span><span class="sg-val" id="blfSv">1.80</span></div>
-          <input type="range" id="blfS" min="100" max="400" value="180">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Orientation Δ v</span><span class="sg-val" id="blfVv">45°</span></div>
-          <input type="range" id="blfV" min="0" max="180" value="45">
-        </div>
-      </div>
-      <div class="card">
-        <h3>Timing</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">SOA</span><span class="sg-val" id="blfSOAv">500 ms</span></div>
-          <input type="range" id="blfSOA" min="100" max="1500" value="500">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Flash duration</span><span class="sg-val" id="blfFLv">220 ms</span></div>
-          <input type="range" id="blfFL" min="50" max="500" value="220">
-        </div>
-      </div>
-      <div class="card">
-        <h3>Shape</h3>
-        <div class="seg" id="blfShape">
-          <button class="on" data-v="L">L-shape</button>
-          <button data-v="arrow">arrow</button>
-          <button data-v="tri">triangle</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Threshold model</h3>
-        <div class="info">
-          From Bundesen et al. (Eq. 3 &amp; Fig. 3), the minimum SOA for the appearance of a single rigid object is additive in two components:<br><br>
-          <code>SOA<sub>min</sub> ≈ a + b·(s−1)/(s+1) + c·v</code><br><br>
-          where <code>(s−1)/(s+1)</code> is the apparent translation-in-depth term (zero when sizes are equal) and <code>v</code> is the in-plane rotation term. Estimated transformation times were additive in combined transformations — a striking result.
-        </div>
-        <div class="percept-readout" id="blfPercept" style="margin-top:10px">SOA<sub>thr</sub> ≈ — ms</div>
-      </div>
-    </div>
-  </div>
+  <span class="cite">Bundesen, Larsen &amp; Farrell (1983) · Perception &amp; Psychophysics, 34, 218–224.</span>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- TAB 4: McBeath & Shepard 1989 -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 4. Window -->
 <div class="panel-wrap" id="p-window">
-  <div class="ref">
-    <strong>McBeath, M. K., &amp; Shepard, R. N. (1989).</strong> Apparent motion between shapes differing in location and orientation: A window technique for estimating path curvature. <em>Perception &amp; Psychophysics</em>, 46(4), 333–337.
+  <div class="stage"><canvas id="wCv" style="cursor:ns-resize"></canvas></div>
+  <div class="controls">
+    <div class="control"><label>Lateral separation</label><span class="v" id="wDv">320 px</span><input type="range" id="wD" min="160" max="500" value="320"></div>
+    <div class="control"><label>Orientation Δ</label><span class="v" id="wPhiv">60°</span><input type="range" id="wPhi" min="0" max="180" value="60"></div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="wSOAv">450</span><input type="range" id="wSOA" min="120" max="900" value="450"></div>
+    <div class="control"><label>Flash duration (ms)</label><span class="v" id="wFLv">200</span><input type="range" id="wFL" min="60" max="500" value="200"></div>
+    <div class="control"><label>Window offset (px)</label><span class="v" id="wYv">0</span><input type="range" id="wY" min="-120" max="120" value="0"></div>
   </div>
-  <div class="main">
-    <div>
-      <div class="panel">
-        <div class="panel-hdr">
-          <span class="panel-title">Window technique — drag the window vertically</span>
-          <span class="tag off" id="wTag">—</span>
-        </div>
-        <canvas id="wCv" style="cursor:ns-resize"></canvas>
-        <div class="hint-bar" id="wHint">Drag the window up or down to estimate the curvature of the perceived path.</div>
-      </div>
-      <div class="plots-row">
-        <div class="panel">
-          <div class="panel-hdr"><span class="panel-title">Kinematic-geometry prediction vs. window setting</span></div>
-          <canvas id="wPlot"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="sidebar">
-      <div class="card">
-        <h3>Stimulus</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Lateral separation d</span><span class="sg-val" id="wDv">320 px</span></div>
-          <input type="range" id="wD" min="160" max="500" value="320">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Orientation Δ φ</span><span class="sg-val" id="wPhiv">60°</span></div>
-          <input type="range" id="wPhi" min="0" max="180" value="60">
-        </div>
-      </div>
-      <div class="card">
-        <h3>Timing</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">SOA</span><span class="sg-val" id="wSOAv">450 ms</span></div>
-          <input type="range" id="wSOA" min="120" max="900" value="450">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Flash duration</span><span class="sg-val" id="wFLv">200 ms</span></div>
-          <input type="range" id="wFL" min="60" max="500" value="200">
-        </div>
-      </div>
-      <div class="card">
-        <h3>Window setting</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Window offset (px)</span><span class="sg-val" id="wYv">0</span></div>
-          <input type="range" id="wY" min="-120" max="120" value="0">
-        </div>
-        <div class="info" style="margin-top:6px">Kinematic geometry predicts the path bulges toward the side prescribed by rotating each shape about its centroid through the shorter rotation. The window's optimal vertical offset estimates that bulge.</div>
-        <div class="percept-readout" id="wPredict" style="margin-top:10px">predicted bulge: — px</div>
-      </div>
-      <div class="card">
-        <h3>About this paradigm</h3>
-        <div class="info">
-          The shape — here an asymmetric arrow — alternates between two positions and orientations. The motion is bridged by a <strong>curved</strong> path rather than a straight line. To estimate the path, McBeath &amp; Shepard placed a narrow vertical <span class="mono">"window"</span> between the two flashes and asked observers to set its height so the shape was seen smoothly passing through it. The optimal setting traces where the visual system places the path, and it agrees with the bulge predicted by <em>kinematic geometry</em> (the unique smooth rigid screw motion between the two poses).
-        </div>
-      </div>
-    </div>
-  </div>
+  <span class="cite">McBeath &amp; Shepard (1989) · Perception &amp; Psychophysics, 46, 333–337. — drag the slot vertically on the canvas.</span>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- TAB 5: Foster 1975 / 1978 -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 5. Foster -->
 <div class="panel-wrap" id="p-foster">
-  <div class="ref">
-    <strong>Foster, D. H. (1975).</strong> Visual apparent motion and some preferred paths in the rotation group SO(3). <em>Biological Cybernetics</em>, 18, 81–89.<br>
-    <strong>Foster, D. H. (1978).</strong> Visual apparent motion and the calculus of variations. In E. L. J. Leeuwenberg &amp; H. F. J. M. Buffart (Eds.), <em>Formal Theories of Visual Perception</em> (pp. 67–82). Wiley.
+  <div class="stage"><canvas id="fCv"></canvas></div>
+  <div class="controls">
+    <div class="control"><label>Path predictor</label><span class="v">&nbsp;</span><div class="seg" id="fCost"><button class="on" data-v="straight">Euclidean</button><button data-v="screw">Screw</button><button data-v="curved">Smooth</button></div></div>
+    <div class="control"><label>Lateral separation</label><span class="v" id="fDv">340 px</span><input type="range" id="fD" min="0" max="500" value="340"></div>
+    <div class="control"><label>Orientation Δ</label><span class="v" id="fPhiv">90°</span><input type="range" id="fPhi" min="0" max="180" value="90"></div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="fSOAv">600</span><input type="range" id="fSOA" min="200" max="1200" value="600"></div>
   </div>
-  <div class="main">
-    <div>
-      <div class="panel">
-        <div class="panel-hdr">
-          <span class="panel-title">Apparent-motion path as a variational problem</span>
-          <span class="tag off" id="fTag">—</span>
-        </div>
-        <canvas id="fCv"></canvas>
-        <div class="hint-bar">Foster's idea: the perceived motion path minimises an action functional ∫ L(x, ẋ) dt. Different cost functions predict different paths.</div>
-      </div>
-      <div class="plots-row">
-        <div class="panel">
-          <div class="panel-hdr"><span class="panel-title">Energy along the path</span></div>
-          <canvas id="fPlot"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="sidebar">
-      <div class="card">
-        <h3>Cost functional</h3>
-        <div class="seg" id="fCost">
-          <button class="on" data-v="straight">Euclidean</button>
-          <button data-v="screw">Screw / SO(3)</button>
-          <button data-v="curved">Smoothness</button>
-        </div>
-        <div class="info" style="margin-top:8px">
-          <strong>Euclidean:</strong> minimise ∫|ẋ|² → straight line in position+orientation coordinates (Scheme 1 in Foster 75).<br>
-          <strong>Screw:</strong> minimise ∫(ω² + αv²) on SE(2) → one-parameter subgroup (Scheme 2 in Foster 75 — the bi-invariant geodesic).<br>
-          <strong>Smoothness:</strong> minimise ∫|ẍ|² → minimum-jerk-like curved path.
-        </div>
-      </div>
-      <div class="card">
-        <h3>Stimulus</h3>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Lateral separation</span><span class="sg-val" id="fDv">340 px</span></div>
-          <input type="range" id="fD" min="180" max="500" value="340">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">Orientation Δ</span><span class="sg-val" id="fPhiv">90°</span></div>
-          <input type="range" id="fPhi" min="0" max="180" value="90">
-        </div>
-        <div class="sg">
-          <div class="sg-row"><span class="sg-name">SOA</span><span class="sg-val" id="fSOAv">600 ms</span></div>
-          <input type="range" id="fSOA" min="200" max="1200" value="600">
-        </div>
-      </div>
-      <div class="card">
-        <h3>About these models</h3>
-        <div class="info">
-          Foster (1975) framed apparent motion as choosing a path through configuration space — for a tilting bar this is SO(3). He compared two schemes generated by different metrics, and observers favored the bi-invariant geodesic (Scheme 2) on 6 of 8 conditions.<br><br>
-          Foster (1978) extended this to a <em>calculus of variations</em>: the visual system chooses paths minimising an action functional. Changing the integrand changes the predicted path — this is what the toggle on the left lets you explore.<br><br>
-          See also the dedicated <a href="foster1975_so3.html" style="color:#6d8aff;text-decoration:none">Foster SO(3) lab →</a>
-        </div>
-      </div>
-    </div>
-  </div>
+  <span class="cite">Foster (1975) · Biological Cybernetics, 18, 81–89.  ·  Foster (1978) · calculus of variations.</span>
 </div>
 
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-// Shared utilities
-// ═══════════════════════════════════════════════════════════
+// ─── shared canvas init ───
 function initCv(id, w, h) {
   const cv = document.getElementById(id);
   const dpr = window.devicePixelRatio || 1;
@@ -447,224 +136,24 @@ function initCv(id, w, h) {
   return { cv, ctx, w, h };
 }
 
-// Tab switching
+// ─── tabs ───
 const tabBtns = document.querySelectorAll('#tabs .tab');
 const tabPanels = {
-  quartet: document.getElementById('p-quartet'),
+  quartet:  document.getElementById('p-quartet'),
   shepjudd: document.getElementById('p-shepjudd'),
   bundesen: document.getElementById('p-bundesen'),
-  window: document.getElementById('p-window'),
-  foster: document.getElementById('p-foster'),
+  window:   document.getElementById('p-window'),
+  foster:   document.getElementById('p-foster'),
 };
 let activeTab = 'quartet';
-tabBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    tabBtns.forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-    Object.values(tabPanels).forEach(p => p.classList.remove('on'));
-    activeTab = btn.dataset.tab;
-    tabPanels[activeTab].classList.add('on');
-  });
-});
+tabBtns.forEach(btn => btn.addEventListener('click', () => {
+  tabBtns.forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  Object.values(tabPanels).forEach(p => p.classList.remove('on'));
+  activeTab = btn.dataset.tab;
+  tabPanels[activeTab].classList.add('on');
+}));
 
-// ═══════════════════════════════════════════════════════════
-// TAB 1 — Motion Quartet (Schiller 1933)
-// ═══════════════════════════════════════════════════════════
-const qC = initCv('qCv', 830, 360);
-const qP = initCv('qPlot', 830, 200);
-const qState = { ar: 1.0, diag: 220, soa: 200, fl: 120, t: 0 };
-
-function quartetDots() {
-  // place dots on rectangle with given diagonal length d and aspect ratio ar = w/h
-  // w² + h² = d² ; w = ar·h ; h² (ar² + 1) = d² ; h = d/sqrt(ar²+1)
-  const h = qState.diag / Math.sqrt(qState.ar * qState.ar + 1);
-  const w = qState.ar * h;
-  return { w, h };
-}
-
-function pHorizontal() {
-  // Horizontal pairing distance is the horizontal side (w); vertical is the vertical side (h).
-  // Korte/proximity: motion goes along the shorter side. Sigmoid in log distance with vertical bias.
-  const { w, h } = quartetDots();
-  // vertical bias of ~0.85 favored vertical motion when w≈h (Gengerelli 1948; replicated repeatedly)
-  const bias = 0.85;
-  const x = Math.log(w / h) - Math.log(bias);
-  return 1 / (1 + Math.exp(-x * 6));   // steeper sigmoid
-}
-
-function drawQuartet() {
-  const { ctx, w: cw, h: ch } = qC;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, cw, ch);
-  const cx = cw / 2, cy = ch / 2;
-  const { w, h } = quartetDots();
-  const x1 = cx - w/2, x2 = cx + w/2;
-  const y1 = cy - h/2, y2 = cy + h/2;
-
-  // faint reference rectangle
-  ctx.strokeStyle = '#1a1a22'; ctx.lineWidth = 1;
-  ctx.strokeRect(x1, y1, w, h);
-
-  // diagonal-pair indicator lines (very faint)
-  ctx.strokeStyle = '#15151c';
-  ctx.beginPath();
-  ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-  ctx.moveTo(x2, y1); ctx.lineTo(x1, y2);
-  ctx.stroke();
-
-  // animation phase
-  const cycle = 2 * qState.soa;
-  const phase = qState.t % cycle;
-  const flashOn = (p) => p < qState.fl;
-  const inFrameA = phase < qState.soa;
-  const localPhase = inFrameA ? phase : phase - qState.soa;
-  const on = flashOn(localPhase);
-  const which = inFrameA ? 0 : 1;
-
-  const r = 14;
-  const dots = which === 0
-    ? [[x1, y1], [x2, y2]]   // NW, SE
-    : [[x2, y1], [x1, y2]];  // NE, SW
-
-  if (on) {
-    ctx.fillStyle = which === 0 ? '#9ab2ff' : '#f9a8d4';
-    dots.forEach(([x, y]) => {
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  }
-  // ghost outlines for the off frame
-  const ghost = which === 0 ? [[x2, y1], [x1, y2]] : [[x1, y1], [x2, y2]];
-  ctx.strokeStyle = '#22222c'; ctx.lineWidth = 1;
-  ghost.forEach(([x, y]) => {
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.stroke();
-  });
-
-  // predicted-motion arrow overlay (very faint)
-  const pH = pHorizontal();
-  ctx.lineWidth = 2; ctx.lineCap = 'round';
-  const a = 0.18;
-  ctx.strokeStyle = `rgba(110,231,183,${a + pH * 0.4})`;
-  // horizontal arrows
-  drawArrow(ctx, x1 + 24, y1, x2 - 24, y1, 8);
-  drawArrow(ctx, x2 - 24, y2, x1 + 24, y2, 8);
-  ctx.strokeStyle = `rgba(244,114,182,${a + (1 - pH) * 0.4})`;
-  drawArrow(ctx, x1, y1 + 24, x1, y2 - 24, 8);
-  drawArrow(ctx, x2, y2 - 24, x2, y1 + 24, 8);
-
-  // tag
-  const tag = document.getElementById('qTag');
-  if (on) {
-    tag.textContent = which === 0 ? 'Frame A' : 'Frame B';
-    tag.className = 'tag ' + (which === 0 ? 'a' : 'b');
-  } else { tag.textContent = 'ISI'; tag.className = 'tag off'; }
-
-  // percept readout
-  const perc = pH > 0.5 ? 'horizontal motion' : 'vertical motion';
-  const col = pH > 0.5 ? '#6ee7b7' : '#f472b6';
-  document.getElementById('qPercept').innerHTML =
-    `P(horizontal) = <span style="color:${col}">${pH.toFixed(2)}</span> → ${perc}`;
-}
-
-function drawArrow(ctx, x1, y1, x2, y2, hd) {
-  ctx.beginPath();
-  ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-  const ang = Math.atan2(y2 - y1, x2 - x1);
-  ctx.lineTo(x2 - hd * Math.cos(ang - 0.4), y2 - hd * Math.sin(ang - 0.4));
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - hd * Math.cos(ang + 0.4), y2 - hd * Math.sin(ang + 0.4));
-  ctx.stroke();
-}
-
-function drawQuartetPlot() {
-  const { ctx, w, h } = qP;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
-  const m = { l: 60, r: 16, t: 14, b: 30 };
-  const pw = w - m.l - m.r, ph = h - m.t - m.b;
-
-  // Axes
-  ctx.strokeStyle = '#27272a'; ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph);
-  ctx.lineTo(m.l + pw, m.t + ph);
-  ctx.stroke();
-
-  // y=0.5 reference
-  ctx.strokeStyle = '#1a1a22';
-  ctx.setLineDash([3, 4]);
-  ctx.beginPath();
-  ctx.moveTo(m.l, m.t + ph / 2); ctx.lineTo(m.l + pw, m.t + ph / 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // labels
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#3f3f46';
-  ctx.textAlign = 'center';
-  ctx.fillText('aspect ratio  W / H  (log)', m.l + pw / 2, h - 8);
-  ctx.save();
-  ctx.translate(14, m.t + ph / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText('P(horizontal motion)', 0, 0);
-  ctx.restore();
-
-  // tick marks
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#3f3f46';
-  const arVals = [0.3, 0.5, 0.85, 1, 1.5, 2, 3];
-  const arMin = Math.log(0.3), arMax = Math.log(3);
-  const x = ar => m.l + (Math.log(ar) - arMin) / (arMax - arMin) * pw;
-  arVals.forEach(v => {
-    ctx.textAlign = 'center';
-    ctx.fillText(v.toString(), x(v), m.t + ph + 14);
-    ctx.strokeStyle = '#27272a'; ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x(v), m.t + ph); ctx.lineTo(x(v), m.t + ph + 3);
-    ctx.stroke();
-  });
-  [0, 0.5, 1].forEach(v => {
-    ctx.textAlign = 'right';
-    ctx.fillText(v.toString(), m.l - 4, m.t + ph - v * ph + 3);
-  });
-
-  // curve
-  ctx.strokeStyle = '#6d8aff'; ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i <= 200; i++) {
-    const ar = Math.exp(arMin + (arMax - arMin) * i / 200);
-    const xi = m.l + (i / 200) * pw;
-    // bias =0.85, slope 6 in log space (matches pHorizontal())
-    const xv = Math.log(ar) - Math.log(0.85);
-    const p = 1 / (1 + Math.exp(-xv * 6));
-    const yi = m.t + ph - p * ph;
-    if (i === 0) ctx.moveTo(xi, yi); else ctx.lineTo(xi, yi);
-  }
-  ctx.stroke();
-
-  // current state marker
-  const px = x(qState.ar);
-  const py = m.t + ph - pHorizontal() * ph;
-  ctx.fillStyle = '#f472b6';
-  ctx.beginPath();
-  ctx.arc(px, py, 5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 0.85 bias marker
-  ctx.strokeStyle = '#fbbf6e30';
-  ctx.setLineDash([2, 3]);
-  ctx.beginPath();
-  ctx.moveTo(x(0.85), m.t); ctx.lineTo(x(0.85), m.t + ph);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = '#fbbf6e80';
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('bias ≈ 0.85', x(0.85) + 4, m.t + 14);
-}
-
-// Quartet controls
 function bindRange(id, valId, fmt, onChange) {
   const el = document.getElementById(id);
   const vEl = document.getElementById(valId);
@@ -672,212 +161,130 @@ function bindRange(id, valId, fmt, onChange) {
   el.addEventListener('input', upd);
   upd();
 }
-bindRange('qAR', 'qARv', v => (v / 100).toFixed(2), v => { qState.ar = v / 100; });
-bindRange('qD', 'qDv', v => v + ' px', v => { qState.diag = v; });
-bindRange('qSOA', 'qSOAv', v => v + ' ms', v => { qState.soa = v; });
-bindRange('qFL', 'qFLv', v => v + ' ms', v => { qState.fl = v; });
+
+const BG = '#08080d';
+const STIM = '#e4e4e7';
 
 // ═══════════════════════════════════════════════════════════
-// TAB 2 — Shepard & Judd (1976)  apparent rotation
+// 1. Motion Quartet (Schiller 1933)
 // ═══════════════════════════════════════════════════════════
-const sjC = initCv('sjCv', 830, 360);
-const sjP = initCv('sjPlot', 830, 200);
+const qC = initCv('qCv', 820, 440);
+const qState = { ar: 1.0, diag: 260, soa: 200, fl: 120, t: 0 };
+
+function quartetDots() {
+  const h = qState.diag / Math.sqrt(qState.ar * qState.ar + 1);
+  const w = qState.ar * h;
+  return { w, h };
+}
+
+function drawQuartet() {
+  const { ctx, w: cw, h: ch } = qC;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, cw, ch);
+  const cx = cw / 2, cy = ch / 2;
+  const { w, h } = quartetDots();
+  const x1 = cx - w / 2, x2 = cx + w / 2;
+  const y1 = cy - h / 2, y2 = cy + h / 2;
+
+  const cycle = 2 * qState.soa;
+  const phase = qState.t % cycle;
+  const inA = phase < qState.soa;
+  const local = inA ? phase : phase - qState.soa;
+  const on = local < qState.fl;
+  if (!on) return;
+
+  const dots = inA ? [[x1, y1], [x2, y2]] : [[x2, y1], [x1, y2]];
+  ctx.fillStyle = STIM;
+  const r = 12;
+  dots.forEach(([x, y]) => {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+bindRange('qAR',  'qARv',  v => (v / 100).toFixed(2), v => { qState.ar = v / 100; });
+bindRange('qD',   'qDv',   v => v + ' px',            v => { qState.diag = v; });
+bindRange('qSOA', 'qSOAv', v => v + ' ms',            v => { qState.soa = v; });
+bindRange('qFL',  'qFLv',  v => v + ' ms',            v => { qState.fl = v; });
+
+// ═══════════════════════════════════════════════════════════
+// 2. Shepard & Judd (1976)
+// ═══════════════════════════════════════════════════════════
+const sjC = initCv('sjCv', 720, 440);
 const sjState = { axis: 'plane', angle: 60, soa: 400, fl: 200, t: 0 };
 
-// asymmetric 3D "chair" / arrow shape as a list of 3D vertices and edges
+// asymmetric 3D shape (cube-stack)
 const SJ_VERTS = [
-  [-0.4, -0.5, -0.1], [0.4, -0.5, -0.1], [0.4, -0.5, 0.1], [-0.4, -0.5, 0.1],   // bottom 0-3
-  [-0.4,  0.0, -0.1], [0.4,  0.0, -0.1], [0.4,  0.0, 0.1], [-0.4,  0.0, 0.1],   // mid    4-7
-  [-0.4,  0.0, -0.4], [0.4,  0.0, -0.4],                                          // back top 8,9
-  [-0.4,  0.5, -0.4], [0.4,  0.5, -0.4]                                           // back top higher 10,11
+  [-0.4,-0.5,-0.1],[0.4,-0.5,-0.1],[0.4,-0.5,0.1],[-0.4,-0.5,0.1],
+  [-0.4, 0.0,-0.1],[0.4, 0.0,-0.1],[0.4, 0.0,0.1],[-0.4, 0.0,0.1],
+  [-0.4, 0.0,-0.4],[0.4, 0.0,-0.4],
+  [-0.4, 0.5,-0.4],[0.4, 0.5,-0.4],
 ];
 const SJ_EDGES = [
   [0,1],[1,2],[2,3],[3,0],
   [4,5],[5,6],[6,7],[7,4],
   [0,4],[1,5],[2,6],[3,7],
   [4,8],[5,9],[8,9],
-  [8,10],[9,11],[10,11]
+  [8,10],[9,11],[10,11],
 ];
 
-function rotY(p, a) { const c=Math.cos(a),s=Math.sin(a); return [c*p[0]+s*p[2], p[1], -s*p[0]+c*p[2]]; }
-function rotZ(p, a) { const c=Math.cos(a),s=Math.sin(a); return [c*p[0]-s*p[1], s*p[0]+c*p[1], p[2]]; }
+function rotY(p,a){const c=Math.cos(a),s=Math.sin(a);return[c*p[0]+s*p[2],p[1],-s*p[0]+c*p[2]];}
+function rotZ(p,a){const c=Math.cos(a),s=Math.sin(a);return[c*p[0]-s*p[1],s*p[0]+c*p[1],p[2]];}
+function proj(p,cx,cy,scale){const z=p[2]+2.5;const f=2.5/z;return{x:cx+p[0]*scale*f,y:cy-p[1]*scale*f};}
 
-function project(p, cx, cy, scale) {
-  // simple perspective
-  const z = p[2] + 2.5;
-  const f = 2.5 / z;
-  return { x: cx + p[0] * scale * f, y: cy - p[1] * scale * f, depth: z };
-}
-
-function drawShape3D(ctx, cx, cy, scale, angleDeg, axis, color, alpha) {
+function drawShape3D(ctx, cx, cy, scale, angleDeg, axis, color) {
   const rad = angleDeg * Math.PI / 180;
   const verts = SJ_VERTS.map(p => axis === 'depth' ? rotY(p, rad) : rotZ(p, rad));
-  const proj = verts.map(p => project(p, cx, cy, scale));
-  ctx.globalAlpha = alpha;
+  const projected = verts.map(p => proj(p, cx, cy, scale));
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2.2;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.beginPath();
   SJ_EDGES.forEach(([a, b]) => {
-    ctx.moveTo(proj[a].x, proj[a].y);
-    ctx.lineTo(proj[b].x, proj[b].y);
+    ctx.moveTo(projected[a].x, projected[a].y);
+    ctx.lineTo(projected[b].x, projected[b].y);
   });
   ctx.stroke();
-  ctx.globalAlpha = 1;
 }
 
 function drawShepJudd() {
   const { ctx, w, h } = sjC;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
-  const cx = w / 2, cy = h / 2;
-  const scale = 120;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
 
-  // ghost outlines of the two endpoints
-  drawShape3D(ctx, cx, cy, scale, 0, sjState.axis, '#1e1e26', 0.7);
-  drawShape3D(ctx, cx, cy, scale, sjState.angle, sjState.axis, '#1e1e26', 0.7);
-
-  // animation
   const cycle = 2 * sjState.soa;
   const phase = sjState.t % cycle;
   const inA = phase < sjState.soa;
   const local = inA ? phase : phase - sjState.soa;
   const on = local < sjState.fl;
-  const tag = document.getElementById('sjTag');
+  if (!on) return;
 
-  // model perception: if SOA > critical, observer interpolates rigid rotation
-  const criticalSOA = 165 + 1.9 * sjState.angle;
-  const rigid = sjState.soa >= criticalSOA;
-
-  if (on) {
-    const a = inA ? 0 : sjState.angle;
-    drawShape3D(ctx, cx, cy, scale, a, sjState.axis, '#e4e4e7', 0.95);
-    tag.textContent = inA ? 'View 1' : 'View 2';
-    tag.className = 'tag ' + (inA ? 'a' : 'b');
-  } else if (rigid) {
-    // show interpolated rotating "ghost" during ISI
-    const isiPhase = (local - sjState.fl) / Math.max(1, sjState.soa - sjState.fl);
-    const tInt = Math.max(0, Math.min(1, isiPhase));
-    const a = inA ? tInt * sjState.angle : (1 - tInt) * sjState.angle;
-    drawShape3D(ctx, cx, cy, scale, a, sjState.axis, '#6ee7b7', 0.55);
-    tag.textContent = 'rigid rotation';
-    tag.className = 'tag p';
-  } else {
-    tag.textContent = 'ISI';
-    tag.className = 'tag off';
-  }
-
-  // axis indicator
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#3f3f46';
-  ctx.textAlign = 'left';
-  ctx.fillText(sjState.axis === 'depth' ? 'rotation axis: vertical (Y) — depth' : 'rotation axis: front-back (Z) — picture plane', 14, h - 14);
-
-  const perc = rigid ? 'rigid rotation' : 'two separate flashes';
-  const col  = rigid ? '#6ee7b7' : '#f472b6';
-  document.getElementById('sjPercept').innerHTML =
-    `SOA ${sjState.soa} ms vs. SOA<sub>min</sub> ≈ ${Math.round(criticalSOA)} ms → ` +
-    `<span style="color:${col}">${perc}</span>`;
+  const a = inA ? 0 : sjState.angle;
+  drawShape3D(ctx, w / 2, h / 2, 120, a, sjState.axis, STIM);
 }
 
-function drawShepJuddPlot() {
-  const { ctx, w, h } = sjP;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
-  const m = { l: 56, r: 16, t: 16, b: 32 };
-  const pw = w - m.l - m.r, ph = h - m.t - m.b;
-  const xmax = 180, ymax = 1200;
-  const x = v => m.l + v / xmax * pw;
-  const y = v => m.t + ph - v / ymax * ph;
-
-  // axes
-  ctx.strokeStyle = '#27272a'; ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph);
-  ctx.lineTo(m.l + pw, m.t + ph);
-  ctx.stroke();
-
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#3f3f46';
-  ctx.textAlign = 'center';
-  ctx.fillText('angular disparity θ (°)', m.l + pw / 2, h - 8);
-  ctx.save(); ctx.translate(14, m.t + ph / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('critical SOA (ms)', 0, 0); ctx.restore();
-
-  // ticks
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  [0, 45, 90, 135, 180].forEach(v => {
-    ctx.textAlign = 'center';
-    ctx.fillText(v.toString(), x(v), m.t + ph + 14);
-  });
-  [0, 300, 600, 900, 1200].forEach(v => {
-    ctx.textAlign = 'right';
-    ctx.fillText(v.toString(), m.l - 4, y(v) + 3);
-  });
-
-  // critical curve
-  ctx.strokeStyle = '#6d8aff'; ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i <= 200; i++) {
-    const t = i / 200 * xmax;
-    const v = 165 + 1.9 * t;
-    if (i === 0) ctx.moveTo(x(t), y(v)); else ctx.lineTo(x(t), y(v));
-  }
-  ctx.stroke();
-  ctx.fillStyle = '#6d8aff80';
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('SOA = 165 + 1.9·θ  (~525°/s)', x(20), y(900));
-
-  // current state
-  ctx.fillStyle = '#f472b6';
-  ctx.beginPath();
-  ctx.arc(x(sjState.angle), y(sjState.soa), 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#f472b660'; ctx.lineWidth = 1;
-  ctx.setLineDash([3, 3]);
-  ctx.beginPath();
-  ctx.moveTo(x(sjState.angle), m.t); ctx.lineTo(x(sjState.angle), m.t + ph);
-  ctx.moveTo(m.l, y(sjState.soa)); ctx.lineTo(m.l + pw, y(sjState.soa));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // legend
-  ctx.fillStyle = '#52525b';
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('above curve: rigid rotation seen', m.l + 6, m.t + 12);
-}
-
-bindRange('sjA', 'sjAv', v => v + '°', v => { sjState.angle = v; });
+bindRange('sjA',   'sjAv',   v => v + '°',  v => { sjState.angle = v; });
 bindRange('sjSOA', 'sjSOAv', v => v + ' ms', v => { sjState.soa = v; });
-bindRange('sjFL', 'sjFLv', v => v + ' ms', v => { sjState.fl = v; });
-document.querySelectorAll('#sjAxis button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#sjAxis button').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-    sjState.axis = btn.dataset.v;
-  });
-});
+bindRange('sjFL',  'sjFLv',  v => v + ' ms', v => { sjState.fl = v; });
+document.querySelectorAll('#sjAxis button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#sjAxis button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on'); sjState.axis = btn.dataset.v;
+}));
 
 // ═══════════════════════════════════════════════════════════
-// TAB 3 — Bundesen, Larsen & Farrell (1983)
+// 3. Bundesen, Larsen & Farrell (1983) — same location, size + orientation
 // ═══════════════════════════════════════════════════════════
-const blfC = initCv('blfCv', 830, 360);
-const blfP = initCv('blfPlot', 830, 200);
+const blfC = initCv('blfCv', 720, 440);
 const blfState = { s: 1.8, v: 45, soa: 500, fl: 220, shape: 'L', t: 0 };
 
-// Shape paths (in shape-local coordinates, unit scale ≈ 1)
 const SHAPES = {
-  L: [[-0.4,-0.5],[0.1,-0.5],[0.1,-0.1],[0.4,-0.1],[0.4,0.5],[-0.4,0.5]],
+  L:     [[-0.4,-0.5],[0.1,-0.5],[0.1,-0.1],[0.4,-0.1],[0.4,0.5],[-0.4,0.5]],
   arrow: [[-0.5,-0.2],[0.1,-0.2],[0.1,-0.5],[0.5,0],[0.1,0.5],[0.1,0.2],[-0.5,0.2]],
-  tri: [[0,-0.5],[0.5,0.3],[-0.5,0.3]],
+  tri:   [[0,-0.5],[0.5,0.3],[-0.5,0.3]],
 };
 
-function drawShapePath(ctx, cx, cy, scale, rotDeg, sizeMul, color, alpha, lw) {
+function drawShapePath(ctx, cx, cy, scale, rotDeg, sizeMul, color, lw) {
   const pts = SHAPES[blfState.shape];
   const a = rotDeg * Math.PI / 180;
   const c = Math.cos(a), s = Math.sin(a);
-  ctx.globalAlpha = alpha;
   ctx.strokeStyle = color;
   ctx.lineWidth = lw || 2;
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -889,178 +296,46 @@ function drawShapePath(ctx, cx, cy, scale, rotDeg, sizeMul, color, alpha, lw) {
   });
   ctx.closePath();
   ctx.stroke();
-  ctx.globalAlpha = 1;
 }
-
-// model: SOA_min ≈ a + b·(s−1)/(s+1) + c·v
-const BLF_A = 130, BLF_B = 1100, BLF_C = 2.3;
-function blfThresh(s, v) { return BLF_A + BLF_B * (s - 1) / (s + 1) + BLF_C * v; }
 
 function drawBLF() {
   const { ctx, w, h } = blfC;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
-  const cy = h / 2;
-  const leftCx  = w * 0.27;
-  const rightCx = w * 0.73;
-  const baseScale = 110;
-
-  // ghosts of both endpoints
-  drawShapePath(ctx, leftCx, cy, baseScale, 0, 1, '#1e1e26', 0.7, 1.5);
-  drawShapePath(ctx, rightCx, cy, baseScale, blfState.v, blfState.s, '#1e1e26', 0.7, 1.5);
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
 
   const cycle = 2 * blfState.soa;
   const phase = blfState.t % cycle;
   const inA = phase < blfState.soa;
   const local = inA ? phase : phase - blfState.soa;
   const on = local < blfState.fl;
+  if (!on) return;
 
-  // model: rigid motion if SOA exceeds threshold
-  const thr = blfThresh(blfState.s, blfState.v);
-  const rigid = blfState.soa >= thr;
-
-  if (on) {
-    const x = inA ? leftCx : rightCx;
-    const rot = inA ? 0 : blfState.v;
-    const siz = inA ? 1 : blfState.s;
-    drawShapePath(ctx, x, cy, baseScale, rot, siz, '#e4e4e7', 0.95, 2.4);
-  } else if (rigid) {
-    // interpolated rigid translation+rotation+scaling
-    const isiPhase = (local - blfState.fl) / Math.max(1, blfState.soa - blfState.fl);
-    const t = Math.max(0, Math.min(1, isiPhase));
-    const tt = inA ? t : (1 - t);
-    const x = leftCx + (rightCx - leftCx) * tt;
-    const rot = blfState.v * tt;
-    const siz = 1 + (blfState.s - 1) * tt;
-    drawShapePath(ctx, x, cy, baseScale, rot, siz, '#6ee7b7', 0.7, 2);
-  }
-
-  // tag
-  const tag = document.getElementById('blfTag');
-  if (on) {
-    tag.textContent = inA ? 'Shape A' : 'Shape B';
-    tag.className = 'tag ' + (inA ? 'a' : 'b');
-  } else if (rigid) {
-    tag.textContent = '3-D rigid motion';
-    tag.className = 'tag p';
-  } else {
-    tag.textContent = 'ISI';
-    tag.className = 'tag off';
-  }
-
-  // percept readout
-  const col = rigid ? '#6ee7b7' : '#f472b6';
-  const perc = rigid ? 'rigid 3-D object seen' : 'two flashes — no rigid motion';
-  document.getElementById('blfPercept').innerHTML =
-    `SOA<sub>thr</sub> ≈ <strong>${Math.round(thr)}</strong> ms → ` +
-    `<span style="color:${col}">${perc}</span>`;
+  // same screen location — only size & orientation change
+  const rot = inA ? 0 : blfState.v;
+  const siz = inA ? 1 : blfState.s;
+  drawShapePath(ctx, w / 2, h / 2, 95, rot, siz, STIM, 2.4);
 }
 
-function drawBLFPlot() {
-  const { ctx, w, h } = blfP;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
-  const m = { l: 60, r: 16, t: 16, b: 32 };
-  const pw = w - m.l - m.r, ph = h - m.t - m.b;
-
-  // x: size term (s-1)/(s+1) from 0 to 0.6 ;  y: SOA threshold (ms)
-  const xmax = 0.6, ymax = 1600;
-  const x = v => m.l + v / xmax * pw;
-  const y = v => m.t + ph - v / ymax * ph;
-
-  // axes
-  ctx.strokeStyle = '#27272a';
-  ctx.beginPath();
-  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph);
-  ctx.lineTo(m.l + pw, m.t + ph);
-  ctx.stroke();
-
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#3f3f46';
-  ctx.textAlign = 'center';
-  ctx.fillText('size term  (s − 1) / (s + 1)', m.l + pw / 2, h - 8);
-  ctx.save(); ctx.translate(14, m.t + ph / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('SOA threshold (ms)', 0, 0); ctx.restore();
-
-  // ticks
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  [0, 0.15, 0.3, 0.45, 0.6].forEach(v => {
-    ctx.textAlign = 'center'; ctx.fillText(v.toString(), x(v), m.t + ph + 14);
-  });
-  [0, 400, 800, 1200, 1600].forEach(v => {
-    ctx.textAlign = 'right'; ctx.fillText(v.toString(), m.l - 4, y(v) + 3);
-  });
-
-  // family of lines (different v)
-  const vLevels = [0, 45, 90, 135];
-  const colors = ['#6d8aff', '#7dd3fc', '#fbbf6e', '#f472b6'];
-  vLevels.forEach((vv, i) => {
-    ctx.strokeStyle = colors[i]; ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    for (let k = 0; k <= 60; k++) {
-      const xv = k / 60 * xmax;
-      const yv = BLF_A + BLF_B * xv + BLF_C * vv;
-      if (k === 0) ctx.moveTo(x(xv), y(yv)); else ctx.lineTo(x(xv), y(yv));
-    }
-    ctx.stroke();
-    ctx.fillStyle = colors[i];
-    ctx.font = '9px "IBM Plex Mono", monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('v = ' + vv + '°', x(xmax) - 56, y(BLF_A + BLF_B * xmax + BLF_C * vv) - 4);
-  });
-
-  // current state
-  const sx = (blfState.s - 1) / (blfState.s + 1);
-  const sy = blfThresh(blfState.s, blfState.v);
-  ctx.fillStyle = '#f472b6';
-  ctx.beginPath(); ctx.arc(x(sx), y(Math.min(sy, ymax * 0.98)), 5, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#52525b'; ctx.lineWidth = 1;
-  ctx.setLineDash([3, 3]);
-  ctx.beginPath();
-  ctx.moveTo(x(sx), m.t); ctx.lineTo(x(sx), m.t + ph);
-  ctx.moveTo(m.l, y(blfState.soa)); ctx.lineTo(m.l + pw, y(blfState.soa));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  ctx.fillStyle = '#a1a1aa';
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('your SOA: ' + blfState.soa + ' ms', m.l + 6, y(blfState.soa) - 5);
-}
-
-bindRange('blfS', 'blfSv', v => (v / 100).toFixed(2), v => { blfState.s = v / 100; });
-bindRange('blfV', 'blfVv', v => v + '°', v => { blfState.v = v; });
+bindRange('blfS',   'blfSv',   v => (v / 100).toFixed(2), v => { blfState.s = v / 100; });
+bindRange('blfV',   'blfVv',   v => v + '°',  v => { blfState.v = v; });
 bindRange('blfSOA', 'blfSOAv', v => v + ' ms', v => { blfState.soa = v; });
-bindRange('blfFL', 'blfFLv', v => v + ' ms', v => { blfState.fl = v; });
-document.querySelectorAll('#blfShape button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#blfShape button').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-    blfState.shape = btn.dataset.v;
-  });
-});
+bindRange('blfFL',  'blfFLv',  v => v + ' ms', v => { blfState.fl = v; });
+document.querySelectorAll('#blfShape button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#blfShape button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on'); blfState.shape = btn.dataset.v;
+}));
 
 // ═══════════════════════════════════════════════════════════
-// TAB 4 — McBeath & Shepard (1989)
+// 4. Window Technique (McBeath & Shepard 1989)
 // ═══════════════════════════════════════════════════════════
-const wC = initCv('wCv', 830, 360);
-const wP = initCv('wPlot', 830, 200);
+const wC = initCv('wCv', 860, 440);
 const wState = { d: 320, phi: 60, soa: 450, fl: 200, winY: 0, t: 0 };
 
-// kinematic-geometry prediction for vertical bulge of the path
-// For pure rotation by φ between two centres separated by d horizontally, the screw axis is the
-// perpendicular bisector — the path is an arc with sagitta s = (d/2) · tan(φ/4).
-function predictBulge() {
-  return (wState.d / 2) * Math.tan(wState.phi * Math.PI / 180 / 4);
-}
-
-// asymmetric arrow shape
 const ARROW = [[-0.3,-0.2],[0.05,-0.2],[0.05,-0.45],[0.45,0],[0.05,0.45],[0.05,0.2],[-0.3,0.2]];
 
-function drawArrowShape(ctx, cx, cy, scale, rotDeg, color, alpha, lw, fill) {
+function drawArrow(ctx, cx, cy, scale, rotDeg, color, lw) {
   const a = rotDeg * Math.PI / 180;
   const c = Math.cos(a), s = Math.sin(a);
-  ctx.globalAlpha = alpha;
   ctx.strokeStyle = color;
-  ctx.fillStyle = color;
   ctx.lineWidth = lw || 2;
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.beginPath();
@@ -1070,161 +345,55 @@ function drawArrowShape(ctx, cx, cy, scale, rotDeg, color, alpha, lw, fill) {
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   });
   ctx.closePath();
-  if (fill) ctx.fill(); else ctx.stroke();
-  ctx.globalAlpha = 1;
+  ctx.stroke();
 }
 
 function drawWindow() {
   const { ctx, w, h } = wC;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
-  const cy = h / 2;
-  const cx = w / 2;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2;
   const leftX  = cx - wState.d / 2;
   const rightX = cx + wState.d / 2;
-  const scale = 70;
 
-  // predicted arc path (curved)
-  const bulge = predictBulge();
-  ctx.strokeStyle = '#1f2937';
-  ctx.setLineDash([4, 4]);
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  for (let i = 0; i <= 60; i++) {
-    const t = i / 60;
-    const px = leftX + (rightX - leftX) * t;
-    // smooth arc: parabolic approximation to the screw-axis arc
-    const py = cy - bulge * 4 * t * (1 - t);
-    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-  }
-  ctx.stroke();
-  ctx.setLineDash([]);
+  // opaque partition with a cut-out slot — this is the actual McBeath stimulus
+  const partW = 14;
+  const slotH = 130;
+  const slotW = 60;
+  const slotCy = cy - wState.winY;
 
-  // straight path reference
-  ctx.strokeStyle = '#15151c';
-  ctx.beginPath(); ctx.moveTo(leftX, cy); ctx.lineTo(rightX, cy); ctx.stroke();
+  // partition is a wide vertical strip that occludes the centre of the canvas
+  ctx.fillStyle = '#15151c';
+  ctx.fillRect(cx - slotW / 2, 0, slotW, slotCy - slotH / 2);
+  ctx.fillRect(cx - slotW / 2, slotCy + slotH / 2, slotW, h - (slotCy + slotH / 2));
 
-  // window: vertical slit at x = cx, height ≈ shape height + slack, vertical position user-controlled
-  const winH = 120; // pixels
-  const winW = 60;
-  const winCx = cx;
-  const winCy = cy - wState.winY;
-
-  // mask everything except inside the window region for the moving shape (visual cue)
+  // subtle slot edges so the participant sees where the window is
   ctx.strokeStyle = '#27272a';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(winCx - winW / 2, winCy - winH / 2, winW, winH);
-  // soft inner fill
-  ctx.fillStyle = '#0a0a14';
-  ctx.fillRect(winCx - winW / 2, winCy - winH / 2, winW, winH);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - slotW / 2, slotCy - slotH / 2, slotW, slotH);
 
-  // ghosts of the two flashed shapes
-  drawArrowShape(ctx, leftX, cy, scale, 0, '#1e1e26', 0.7, 1.5);
-  drawArrowShape(ctx, rightX, cy, scale, wState.phi, '#1e1e26', 0.7, 1.5);
-
-  // animation
+  // animation — two flash poses; nothing in between
   const cycle = 2 * wState.soa;
   const phase = wState.t % cycle;
   const inA = phase < wState.soa;
   const local = inA ? phase : phase - wState.soa;
   const on = local < wState.fl;
+  if (!on) return;
 
-  // show the moving shape during ISI, passing through the window along the bulged path
-  if (on) {
-    const x = inA ? leftX : rightX;
-    const rot = inA ? 0 : wState.phi;
-    drawArrowShape(ctx, x, cy, scale, rot, '#e4e4e7', 0.95, 2.2);
-  } else {
-    const isiPhase = (local - wState.fl) / Math.max(1, wState.soa - wState.fl);
-    const t = Math.max(0, Math.min(1, isiPhase));
-    const tt = inA ? t : (1 - t);
-    const px = leftX + (rightX - leftX) * tt;
-    const py = cy - bulge * 4 * tt * (1 - tt);
-    const rot = wState.phi * tt;
-    drawArrowShape(ctx, px, py, scale, rot, '#6ee7b7', 0.6, 2);
-  }
-
-  // tag
-  const tag = document.getElementById('wTag');
-  if (on) { tag.textContent = inA ? 'Pose 1' : 'Pose 2'; tag.className = 'tag ' + (inA ? 'a' : 'b'); }
-  else { tag.textContent = 'in transit'; tag.className = 'tag p'; }
-
-  // hint about agreement
-  const diff = Math.abs(wState.winY - bulge);
-  const ok = diff < 8;
-  document.getElementById('wHint').textContent = ok
-    ? '✓ Window aligned with the predicted bulge — smooth passage'
-    : `window vs. predicted bulge: Δ ${(wState.winY - bulge).toFixed(0)} px`;
-
-  // readout
-  document.getElementById('wPredict').innerHTML =
-    `predicted bulge: <strong>${bulge.toFixed(1)}</strong> px<br>your window: <em>${wState.winY}</em> px`;
+  const x = inA ? leftX : rightX;
+  const rot = inA ? 0 : wState.phi;
+  drawArrow(ctx, x, cy, 70, rot, STIM, 2.4);
 }
 
-function drawWindowPlot() {
-  const { ctx, w, h } = wP;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
-  const m = { l: 60, r: 16, t: 16, b: 30 };
-  const pw = w - m.l - m.r, ph = h - m.t - m.b;
-
-  const phiMax = 180, bulgeMax = 320 / 2 * Math.tan(180 * Math.PI / 180 / 4);
-  const x = v => m.l + v / phiMax * pw;
-  const y = v => m.t + ph - v / bulgeMax * ph;
-
-  ctx.strokeStyle = '#27272a';
-  ctx.beginPath();
-  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph); ctx.lineTo(m.l + pw, m.t + ph); ctx.stroke();
-
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#3f3f46';
-  ctx.textAlign = 'center';
-  ctx.fillText('orientation Δ φ (°)', m.l + pw / 2, h - 8);
-  ctx.save(); ctx.translate(14, m.t + ph / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('path bulge (px)', 0, 0); ctx.restore();
-
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  [0, 45, 90, 135, 180].forEach(v => { ctx.textAlign = 'center'; ctx.fillText(v.toString(), x(v), m.t + ph + 14); });
-  [0, 25, 50, 75, 100, 125].forEach(v => { ctx.textAlign = 'right'; ctx.fillText(v.toString(), m.l - 4, y(v) + 3); });
-
-  // theoretical curve for the chosen d
-  ctx.strokeStyle = '#6d8aff'; ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i <= 180; i++) {
-    const phi = i;
-    const b = (wState.d / 2) * Math.tan(phi * Math.PI / 180 / 4);
-    if (i === 0) ctx.moveTo(x(phi), y(b)); else ctx.lineTo(x(phi), y(b));
-  }
-  ctx.stroke();
-  ctx.fillStyle = '#6d8aff';
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('kinematic prediction  (d/2)·tan(φ/4)', x(8), y(bulgeMax * 0.85));
-
-  // current state
-  ctx.fillStyle = '#f472b6';
-  ctx.beginPath(); ctx.arc(x(wState.phi), y(predictBulge()), 5, 0, Math.PI * 2); ctx.fill();
-
-  // user window setting (different y axis interpretation but plotted as a square)
-  ctx.fillStyle = '#fbbf6e';
-  ctx.beginPath(); ctx.rect(x(wState.phi) - 4, y(wState.winY) - 4, 8, 8); ctx.fill();
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#fbbf6e';
-  ctx.textAlign = 'left';
-  ctx.fillText('● prediction   ■ your setting', m.l + 6, m.t + 14);
-}
-
-bindRange('wD', 'wDv', v => v + ' px', v => { wState.d = v; });
-bindRange('wPhi', 'wPhiv', v => v + '°', v => { wState.phi = v; });
+bindRange('wD',   'wDv',   v => v + ' px', v => { wState.d = v; });
+bindRange('wPhi', 'wPhiv', v => v + '°',  v => { wState.phi = v; });
 bindRange('wSOA', 'wSOAv', v => v + ' ms', v => { wState.soa = v; });
-bindRange('wFL', 'wFLv', v => v + ' ms', v => { wState.fl = v; });
-bindRange('wY', 'wYv', v => v.toString(), v => { wState.winY = v; });
+bindRange('wFL',  'wFLv',  v => v + ' ms', v => { wState.fl = v; });
+bindRange('wY',   'wYv',   v => v.toString(), v => { wState.winY = v; });
 
-// allow dragging the canvas to move the window vertically
+// drag the canvas to set window Y
 const wCv = document.getElementById('wCv');
 let wDrag = false;
-wCv.addEventListener('pointerdown', e => {
-  wDrag = true;
-  wCv.setPointerCapture(e.pointerId);
-});
+wCv.addEventListener('pointerdown', e => { wDrag = true; wCv.setPointerCapture(e.pointerId); });
 wCv.addEventListener('pointermove', e => {
   if (!wDrag) return;
   const rect = wCv.getBoundingClientRect();
@@ -1238,10 +407,9 @@ wCv.addEventListener('pointermove', e => {
 wCv.addEventListener('pointerup', () => { wDrag = false; });
 
 // ═══════════════════════════════════════════════════════════
-// TAB 5 — Foster 1975 / 1978
+// 5. Foster (1975, 1978) — translation kept; cost-functional toggle
 // ═══════════════════════════════════════════════════════════
-const fC = initCv('fCv', 830, 360);
-const fP = initCv('fPlot', 830, 200);
+const fC = initCv('fCv', 860, 440);
 const fState = { cost: 'straight', d: 340, phi: 90, soa: 600, t: 0 };
 
 function fosterPath(t) {
@@ -1250,15 +418,10 @@ function fosterPath(t) {
   const phi = fState.phi * Math.PI / 180;
   let x, y, rot;
   if (fState.cost === 'straight') {
-    // Euclidean: linear in (x, rotation)
     x = leftX + (rightX - leftX) * t;
     y = cy;
     rot = phi * t;
   } else if (fState.cost === 'screw') {
-    // One-parameter subgroup of SE(2): rotation about a fixed point + translation
-    // For symmetry, choose the fixed point on the perpendicular bisector
-    // The screw motion has parameter ω = φ ; v chosen so endpoints match.
-    // Approx: arc whose chord = d, subtended angle = φ
     const halfPhi = phi / 2;
     if (Math.abs(halfPhi) < 1e-3) {
       x = leftX + (rightX - leftX) * t; y = cy; rot = 0;
@@ -1272,10 +435,9 @@ function fosterPath(t) {
       rot = phi * t;
     }
   } else {
-    // Smoothness (min-jerk-like): position uses 10t³−15t⁴+6t⁵, with bulge
-    const u = 10 * t * t * t - 15 * t * t * t * t + 6 * t * t * t * t * t;
+    const u = 10 * t * t * t - 15 * Math.pow(t, 4) + 6 * Math.pow(t, 5);
     x = leftX + (rightX - leftX) * u;
-    const bulge = (fState.d / 2) * Math.tan(phi / 4) * 0.7; // a bit less than McBeath
+    const bulge = (fState.d / 2) * Math.tan(phi / 4) * 0.7;
     y = cy - bulge * 4 * t * (1 - t);
     rot = phi * u;
   }
@@ -1284,125 +446,53 @@ function fosterPath(t) {
 
 function drawFoster() {
   const { ctx, w, h } = fC;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
   const cx = w / 2, cy = h / 2;
   const leftX = cx - fState.d / 2, rightX = cx + fState.d / 2;
   const scale = 70;
 
-  // ghost path
-  ctx.strokeStyle = '#1e1e26'; ctx.lineWidth = 1.5;
-  ctx.setLineDash([3, 4]);
-  ctx.beginPath();
-  for (let i = 0; i <= 80; i++) {
-    const t = i / 80; const p = fosterPath(t);
-    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+  const cycle = 2 * fState.soa;
+  const phase = fState.t % cycle;
+  const inA = phase < fState.soa;
+  const local = inA ? phase : phase - fState.soa;
+  const flashDur = 110;
+  const flashOn = local < flashDur;
+
+  if (flashOn) {
+    const x = inA ? leftX : rightX;
+    const rot = inA ? 0 : fState.phi;
+    drawArrow(ctx, x, cy, scale, rot, STIM, 2.4);
+  } else {
+    // during ISI, render the path predicted by the chosen cost functional
+    const isiPhase = (local - flashDur) / Math.max(1, fState.soa - flashDur);
+    const tInt = Math.max(0, Math.min(1, isiPhase));
+    const tt = inA ? tInt : (1 - tInt);
+    const p = fosterPath(tt);
+    drawArrow(ctx, p.x, p.y, scale, p.rot, STIM, 2);
   }
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // straight reference
-  ctx.strokeStyle = '#15151c';
-  ctx.beginPath(); ctx.moveTo(leftX, cy); ctx.lineTo(rightX, cy); ctx.stroke();
-
-  // endpoints
-  drawArrowShape(ctx, leftX, cy, scale, 0, '#1e1e26', 0.7, 1.5);
-  drawArrowShape(ctx, rightX, cy, scale, fState.phi, '#1e1e26', 0.7, 1.5);
-
-  // animation - continuous motion along the path
-  const T = (fState.t % (2 * fState.soa)) / fState.soa;
-  const t = T < 1 ? T : 2 - T;
-  const p = fosterPath(t);
-  drawArrowShape(ctx, p.x, p.y, scale, p.rot, '#6ee7b7', 0.95, 2.2);
-
-  // flash endpoints intermittently to anchor
-  const phase = fState.t % (2 * fState.soa);
-  if (phase < 70) drawArrowShape(ctx, leftX, cy, scale, 0, '#e4e4e7', 0.85, 2.2);
-  if (phase > fState.soa && phase < fState.soa + 70) drawArrowShape(ctx, rightX, cy, scale, fState.phi, '#e4e4e7', 0.85, 2.2);
-
-  // tag
-  const tag = document.getElementById('fTag');
-  tag.textContent = ({ straight: 'Euclidean', screw: 'Screw (SE2)', curved: 'Smoothness' })[fState.cost];
-  tag.className = 'tag p';
 }
 
-function drawFosterPlot() {
-  const { ctx, w, h } = fP;
-  ctx.fillStyle = '#0a0a10'; ctx.fillRect(0, 0, w, h);
-  const m = { l: 56, r: 16, t: 16, b: 30 };
-  const pw = w - m.l - m.r, ph = h - m.t - m.b;
-
-  // energy along path = ∫|ẋ|² dt (sampled)
-  const samples = 80;
-  let prevX = null, prevY = null, prevR = null;
-  const energies = [];
-  for (let i = 0; i <= samples; i++) {
-    const t = i / samples;
-    const p = fosterPath(t);
-    if (prevX !== null) {
-      const dx = p.x - prevX, dy = p.y - prevY, dr = (p.rot - prevR) * 60;
-      energies.push(dx * dx + dy * dy + dr * dr);
-    }
-    prevX = p.x; prevY = p.y; prevR = p.rot;
-  }
-  const eMax = Math.max(...energies) * 1.1;
-
-  // axes
-  ctx.strokeStyle = '#27272a';
-  ctx.beginPath();
-  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph); ctx.lineTo(m.l + pw, m.t + ph); ctx.stroke();
-
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#3f3f46';
-  ctx.textAlign = 'center';
-  ctx.fillText('normalised time along path  t', m.l + pw / 2, h - 8);
-  ctx.save(); ctx.translate(14, m.t + ph / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('instantaneous energy', 0, 0); ctx.restore();
-
-  const x = i => m.l + i / energies.length * pw;
-  const y = v => m.t + ph - v / eMax * ph;
-
-  ctx.strokeStyle = '#6d8aff'; ctx.lineWidth = 2;
-  ctx.beginPath();
-  energies.forEach((e, i) => { if (i === 0) ctx.moveTo(x(i), y(e)); else ctx.lineTo(x(i), y(e)); });
-  ctx.stroke();
-
-  // total energy
-  const total = energies.reduce((a, b) => a + b, 0);
-  ctx.fillStyle = '#a1a1aa';
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText('∫E dt ≈ ' + total.toFixed(0), m.l + pw - 8, m.t + 14);
-}
-
-bindRange('fD', 'fDv', v => v + ' px', v => { fState.d = v; });
-bindRange('fPhi', 'fPhiv', v => v + '°', v => { fState.phi = v; });
+bindRange('fD',   'fDv',   v => v + ' px', v => { fState.d = v; });
+bindRange('fPhi', 'fPhiv', v => v + '°',  v => { fState.phi = v; });
 bindRange('fSOA', 'fSOAv', v => v + ' ms', v => { fState.soa = v; });
-document.querySelectorAll('#fCost button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#fCost button').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-    fState.cost = btn.dataset.v;
-  });
-});
+document.querySelectorAll('#fCost button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#fCost button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on'); fState.cost = btn.dataset.v;
+}));
 
 // ═══════════════════════════════════════════════════════════
-// Master animation loop
+// Master loop
 // ═══════════════════════════════════════════════════════════
 let lastTs = 0;
 function frame(ts) {
   const dt = lastTs ? (ts - lastTs) : 16;
   lastTs = ts;
-  qState.t += dt;
-  sjState.t += dt;
-  blfState.t += dt;
-  wState.t += dt;
-  fState.t += dt;
-
-  if (activeTab === 'quartet')  { drawQuartet();  drawQuartetPlot();  }
-  if (activeTab === 'shepjudd') { drawShepJudd(); drawShepJuddPlot(); }
-  if (activeTab === 'bundesen') { drawBLF();      drawBLFPlot();      }
-  if (activeTab === 'window')   { drawWindow();   drawWindowPlot();   }
-  if (activeTab === 'foster')   { drawFoster();   drawFosterPlot();   }
+  qState.t += dt; sjState.t += dt; blfState.t += dt; wState.t += dt; fState.t += dt;
+  if (activeTab === 'quartet')  drawQuartet();
+  if (activeTab === 'shepjudd') drawShepJudd();
+  if (activeTab === 'bundesen') drawBLF();
+  if (activeTab === 'window')   drawWindow();
+  if (activeTab === 'foster')   drawFoster();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
