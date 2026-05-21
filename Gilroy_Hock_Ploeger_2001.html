@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gilroy, Hock & Ploeger (2001) — Motion Quartet + Luminance</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="520" height="400"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">45</span> ms &nbsp;<input type="range" id="isi" min="10" max="200" value="45" step="5"></label>
+  <label>H-path lum: <span id="lumLbl">1.0</span> &nbsp;<input type="range" id="lum" min="0.2" max="1.8" value="1.0" step="0.1"></label>
+</div>
+<div class="meta">Gilroy, Hock &amp; Ploeger (2001). Motion quartet — luminance similarity along each path biases H vs V motion.</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const btn = document.getElementById('btn');
+const isiSlider = document.getElementById('isi');
+const lbl = document.getElementById('lbl');
+const lumSlider = document.getElementById('lum');
+const lumLbl = document.getElementById('lumLbl');
+
+const CX = c.width / 2, CY = c.height / 2;
+const R = 10;
+const HW = 90, HH = 90; // half-width, half-height
+const FRAME_MS = 195;
+const BG = 128;
+
+let isiMs = 45, running = true, phase = 'f1', phaseStart = performance.now();
+
+function dotColor(luminanceFactor) {
+  const v = Math.max(0, Math.min(255, Math.round(BG * luminanceFactor)));
+  return `rgb(${v},${v},${v})`;
+}
+
+function draw(frame) {
+  const lf = +lumSlider.value;
+  // Base luminance = 1.0 (same as background = 128... but we use relative to white dots)
+  // H-path dots share luminance lf, V-path dots share luminance 1/lf (reciprocal for contrast)
+  // Frame 1: top-left (TL) + bottom-right (BR)
+  // Frame 2: top-right (TR) + bottom-left (BL)
+  // H-path: TL↔TR and BL↔BR
+  // V-path: TL↔BL and TR↔BR
+  // We color F1 dots: TL gets H-path color if H-path, etc.
+  // Simpler: TL and TR share same luminance (H path), BL and BR share inverse luminance
+
+  const hLum = Math.min(1.8, lf);
+  const vLum = 1.0; // keep V-path dots constant
+
+  const bgLum = 128;
+  const baseVal = 200; // base dot luminance
+  const hVal = Math.round(Math.max(20, Math.min(235, baseVal * hLum)));
+  const vVal = Math.round(Math.max(20, Math.min(235, baseVal * vLum)));
+
+  ctx.fillStyle = `rgb(${bgLum},${bgLum},${bgLum})`;
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  // TL + BR in F1 share diagonal (same element pair)
+  // TR + BL in F2 share diagonal
+  // H-path connects TL↔TR and BL↔BR
+  // V-path connects TL↔BL and TR↔BR
+  // Color TL and TR with hVal (they're on the H path), BL and BR with vVal
+  const dots = frame === 1
+    ? [[-HW, -HH, hVal], [HW, HH, vVal]]
+    : [[HW, -HH, hVal], [-HW, HH, vVal]];
+
+  for (const [x, y, v] of dots) {
+    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.beginPath();
+    ctx.arc(CX + x, CY + y, R, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBlank() {
+  const bgLum = 128;
+  ctx.fillStyle = `rgb(${bgLum},${bgLum},${bgLum})`;
+  ctx.fillRect(0, 0, c.width, c.height);
+}
+
+function tick(now) {
+  if (!running) { requestAnimationFrame(tick); return; }
+  const elapsed = now - phaseStart;
+  const dur = { f1: FRAME_MS, isi1: isiMs, f2: FRAME_MS, isi2: isiMs };
+  if (elapsed >= dur[phase]) {
+    phaseStart = now;
+    const order = ['f1','isi1','f2','isi2'];
+    phase = order[(order.indexOf(phase)+1)%4];
+  }
+  if (phase === 'f1') draw(1);
+  else if (phase === 'f2') draw(2);
+  else drawBlank();
+  requestAnimationFrame(tick);
+}
+
+isiSlider.addEventListener('input', () => { isiMs = +isiSlider.value; lbl.textContent = isiMs; });
+lumSlider.addEventListener('input', () => { lumLbl.textContent = (+lumSlider.value).toFixed(1); });
+btn.addEventListener('click', () => { running = !running; btn.textContent = running ? 'Pause' : 'Play'; if (running) phaseStart = performance.now(); });
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

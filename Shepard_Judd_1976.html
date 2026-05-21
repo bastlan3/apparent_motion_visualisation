@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shepard & Judd (1976) — 3D Block Rotation AM</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#111; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="540" height="360"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>SOA: <span id="lbl">400</span> ms &nbsp;<input type="range" id="soa" min="50" max="1000" value="400" step="50"></label>
+  <label>Rotation: <span id="rotLbl">90</span>° &nbsp;<input type="range" id="rot" min="30" max="180" value="90" step="30"></label>
+</div>
+<div class="meta">Shepard &amp; Judd (1976). Wireframe cube in two orientations — apparent 3D rotation is perceived, not 2D path. Minimum SOA scales with angular disparity.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+let soaMs=400, running=true, phase='f1', phaseStart=performance.now();
+
+// Project 3D point to 2D with simple perspective
+function project([x,y,z],camZ=5) {
+  const scale=200/(camZ-z);
+  return [CX+x*scale, CY-y*scale];
+}
+
+// Cube vertices
+function cubeVerts(rotY) {
+  const s=Math.sin(rotY), cos_=Math.cos(rotY);
+  const pts=[];
+  for(const sx of[-1,1]) for(const sy of[-1,1]) for(const sz of[-1,1])
+    pts.push([sx*cos_-sz*s, sy, sx*s+sz*cos_].map(v=>v*0.6));
+  return pts;
+}
+
+// Cube edges by vertex index pairs
+const EDGES=[];
+// 8 vertices: index = (xi*4+yi*2+zi) where xi,yi,zi in {0,1}
+// Connect vertices differing by exactly one coordinate
+for(let a=0;a<8;a++) for(let b=a+1;b<8;b++){
+  const diff=(a^b); if(diff===1||diff===2||diff===4) EDGES.push([a,b]);
+}
+
+function drawCube(rotY, alpha=1) {
+  const verts=cubeVerts(rotY);
+  const proj=verts.map(v=>project(v));
+  ctx.strokeStyle=`rgba(200,220,255,${alpha})`;
+  ctx.lineWidth=1.5;
+  for(const [a,b] of EDGES){
+    ctx.beginPath();
+    ctx.moveTo(...proj[a]);
+    ctx.lineTo(...proj[b]);
+    ctx.stroke();
+  }
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
+  const disparity=(+document.getElementById('rot').value)*Math.PI/180;
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+
+  ctx.fillStyle='#111'; ctx.fillRect(0,0,c.width,c.height);
+  if(phase==='f1') drawCube(0);
+  else if(phase==='f2') drawCube(disparity);
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
+document.getElementById('rot').addEventListener('input',e=>{document.getElementById('rotLbl').textContent=e.target.value;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kolers & von Grünau (1976) — Color-Change AM</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#808080; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+select { background:#333; color:#ddd; border:1px solid #555; padding:5px 10px; border-radius:4px; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="520" height="300"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">60</span> ms &nbsp;<input type="range" id="isi" min="20" max="300" value="60" step="10"></label>
+  <select id="shape">
+    <option value="circle" selected>F2: circle</option>
+    <option value="square">F2: square</option>
+  </select>
+</div>
+<div class="meta">Kolers &amp; von Grünau (1976). Red circle (left) → green shape (right). Perceived color changes at spatial midpoint during apparent motion.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+const FRAME_MS=120, R=28;
+const LX=CX-130, RX=CX+130;
+let isiMs=60, running=true, phase='f1', phaseStart=performance.now();
+
+function drawCircle(x,y,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+function drawSquare(x,y,r,color){ctx.fillStyle=color;ctx.fillRect(x-r,y-r,r*2,r*2);}
+
+function draw(frame) {
+  ctx.fillStyle='#808080'; ctx.fillRect(0,0,c.width,c.height);
+  if(frame===1) drawCircle(LX,CY,R,'#c0392b');
+  else {
+    if(document.getElementById('shape').value==='circle') drawCircle(RX,CY,R,'#27ae60');
+    else drawSquare(RX,CY,R,'#27ae60');
+  }
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+  if(phase==='f1')draw(1); else if(phase==='f2')draw(2);
+  else{ctx.fillStyle='#808080';ctx.fillRect(0,0,c.width,c.height);}
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('isi').addEventListener('input',e=>{isiMs=+e.target.value;document.getElementById('lbl').textContent=isiMs;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

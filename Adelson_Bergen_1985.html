@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Adelson & Bergen (1985) — Spatiotemporal Energy</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:140px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="560" height="320"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>Spatial freq: <span id="sfLbl">0.05</span> cyc/px &nbsp;<input type="range" id="sf" min="0.01" max="0.15" value="0.05" step="0.005"></label>
+  <label>Speed: <span id="spLbl">1.0</span> &nbsp;<input type="range" id="sp" min="-3" max="3" value="1" step="0.25"></label>
+</div>
+<div class="meta">Adelson &amp; Bergen (1985). Drifting sinusoidal grating — motion perception arises from spatiotemporal energy in oriented filters. Drag speed through zero to reverse.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const W=c.width, H=c.height;
+let sf=0.05, speed=1.0, phase=0, running=true, last=null;
+
+function render(ts) {
+  if(!running){requestAnimationFrame(render);return;}
+  const dt=last?ts-last:16; last=ts;
+  phase+=speed*sf*dt*0.06;
+  const img=ctx.createImageData(W,H);
+  const d=img.data;
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const v=Math.sin(2*Math.PI*(x*sf - phase));
+      const lum=Math.round((v+1)*127.5);
+      const i=(y*W+x)*4;
+      d[i]=d[i+1]=d[i+2]=lum; d[i+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+  requestAnimationFrame(render);
+}
+
+document.getElementById('sf').addEventListener('input',e=>{sf=+e.target.value;document.getElementById('sfLbl').textContent=sf.toFixed(3);});
+document.getElementById('sp').addEventListener('input',e=>{speed=+e.target.value;document.getElementById('spLbl').textContent=speed.toFixed(2);});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)last=null;});
+requestAnimationFrame(render);
+</script>
+</body>
+</html>

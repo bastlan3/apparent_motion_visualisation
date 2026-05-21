@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wertheimer (1912/2012) — Phi Motion</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#f0f0f0; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:180px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.regime { margin-top:8px; font-size:13px; color:#aaa; min-height:20px; }
+.meta { margin-top:12px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="540" height="300"></canvas>
+<div class="regime" id="regime"></div>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">60</span> ms &nbsp;<input type="range" id="isi" min="0" max="300" value="60" step="5"></label>
+</div>
+<div class="meta">Wertheimer (1912). Two vertical bars alternating — ISI determines percept: simultaneity → pure phi motion → beta motion → succession.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+const FRAME_MS=80;
+const BW=8, BH=120; // bar dimensions
+const LX=CX-120, RX=CX+120;
+let isiMs=60, running=true, phase='f1', phaseStart=performance.now();
+
+function regime(isi) {
+  if(isi<15) return 'Simultaneity — both seen at once';
+  if(isi<40) return 'Pure phi motion — motion without object';
+  if(isi<150) return 'Beta motion — object appears to move';
+  return 'Succession — two separate flashes';
+}
+
+function draw(left, right) {
+  ctx.fillStyle='#f0f0f0'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#111';
+  if(left) ctx.fillRect(LX-BW/2, CY-BH/2, BW, BH);
+  if(right) ctx.fillRect(RX-BW/2, CY-BH/2, BW, BH);
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const e=now-phaseStart;
+  // At very short ISI, both show simultaneously
+  const showBoth = isiMs < 15;
+  const dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+
+  if(showBoth) draw(true,true);
+  else if(phase==='f1') draw(true,false);
+  else if(phase==='f2') draw(false,true);
+  else draw(false,false);
+
+  document.getElementById('regime').textContent = regime(isiMs);
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('isi').addEventListener('input',e=>{isiMs=+e.target.value;document.getElementById('lbl').textContent=isiMs;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

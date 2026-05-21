@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hecht & Proffitt (1991) — 3D Domino Orientation AM</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#222; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="540" height="360"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>SOA: <span id="lbl">400</span> ms &nbsp;<input type="range" id="soa" min="50" max="1000" value="400" step="50"></label>
+  <label>Tilt: <span id="tiltLbl">45</span>° &nbsp;<input type="range" id="tilt" min="0" max="72" value="45" step="9"></label>
+</div>
+<div class="meta">Hecht &amp; Proffitt (1991). Domino shown in two 3D tilt orientations — perceived apparent rotation curves through 3D space.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+let soaMs=400, running=true, phase='f1', phaseStart=performance.now();
+
+// Draw a domino (tall rectangle) tilted in 3D about the horizontal axis
+// tiltDeg: 0 = upright, 90 = flat on table
+function drawDomino(tiltDeg) {
+  const tilt = tiltDeg * Math.PI / 180;
+  const W=50, H=110, D=12; // width, height, depth
+  // Project with simple cabinet oblique projection
+  const cos_=Math.cos(tilt), sin_=Math.sin(tilt);
+  // Front face corners in object space (before tilt around x-axis)
+  // Object: centered at origin, width W, height H, depth D
+  function project3d(x,y,z) {
+    // rotate around x-axis by tilt
+    const yr = y*cos_ - z*sin_;
+    const zr = y*sin_ + z*cos_;
+    // perspective: use a larger camera distance so denominator stays positive
+    const camera = 400;
+    const scale = 280 / (camera - zr);
+    return {x: CX + x*scale, y: CY - yr*scale, z: zr};
+  }
+
+  const corners = [
+    [-W/2,-H/2,0],[ W/2,-H/2,0],[ W/2, H/2,0],[-W/2, H/2,0], // front
+    [-W/2,-H/2,D],[ W/2,-H/2,D],[ W/2, H/2,D],[-W/2, H/2,D], // back
+  ];
+  const proj = corners.map(p=>project3d(...p));
+
+  // Draw faces (use painter's algorithm: sort faces back-to-front by depth)
+  const faces = [
+    {verts:[0,1,2,3], fill:'#c8b090'},  // front
+    {verts:[4,5,6,7], fill:'#a09070'},  // back
+    {verts:[0,4,7,3], fill:'#b0a080'},  // left
+    {verts:[1,5,6,2], fill:'#b0a080'},  // right
+    {verts:[0,1,5,4], fill:'#d0c0a0'},  // top
+    {verts:[3,2,6,7], fill:'#906050'},  // bottom
+  ];
+
+  const facesToDraw = faces.map(face => {
+    const depth = face.verts.reduce((s,i)=>s + proj[i].z, 0) / face.verts.length;
+    return {...face, depth};
+  }).sort((a,b)=>a.depth - b.depth);
+
+  for(const face of facesToDraw){
+    const v0 = proj[face.verts[0]];
+    ctx.beginPath();
+    ctx.moveTo(v0.x, v0.y);
+    for(let i=1;i<face.verts.length;i++){ const v = proj[face.verts[i]]; ctx.lineTo(v.x, v.y); }
+    ctx.closePath();
+    ctx.fillStyle=face.fill; ctx.fill();
+    ctx.strokeStyle='#555'; ctx.lineWidth=1; ctx.stroke();
+  }
+
+  // Dots on the face that's currently facing the camera (choose closest face)
+  const frontDepth = (proj[0].z + proj[1].z + proj[2].z + proj[3].z) / 4;
+  const backDepth  = (proj[4].z + proj[5].z + proj[6].z + proj[7].z) / 4;
+  // larger z => closer to camera (used earlier in sorting), so choose the face with larger average z
+  const base = frontDepth > backDepth ? 0 : 4;
+  const pv0 = proj[base], pv1 = proj[base+1], pv3 = proj[base+3];
+  const cx = pv0.x + (pv1.x - pv0.x)*0.5;
+  const cy = pv0.y + (pv3.y - pv0.y)*0.35;
+  ctx.fillStyle='#333';
+  ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill();
+  const cy2 = pv0.y + (pv3.y - pv0.y)*0.65;
+  ctx.beginPath(); ctx.arc(cx,cy2,4,0,Math.PI*2); ctx.fill();
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const tilt=+document.getElementById('tilt').value;
+  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+  ctx.fillStyle='#222'; ctx.fillRect(0,0,c.width,c.height);
+  if(phase==='f1') drawDomino(0);
+  else if(phase==='f2') drawDomino(tilt);
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
+document.getElementById('tilt').addEventListener('input',e=>{document.getElementById('tiltLbl').textContent=e.target.value;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
