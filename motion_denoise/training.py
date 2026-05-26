@@ -14,7 +14,16 @@ def dsm_loss(
     device: torch.device,
     sigma_min: float = 0.01,
     sigma_max: float = 1.5,
+    missing_frac: float = 0.0,
+    missing_sigma: float = 0.8,
 ) -> Tensor:
+    """
+    Denoising score matching loss.
+
+    missing_frac: fraction of each batch trained as explicitly all-missing
+      (x_noisy zeroed, sigma fixed to missing_sigma). Directly trains the
+      reconstruction-from-context pathway used by reconstruct_trajectory.
+    """
     targets = batch["targets"].to(device)   # [B, T, 1, H, W]
     B, T = targets.shape[:2]
     assert T >= 3, f"T must be >= 3, got {T}"
@@ -32,8 +41,17 @@ def dsm_loss(
     sigma     = torch.exp(log_sigma)                            # [B]
 
     x_noisy = x_clean + sigma[:, None, None, None] * torch.randn_like(x_clean)
-    x_pred  = model(x_noisy, sigma, ctx_first, ctx_last, t_frac)
 
+    # Override a fraction of the batch with explicitly zeroed frames at missing_sigma.
+    # This directly trains the model on the exact scenario used at inference for
+    # fully-missing frames (zero input, large sigma, reconstruct from context).
+    if missing_frac > 0.0:
+        n_missing = max(1, int(B * missing_frac))
+        miss_idx  = torch.randperm(B, device=device)[:n_missing]
+        x_noisy[miss_idx] = 0.0
+        sigma[miss_idx]   = missing_sigma
+
+    x_pred = model(x_noisy, sigma, ctx_first, ctx_last, t_frac)
     return F.mse_loss(x_pred, x_clean)
 
 
@@ -52,12 +70,14 @@ def train_epoch(
     sigma_min: float = 0.01,
     sigma_max: float = 1.5,
     grad_clip: float = 1.0,
+    missing_frac: float = 0.0,
+    missing_sigma: float = 0.8,
 ) -> float:
     model.train()
     total_loss = 0.0
     for batch in loader:
         optimizer.zero_grad()
-        loss = dsm_loss(model, batch, device, sigma_min, sigma_max)
+        loss = dsm_loss(model, batch, device, sigma_min, sigma_max, missing_frac, missing_sigma)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
