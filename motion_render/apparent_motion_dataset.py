@@ -47,6 +47,7 @@ class ApparentMotionDataset(Dataset):
         seed: int | None = 42,
         trans_speed_range: tuple | None = None,
         rot_speed_range: tuple | None = None,
+        return_poses: bool = False,
     ) -> None:
         if T < 3:
             raise ValueError(f"T must be >= 3, got {T}")
@@ -70,6 +71,7 @@ class ApparentMotionDataset(Dataset):
         self.seed = seed
         self.trans_speed_range = trans_speed_range
         self.rot_speed_range = rot_speed_range
+        self.return_poses = return_poses
 
     def __len__(self) -> int:
         return self.n_sequences
@@ -89,7 +91,12 @@ class ApparentMotionDataset(Dataset):
 
         # Render clean sequence
         clean_frames = []
+        poses = [] if self.return_poses else None
         for _ in range(self.T):
+            if self.return_poses:
+                body = scene.bodies[0]
+                poses.append(torch.cat([body.position.clone(),
+                                        body.orientation.clone().flatten()]))  # [12]
             frame = renderer.render_scene(scene, camera).unsqueeze(0)  # [1, H, W]
             clean_frames.append(frame)
             scene.step(self.dt)
@@ -113,7 +120,11 @@ class ApparentMotionDataset(Dataset):
                     frames[t] = (frames[t] + noise).clamp(0.0, 1.0)
                     # mask stays True — frame is present but degraded
 
-        return {"frames": frames, "targets": targets, "mask": mask}
+        result = {"frames": frames, "targets": targets, "mask": mask}
+        if self.return_poses:
+            result["poses"]      = torch.stack(poses, dim=0)   # [T, 12]
+            result["camera_eye"] = camera.eye.clone()           # [3]
+        return result
 
     def _corruption_decision(self) -> str:
         if self.corruption_mode == "none":
