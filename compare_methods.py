@@ -1,5 +1,5 @@
 """
-Three-way comparison: DSM / Flow Matching / 3D Pose DSM + Langevin equilibrium.
+Four-way comparison: DSM / Flow Matching / 3D Pose DSM / ST-DSM (spatiotemporal).
 
 Layout
 ------
@@ -7,7 +7,8 @@ Rows 1-2 : GT and missing input (shared)
 Row  3   : DSM reconstruction
 Row  4   : Flow matching reconstruction
 Row  5   : 3D Pose DSM + Langevin equilibrium (rendered from 3D poses)
-Row  6   : 3D time-vector panel (position trajectory + velocity arrows in 3D)
+Row  6   : ST-DSM + Langevin equilibrium (3D UNet on spatiotemporal volume)
+Row  7   : Spacetime diagram (x-t slice at y=H/2) + spatiotemporal vector field
 
 Saves: compare_methods.png
 """
@@ -30,10 +31,12 @@ from motion_pose import (
     reconstruct_pose_trajectory,
     pose_to_2d_sequence,
 )
+from motion_st import STUNet, reconstruct_st_trajectory, st_velocity_field
 
 DSM_CKPT  = "denoiser_best.pt"
 FLOW_CKPT = "flow_best.pt"
 POSE_CKPT = "pose_best.pt"
+ST_CKPT   = "st_best.pt"
 OUT_FILE  = "compare_methods.png"
 T         = 16
 VIS_SEED  = 7
@@ -45,7 +48,7 @@ def load_dsm(device):
     ckpt = torch.load(DSM_CKPT, map_location=device)
     m = CondUNet(base_ch=32, emb_dim=128).to(device)
     m.load_state_dict(ckpt["model_state"]); m.eval()
-    print(f"DSM  model: {ckpt.get('label','?')}  traj_PSNR={ckpt.get('traj_psnr','?'):.2f} dB")
+    print(f"DSM  model: traj_PSNR={ckpt.get('traj_psnr','?'):.2f} dB")
     return m
 
 def load_flow(device):
@@ -62,15 +65,32 @@ def load_pose(device):
     print(f"Pose model: traj_PSNR={ckpt.get('traj_psnr','?'):.2f} dB")
     return m
 
+def load_st(device):
+    ckpt = torch.load(ST_CKPT, map_location=device)
+    base_ch = ckpt.get("base_ch", 16)
+    emb_dim = ckpt.get("emb_dim", 128)
+    m = STUNet(base_ch=base_ch, emb_dim=emb_dim).to(device)
+    m.load_state_dict(ckpt["model_state"]); m.eval()
+    print(f"ST   model: traj_PSNR={ckpt.get('traj_psnr','?'):.2f} dB")
+    return m
+
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    dsm_model  = load_dsm(device)
-    flow_model = load_flow(device)
-    pose_model = load_pose(device)
+    models = {}
+    for name, loader in [
+        ("dsm",  lambda: load_dsm(device)),
+        ("flow", lambda: load_flow(device)),
+        ("pose", lambda: load_pose(device)),
+        ("st",   lambda: load_st(device)),
+    ]:
+        try:
+            models[name] = loader()
+        except FileNotFoundError:
+            print(f"  [{name}] checkpoint not found — skipping")
 
     ds = ApparentMotionDataset(
         n_sequences=1, T=T,
@@ -85,144 +105,184 @@ def main():
     gt_poses   = sample["poses"]       # [T, 12]
     camera_eye = sample["camera_eye"]  # [3]
 
-    dsm_recon  = reconstruct_trajectory(dsm_model,  targets[0], targets[-1], T, device=device)
-    flow_recon = reconstruct_flow_trajectory(flow_model, targets[0], targets[-1], T, device=device)
-    pose_recon_poses = reconstruct_pose_trajectory(pose_model, gt_poses[0], gt_poses[-1], T, device=device)
-    pose_recon = pose_to_2d_sequence(pose_recon_poses, camera_eye, targets)
+    recons = {}
+    if "dsm" in models:
+        recons["dsm"] = reconstruct_trajectory(models["dsm"], targets[0], targets[-1], T, device=device)
+    if "flow" in models:
+        recons["flow"] = reconstruct_flow_trajectory(models["flow"], targets[0], targets[-1], T, device=device)
+    if "pose" in models:
+        pose_recon_poses = reconstruct_pose_trajectory(models["pose"], gt_poses[0], gt_poses[-1], T, device=device)
+        recons["pose"] = pose_to_2d_sequence(pose_recon_poses, camera_eye, targets)
+    if "st" in models:
+        recons["st"] = reconstruct_st_trajectory(models["st"], targets[0:1], targets[-1:], T, device=device)
 
     def mid_psnr(recon):
         return [_psnr(recon[t], targets[t]) for t in range(1, T - 1)]
 
-    dsm_ps   = mid_psnr(dsm_recon)
-    flow_ps  = mid_psnr(flow_recon)
-    pose_ps  = mid_psnr(pose_recon)
+    psnrs = {k: mid_psnr(v) for k, v in recons.items()}
+    means = {k: sum(v) / len(v) for k, v in psnrs.items()}
+    for k, m in means.items():
+        print(f"{k.upper():>5} PSNR: {m:.2f} dB")
 
-    dsm_mean  = sum(dsm_ps)  / len(dsm_ps)
-    flow_mean = sum(flow_ps) / len(flow_ps)
-    pose_mean = sum(pose_ps) / len(pose_ps)
-    print(f"DSM  PSNR: {dsm_mean:.2f} dB")
-    print(f"Flow PSNR: {flow_mean:.2f} dB")
-    print(f"Pose PSNR: {pose_mean:.2f} dB")
+    # ── figure layout ──────────────────────────────────────────────────────────
+    # image rows: GT, Input, DSM, Flow, Pose, ST (with PSNR strips for DSM/Flow/Pose/ST)
+    # bottom row: spacetime diagram + spatiotemporal vector field
 
-    # ── figure layout ─────────────────────────────────────────────────────────
-    # 5 image rows + 3 PSNR strips + 1 tall 3D-panel row
-    n_img_rows = 5
-    img_cols   = T
+    n_methods = sum(k in recons for k in ["dsm", "flow", "pose", "st"])
+    # height_ratios: GT(1), Input(1), then per method: img(1)+psnr(0.18), final: spacetime(2.5)
+    hr = [1, 1]
+    for _ in range(n_methods):
+        hr += [1, 0.18]
+    n_img_rows_gs = 2 + n_methods * 2
+
     fig_w = T * 1.3
-    fig_h = 12.0
+    fig_h = 2 + n_methods * 1.4 + 3.5
 
     fig = plt.figure(figsize=(fig_w, fig_h))
 
-    # Upper part: image grid (5 rows × T cols, each with optional PSNR strip)
+    top_bottom = 0.28
     gs_top = GridSpec(
-        8, T, figure=fig,
-        left=0.04, right=0.98, top=0.97, bottom=0.32,
+        n_img_rows_gs, T, figure=fig,
+        left=0.04, right=0.98, top=0.97, bottom=top_bottom,
         hspace=0.06, wspace=0.04,
-        height_ratios=[1, 1, 1, 0.18, 1, 0.18, 1, 0.18],
+        height_ratios=hr,
     )
-
-    # Lower part: 3D trajectory panel
     gs_bot = GridSpec(
         1, 2, figure=fig,
-        left=0.06, right=0.98, top=0.28, bottom=0.04,
+        left=0.06, right=0.98, top=top_bottom - 0.02, bottom=0.04,
         wspace=0.3,
     )
 
+    # Build row config dynamically
     row_cfg = [
-        # (gs_row, label,                              seq,        psnrs,     psnr_row, color)
-        (0, "Ground truth",                            targets,    None,      None,     None),
-        (1, "Input (central missing)",                 frames,     None,      None,     None),
-        (2, f"DSM  ({dsm_mean:.1f} dB)",              dsm_recon,  dsm_ps,    3,        "#226633"),
-        (4, f"Flow ({flow_mean:.1f} dB)",             flow_recon, flow_ps,   5,        "#22446b"),
-        (6, f"3D Pose+Langevin ({pose_mean:.1f} dB)", pose_recon, pose_ps,   7,        "#662244"),
+        (0, "Ground truth",     targets, None, None, None),
+        (1, "Input (all miss)", frames,  None, None, None),
     ]
+    method_rows = [
+        ("dsm",  f"DSM  ({means.get('dsm',0):.1f} dB)",              "#226633"),
+        ("flow", f"Flow ({means.get('flow',0):.1f} dB)",              "#22446b"),
+        ("pose", f"3D Pose+Langevin ({means.get('pose',0):.1f} dB)",  "#662244"),
+        ("st",   f"ST-DSM+Langevin ({means.get('st',0):.1f} dB)",    "#336655"),
+    ]
+    gs_row = 2
+    for key, label, color in method_rows:
+        if key not in recons:
+            continue
+        row_cfg.append((gs_row, label, recons[key], psnrs[key], gs_row + 1, color))
+        gs_row += 2
 
-    for gs_row, label, seq, psnrs, psnr_gs_row, color in row_cfg:
+    for gs_r, label, seq, psnr_list, psnr_gs_row, color in row_cfg:
         for t in range(T):
-            ax  = fig.add_subplot(gs_top[gs_row, t])
+            ax  = fig.add_subplot(gs_top[gs_r, t])
             img = seq[t, 0].numpy().clip(0, 1)
             ax.imshow(img, cmap="gray", vmin=0, vmax=1, interpolation="nearest")
             ax.set_xticks([]); ax.set_yticks([])
 
-            is_miss = (gs_row == 1) and (0 < t < T - 1)
+            is_miss = (gs_r == 1) and (0 < t < T - 1)
             ec = "#cc3333" if is_miss else "#aaaaaa"
             lw = 1.8 if is_miss else 0.5
             for sp in ax.spines.values():
                 sp.set_edgecolor(ec); sp.set_linewidth(lw)
 
-            if gs_row == 6:
+            if gs_r == gs_row - 2:   # last image row
                 ax.set_xlabel(f"t={t}", fontsize=5.5, labelpad=2)
 
-        ax0 = fig.add_subplot(gs_top[gs_row, 0])
+        ax0 = fig.add_subplot(gs_top[gs_r, 0])
         ax0.set_ylabel(label, fontsize=7, labelpad=4)
 
-        if psnrs is not None and psnr_gs_row is not None:
+        if psnr_list is not None and psnr_gs_row is not None:
             for t in range(T):
                 axp = fig.add_subplot(gs_top[psnr_gs_row, t])
                 axp.axis("off")
                 if 0 < t < T - 1:
-                    axp.text(0.5, 0.6, f"{psnrs[t-1]:.1f}",
+                    axp.text(0.5, 0.6, f"{psnr_list[t-1]:.1f}",
                              ha="center", va="center", fontsize=5.5,
                              color=color, transform=axp.transAxes)
 
-    # ── 3D time-vector panel ───────────────────────────────────────────────────
-    ax3d = fig.add_subplot(gs_bot[0, 0], projection="3d")
+    # ── Bottom left: spacetime diagram (x-t slice at y = H/2) ─────────────────
+    ax_st = fig.add_subplot(gs_bot[0, 0])
 
-    gt_pos   = gt_poses[:, :3].numpy()
-    rec_pos  = pose_recon_poses[:, :3].numpy()
+    if "st" in recons:
+        seq_st = recons["st"]   # [T, 1, H, W]
+        H_img  = seq_st.shape[-2]
+        y_mid  = H_img // 2
 
-    # GT trajectory
-    ax3d.plot(*gt_pos.T,  "o-", color="#555555", lw=1.0, ms=3, label="GT trajectory")
-    # Reconstructed trajectory
-    ax3d.plot(*rec_pos.T, "s-", color="#cc3333", lw=1.0, ms=3, label="Reconstructed")
+        # x-t image: each column is a frame, rows are x pixels
+        xt_img = seq_st[:, 0, y_mid, :].numpy().T  # [W, T]
+        ax_st.imshow(xt_img, cmap="gray", vmin=0, vmax=1,
+                     aspect="auto", origin="lower",
+                     extent=[0, T-1, 0, seq_st.shape[-1]-1])
 
-    # Time vectors: velocity arrows at each intermediate frame (FD estimate)
-    dt_inv = T - 1
-    for k in range(1, T - 1):
-        p  = rec_pos[k]
-        dp = (rec_pos[min(k+1, T-1)] - rec_pos[max(k-1, 0)]) / 2.0 * (1.0 / dt_inv)
-        scale = 0.35
-        ax3d.quiver(*p, *(dp * scale), color="#22446b", linewidth=0.7, arrow_length_ratio=0.35)
+        # Overlay spatiotemporal gradient arrows (sub-sampled)
+        I_x, I_y, I_t = st_velocity_field(seq_st)
+        # Take the y=H/2-1 row (accounting for interior trimming)
+        y_row = y_mid - 1
+        y_row = max(0, min(y_row, I_x.shape[1] - 1))
+        step  = 4
+        for ti in range(0, I_t.shape[0], step):
+            for xi in range(0, I_t.shape[2], step):
+                vt = I_t[ti, y_row, xi].item()
+                vx = I_x[ti, y_row, xi].item()
+                mag = math.sqrt(vt**2 + vx**2)
+                if mag > 0.02:
+                    scale = 2.0 / (mag + 1e-6)
+                    ax_st.annotate(
+                        "", xy=(ti + 1 + vt * scale, xi + vx * scale),
+                        xytext=(ti + 1, xi),
+                        arrowprops=dict(arrowstyle="->", color="#cc3333",
+                                        lw=0.6, mutation_scale=5),
+                    )
 
-    ax3d.scatter(*gt_pos[0],  c="green",  s=40, zorder=5, label="first frame")
-    ax3d.scatter(*gt_pos[-1], c="orange", s=40, zorder=5, label="last frame")
+        ax_st.set_xlabel("Time (frame index)", fontsize=8)
+        ax_st.set_ylabel("x pixel", fontsize=8)
+        ax_st.set_title("Spacetime slice (y=H/2) + gradient vectors", fontsize=8)
+        ax_st.tick_params(labelsize=6)
+    else:
+        ax_st.text(0.5, 0.5, "ST model not loaded", ha="center", va="center",
+                   transform=ax_st.transAxes, fontsize=9)
+        ax_st.axis("off")
 
-    ax3d.set_xlabel("X", fontsize=7); ax3d.set_ylabel("Y", fontsize=7); ax3d.set_zlabel("Z", fontsize=7)
-    ax3d.set_title("3D position trajectory + velocity vectors", fontsize=8)
-    ax3d.legend(fontsize=6, loc="upper left")
-    ax3d.tick_params(labelsize=6)
-
-    # Angular-velocity magnitude plot (right panel)
-    ax_av = fig.add_subplot(gs_bot[0, 1])
-    rot_vels = []
-    for k in range(1, T - 1):
-        R_prev = pose_recon_poses[max(k-1, 0), 3:].reshape(3, 3)
-        R_next = pose_recon_poses[min(k+1, T-1), 3:].reshape(3, 3)
-        dR = R_next @ R_prev.T
-        # Frobenius distance ≈ angular velocity magnitude
-        ang_speed = (torch.linalg.matrix_norm(dR - torch.eye(3)) / 2.0).item()
-        rot_vels.append(ang_speed)
-
+    # ── Bottom right: PSNR-vs-time comparison across methods ──────────────────
+    ax_psnr = fig.add_subplot(gs_bot[0, 1])
+    colors_map = {
+        "dsm":  "#226633",
+        "flow": "#22446b",
+        "pose": "#662244",
+        "st":   "#336655",
+    }
+    labels_map = {
+        "dsm":  "DSM",
+        "flow": "Flow",
+        "pose": "3D Pose",
+        "st":   "ST-DSM",
+    }
     ts = list(range(1, T - 1))
-    ax_av.bar(ts, rot_vels, color="#662244", alpha=0.7)
-    ax_av.set_xlabel("Frame", fontsize=8)
-    ax_av.set_ylabel("Angular speed (approx)", fontsize=8)
-    ax_av.set_title("Reconstructed angular velocity in 3D", fontsize=8)
-    ax_av.tick_params(labelsize=7)
+    for key, color in colors_map.items():
+        if key in psnrs:
+            ax_psnr.plot(ts, psnrs[key], "o-", color=color,
+                         lw=1.2, ms=3, label=f"{labels_map[key]} ({means[key]:.1f} dB)")
+    ax_psnr.set_xlabel("Frame index", fontsize=8)
+    ax_psnr.set_ylabel("PSNR (dB)", fontsize=8)
+    ax_psnr.set_title("Per-frame PSNR (all methods)", fontsize=8)
+    ax_psnr.legend(fontsize=6, loc="lower center")
+    ax_psnr.tick_params(labelsize=6)
 
-    # ── legend + title ────────────────────────────────────────────────────────
+    # ── title & legend ────────────────────────────────────────────────────────
     red_patch = mpatches.Patch(color="#cc3333", label="missing input frame")
     fig.legend(handles=[red_patch], loc="lower left", fontsize=7,
                framealpha=0.85, bbox_to_anchor=(0.01, 0.005))
+
+    title_parts = [f"{labels_map[k]}: {means[k]:.2f} dB" for k in ["dsm","flow","pose","st"] if k in means]
     fig.suptitle(
-        f"Endpoint-only reconstruction  —  cube rotation+translation\n"
-        f"DSM: {dsm_mean:.2f} dB   |   Flow: {flow_mean:.2f} dB   |   3D Pose + Langevin: {pose_mean:.2f} dB",
+        "Endpoint-only reconstruction — cube rotation+translation\n" + "   |   ".join(title_parts),
         fontsize=9, y=0.999,
     )
 
     plt.savefig(OUT_FILE, dpi=130, bbox_inches="tight", facecolor="white")
     print(f"Saved: {OUT_FILE}")
 
+
+import math
 
 if __name__ == "__main__":
     main()
