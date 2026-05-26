@@ -1,34 +1,45 @@
 """
-Train a FlowNet on cube rotation+translation sequences and compare it to
-the best DSM denoiser from experiment_grid.py.
+Train a FlowNet with the same curriculum as the best DSM variant for a fair
+head-to-head comparison.
 
-Flow matching trains the model to predict the velocity field
-  v_θ(x_t, t; ctx_first, ctx_last) ≈ dx/dt
-at every point in (image × time) space.  At inference the ODE is integrated
-with the Heun method to reconstruct all intermediate frames from the two
-endpoint frames only.
+Curriculum (identical settings to experiment_grid.py / cosine+gaussian DSM):
+  sigma_max cosine annealing  0.15 → 1.5  over first 67% of epochs
+  missing_frac = 0.25  (25% of each batch uses zeroed x_t, same as DSM)
+
+Flow matching learns the velocity field  v_θ(x_t, t; ctx_first, ctx_last)
+and integrates it with the Heun ODE solver at inference.
 
 Saves: flow_best.pt
 """
 
-import math
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from motion_render import ApparentMotionDataset, sequence_collate_fn
-from motion_flow import FlowNet, train_flow_epoch, val_flow_epoch, reconstruct_flow_trajectory, compute_psnr
+from motion_flow import (
+    FlowNet,
+    train_flow_epoch,
+    val_flow_epoch,
+    reconstruct_flow_trajectory,
+    compute_psnr,
+    sigma_max_schedule,
+)
 
-# ── Config ────────────────────────────────────────────────────────────────────
-N_TRAIN      = 200
-N_VAL        = 40
-N_TRAJ_EVAL  = 10
-T            = 16
-BATCH_SIZE   = 8
-N_EPOCHS     = 20
-LR           = 1e-3
-GRAD_CLIP    = 1.0
-BEST_CKPT    = "flow_best.pt"
+# ── Config (mirrors experiment_grid.py) ───────────────────────────────────────
+N_TRAIN       = 200
+N_VAL         = 40
+N_TRAJ_EVAL   = 10
+T             = 16
+BATCH_SIZE    = 8
+N_EPOCHS      = 20
+LR            = 1e-3
+GRAD_CLIP     = 1.0
+SIGMA_START   = 0.15
+SIGMA_TARGET  = 1.5
+WARMUP_FRAC   = 0.67
+MISSING_FRAC  = 0.25
+BEST_CKPT     = "flow_best.pt"
 
 
 class PrerenderedDataset(Dataset):
@@ -54,7 +65,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
     print(f"Shape: cube | Motion: both (rotation+translation)")
-    print(f"N_TRAIN={N_TRAIN}, N_EPOCHS={N_EPOCHS}\n")
+    print(f"N_TRAIN={N_TRAIN}, N_EPOCHS={N_EPOCHS}, missing_frac={MISSING_FRAC}")
+    print(f"Curriculum: σ_max cosine {SIGMA_START}→{SIGMA_TARGET} over {int(N_EPOCHS*WARMUP_FRAC)} epochs\n")
 
     print("Pre-rendering training data...")
     ds_train = ApparentMotionDataset(
@@ -93,7 +105,7 @@ def main():
 
     model = FlowNet(base_ch=32, emb_dim=128).to(device)
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"\nFlowNet parameters: {n_params:,}")
+    print(f"\nFlowNet parameters: {n_params:,}\n")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
@@ -103,9 +115,17 @@ def main():
     best_val_loss = float("inf")
     best_state    = None
 
-    print()
     for epoch in range(1, N_EPOCHS + 1):
-        tr_loss = train_flow_epoch(model, train_loader, optimizer, device, grad_clip=GRAD_CLIP)
+        smax = sigma_max_schedule(
+            epoch, N_EPOCHS, SIGMA_START, SIGMA_TARGET,
+            schedule="cosine", warmup_frac=WARMUP_FRAC,
+        )
+        tr_loss = train_flow_epoch(
+            model, train_loader, optimizer, device,
+            grad_clip=GRAD_CLIP,
+            sigma_max=smax,
+            missing_frac=MISSING_FRAC,
+        )
         val_loss, val_psnr = val_flow_epoch(model, val_loader, device)
         scheduler.step()
 
@@ -116,7 +136,7 @@ def main():
             marker = " *"
 
         print(
-            f"  ep {epoch:02d}/{N_EPOCHS} | "
+            f"  ep {epoch:02d}/{N_EPOCHS} | σ_max={smax:.3f} | "
             f"tr={tr_loss:.4f} | val={val_loss:.4f} | step-PSNR={val_psnr:.1f} dB{marker}"
         )
 
@@ -138,7 +158,7 @@ def main():
     dsm_ckpt = "denoiser_best.pt"
     try:
         from motion_denoise import CondUNet, reconstruct_trajectory
-        from motion_denoise.training import compute_psnr as dsm_psnr
+        from motion_denoise.training import compute_psnr as _dsm_psnr
 
         ckpt_dsm  = torch.load(dsm_ckpt, map_location=device)
         dsm_model = CondUNet(base_ch=32, emb_dim=128).to(device)
@@ -149,15 +169,15 @@ def main():
         for sample in traj_data[:N_TRAJ_EVAL]:
             targets = sample["targets"]
             recon   = reconstruct_trajectory(dsm_model, targets[0], targets[-1], T, device=device)
-            dsm_traj_psnrs.append(dsm_psnr(recon[1:-1], targets[1:-1]))
+            dsm_traj_psnrs.append(_dsm_psnr(recon[1:-1], targets[1:-1]))
         dsm_psnr_val = sum(dsm_traj_psnrs) / len(dsm_traj_psnrs)
 
-        print(f"\n{'='*50}")
-        print(f"{'Method':<30} {'traj PSNR':>10}")
-        print(f"{'-'*50}")
-        print(f"  {'DSM (cosine+gaussian)':<28} {dsm_psnr_val:>9.2f} dB")
-        print(f"  {'Flow Matching (Heun ODE)':<28} {traj_psnr:>9.2f} dB")
-        print(f"{'='*50}")
+        print(f"\n{'='*56}")
+        print(f"{'Method':<36} {'traj PSNR':>10}")
+        print(f"{'-'*56}")
+        print(f"  {'DSM  cosine+gaussian  (curriculum)':<34} {dsm_psnr_val:>9.2f} dB")
+        print(f"  {'Flow cosine curriculum + missing_frac':<34} {traj_psnr:>9.2f} dB")
+        print(f"{'='*56}")
     except FileNotFoundError:
         print(f"\n(Skipping DSM comparison — {dsm_ckpt} not found)")
 

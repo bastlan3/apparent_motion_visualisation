@@ -11,8 +11,14 @@ central finite-difference approximation of dx/dt:
 
 The model learns  v_θ(x_t, t/(T-1), ctx_first, ctx_last) ≈ v*(t).
 
-This directly supervises the tangent vector of the true trajectory at each
-point in (image × time) space — the "flow field in time" interpretation.
+Curriculum (mirrors the DSM curriculum in motion_denoise/training.py):
+  sigma_max   – log-uniform noise added to x_t, annealing from a small value
+                to sigma_max; simulates ODE drift from the GT trajectory.
+  missing_frac – fraction of each batch where x_t is replaced with zeros,
+                 exactly matching the all-missing inference scenario.
+                 The velocity target is unchanged (still the GT FD velocity),
+                 so the model learns to predict correct velocities even when it
+                 cannot see x_t and must rely on ctx_first, ctx_last, and t.
 """
 
 import math
@@ -22,7 +28,31 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 
-def flow_matching_loss(model, batch: dict, device: torch.device) -> Tensor:
+def sigma_max_schedule(
+    epoch: int,
+    total_epochs: int,
+    sigma_start: float = 0.15,
+    sigma_target: float = 1.5,
+    schedule: str = "cosine",
+    warmup_frac: float = 0.67,
+) -> float:
+    warmup = max(1, int(total_epochs * warmup_frac))
+    t = min(epoch / warmup, 1.0)
+    if schedule == "cosine":
+        t = (1.0 - math.cos(math.pi * t)) / 2.0
+    elif schedule == "exp":
+        t = (math.exp(t) - 1.0) / (math.e - 1.0)
+    return sigma_start + (sigma_target - sigma_start) * t
+
+
+def flow_matching_loss(
+    model,
+    batch: dict,
+    device: torch.device,
+    sigma_min: float = 0.01,
+    sigma_max: float = 0.0,
+    missing_frac: float = 0.0,
+) -> Tensor:
     targets = batch["targets"].to(device)   # [B, T, 1, H, W]
     B, T = targets.shape[:2]
     assert T >= 3, f"T must be >= 3, got {T}"
@@ -38,11 +68,30 @@ def flow_matching_loss(model, batch: dict, device: torch.device) -> Tensor:
     x_prev = targets[torch.arange(B), t_idx - 1]
     x_next = targets[torch.arange(B), t_idx + 1]
 
+    # Curriculum noise on x_t: simulates ODE state deviating from GT trajectory
+    if sigma_max > 0.0:
+        log_sigma = (
+            torch.rand(B, device=device) * (math.log(sigma_max) - math.log(sigma_min))
+            + math.log(sigma_min)
+        )
+        sigma = torch.exp(log_sigma)
+        x_t_input = x_t + sigma[:, None, None, None] * torch.randn_like(x_t)
+    else:
+        x_t_input = x_t.clone()
+
+    # Explicit missing-frame batches: zero out x_t so the model must reconstruct
+    # velocity from ctx_first, ctx_last, and t alone
+    if missing_frac > 0.0:
+        n_missing = max(1, int(B * missing_frac))
+        miss_idx  = torch.randperm(B, device=device)[:n_missing]
+        x_t_input = x_t_input.clone()
+        x_t_input[miss_idx] = 0.0
+
     # Central FD velocity; dt_norm = 1/(T-1)
     dt_norm  = 1.0 / (T - 1)
     v_target = (x_next - x_prev) / (2.0 * dt_norm)         # [B, 1, H, W]
 
-    v_pred = model(x_t, t_norm, ctx_first, ctx_last)
+    v_pred = model(x_t_input, t_norm, ctx_first, ctx_last)
     return F.mse_loss(v_pred, v_target)
 
 
@@ -59,12 +108,14 @@ def train_flow_epoch(
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     grad_clip: float = 1.0,
+    sigma_max: float = 0.0,
+    missing_frac: float = 0.0,
 ) -> float:
     model.train()
     total = 0.0
     for batch in loader:
         optimizer.zero_grad()
-        loss = flow_matching_loss(model, batch, device)
+        loss = flow_matching_loss(model, batch, device, sigma_max=sigma_max, missing_frac=missing_frac)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
