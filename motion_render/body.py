@@ -48,19 +48,23 @@ class RigidBody:
         mode: str,
         position_range: float = 1.5,
         speed_range: tuple = (0.3, 1.5),
+        trans_speed_range: tuple | None = None,
+        rot_speed_range: tuple | None = None,
     ) -> 'RigidBody':
-        lo, hi = speed_range
+        # trans/rot_speed_range override speed_range when provided
+        tlo, thi = trans_speed_range if trans_speed_range is not None else speed_range
+        rlo, rhi = rot_speed_range   if rot_speed_range   is not None else speed_range
 
         position = (torch.rand(3) * 2 - 1) * position_range
         orientation = torch.eye(3, dtype=torch.float32)
 
-        speed = lo + random.random() * (hi - lo)
+        speed = tlo + random.random() * (thi - tlo)
         v = torch.randn(3)
         velocity = v / (v.norm() + 1e-8) * speed
 
         rot_axis = torch.randn(3)
         rot_axis = rot_axis / (rot_axis.norm() + 1e-8)
-        rot_speed = lo + random.random() * (hi - lo)
+        rot_speed = rlo + random.random() * (rhi - rlo)
 
         return RigidBody(
             shape=shape,

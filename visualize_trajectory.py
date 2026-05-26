@@ -46,6 +46,7 @@ def main():
         n_sequences=1, T=T,
         shape_type="cube", motion_mode="both",
         corruption_mode="all_missing", seed=VIS_SEED,
+        trans_speed_range=(2.5, 4.0),
     )
     sample  = ds[0]
     targets = sample["targets"]   # [T, 1, H, W]  clean GT

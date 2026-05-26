@@ -45,6 +45,8 @@ class ApparentMotionDataset(Dataset):
         noise_std: float = 0.15,
         missing_prob: float = 0.3,
         seed: int | None = 42,
+        trans_speed_range: tuple | None = None,
+        rot_speed_range: tuple | None = None,
     ) -> None:
         if T < 3:
             raise ValueError(f"T must be >= 3, got {T}")
@@ -66,6 +68,8 @@ class ApparentMotionDataset(Dataset):
         self.noise_std = noise_std
         self.missing_prob = missing_prob
         self.seed = seed
+        self.trans_speed_range = trans_speed_range
+        self.rot_speed_range = rot_speed_range
 
     def __len__(self) -> int:
         return self.n_sequences
@@ -75,7 +79,10 @@ class ApparentMotionDataset(Dataset):
             random.seed(self.seed + idx)
             torch.manual_seed(self.seed + idx)
 
-        scene = Scene.random(n_bodies=1, shape_types=self.shape_types, motion_modes=self.motion_modes)
+        scene = Scene.random(
+            n_bodies=1, shape_types=self.shape_types, motion_modes=self.motion_modes,
+            trans_speed_range=self.trans_speed_range, rot_speed_range=self.rot_speed_range,
+        )
         camera = Camera(self.image_height, self.image_width, self.fov_y)
         camera.place_random(self.camera_radius)
         renderer = Renderer(self.image_height, self.image_width)
