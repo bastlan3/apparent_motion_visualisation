@@ -12,7 +12,7 @@ from .renderer import Renderer
 CorruptionMode = Literal["none", "noisy", "missing", "mixed", "all_missing"]
 
 _SHAPE_TYPES = ("cube", "sphere", "tetrahedron")
-_MOTION_MODES = ("translate", "rotate", "both")
+_MOTION_MODES = ("translate", "rotate", "both", "orbit", "orbit_spin")
 
 
 class ApparentMotionDataset(Dataset):
