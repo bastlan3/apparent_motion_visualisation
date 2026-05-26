@@ -24,6 +24,7 @@ def dsm_loss(
 
     t_idx   = torch.randint(1, T - 1, (B,), device=device)
     x_clean = targets[torch.arange(B, device=device), t_idx]   # [B, 1, H, W]
+    t_frac  = t_idx.float() / (T - 1)                          # [B] in (0, 1)
 
     log_sigma_min = math.log(sigma_min)
     log_sigma_max = math.log(sigma_max)
@@ -31,7 +32,7 @@ def dsm_loss(
     sigma     = torch.exp(log_sigma)                            # [B]
 
     x_noisy = x_clean + sigma[:, None, None, None] * torch.randn_like(x_clean)
-    x_pred  = model(x_noisy, sigma, ctx_first, ctx_last)
+    x_pred  = model(x_noisy, sigma, ctx_first, ctx_last, t_frac)
 
     return F.mse_loss(x_pred, x_clean)
 
@@ -83,6 +84,7 @@ def val_epoch(
 
             t_idx     = torch.randint(1, T - 1, (B,), device=device)
             x_clean   = targets[torch.arange(B, device=device), t_idx]
+            t_frac    = t_idx.float() / (T - 1)
 
             log_sigma_min = math.log(sigma_min)
             log_sigma_max = math.log(sigma_max)
@@ -91,7 +93,7 @@ def val_epoch(
             )
             sigma   = torch.exp(log_sigma)
             x_noisy = x_clean + sigma[:, None, None, None] * torch.randn_like(x_clean)
-            x_pred  = model(x_noisy, sigma, ctx_first, ctx_last)
+            x_pred  = model(x_noisy, sigma, ctx_first, ctx_last, t_frac)
 
             total_loss += F.mse_loss(x_pred, x_clean).item()
             total_psnr += compute_psnr(x_pred, x_clean)

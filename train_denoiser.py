@@ -1,9 +1,11 @@
+import math
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from motion_render import ApparentMotionDataset, sequence_collate_fn
-from motion_denoise import CondUNet, train_epoch, val_epoch
+from motion_denoise import CondUNet, train_epoch, val_epoch, reconstruct_trajectory
+from motion_denoise.training import compute_psnr
 
 # ── Config ────────────────────────────────────────────────────────────────────
 N_TRAIN         = 500
@@ -32,17 +34,24 @@ def main() -> None:
     print(f"Using device: {device}")
 
     # Pre-render to RAM (renderer is pure Python — slow per-call, fast from cache)
-    print(f"\nPre-rendering {N_TRAIN} training sequences...")
+    print(f"\nPre-rendering {N_TRAIN} training sequences (mixed corruption)...")
     train_raw = ApparentMotionDataset(
         n_sequences=N_TRAIN, T=T, corruption_mode="mixed", seed=42
     )
     train_data = [train_raw[i] for i in tqdm(range(N_TRAIN), desc="render train")]
 
-    print(f"Pre-rendering {N_VAL} validation sequences...")
+    print(f"Pre-rendering {N_VAL} validation sequences (mixed corruption)...")
     val_raw = ApparentMotionDataset(
         n_sequences=N_VAL, T=T, corruption_mode="mixed", seed=1000
     )
     val_data = [val_raw[i] for i in tqdm(range(N_VAL), desc="render val")]
+
+    # Also pre-render all-missing sequences for the trajectory reconstruction demo
+    print(f"Pre-rendering {N_VAL} all-missing sequences for trajectory demo...")
+    traj_raw = ApparentMotionDataset(
+        n_sequences=N_VAL, T=T, corruption_mode="all_missing", seed=1000
+    )
+    traj_data = [traj_raw[i] for i in tqdm(range(N_VAL), desc="render traj")]
 
     train_loader = DataLoader(
         PrerenderedDataset(train_data),
@@ -65,6 +74,7 @@ def main() -> None:
         optimizer, T_max=N_EPOCHS, eta_min=1e-5
     )
 
+    # ── Training ──────────────────────────────────────────────────────────────
     print(f"\nTraining for {N_EPOCHS} epochs, batch_size={BATCH_SIZE}\n")
     best_val_loss = float("inf")
 
@@ -95,6 +105,38 @@ def main() -> None:
             print(f"  → checkpoint saved (val_loss={val_loss:.4f})")
 
     print(f"\nDone. Best val_loss={best_val_loss:.4f} — checkpoint: {CHECKPOINT_PATH}")
+
+    # ── Trajectory reconstruction demo (all intermediate frames missing) ──────
+    print("\n" + "=" * 60)
+    print("Trajectory reconstruction: all intermediate frames missing")
+    print("=" * 60)
+
+    model.eval()
+    psnr_list = []
+
+    for sample in traj_data[:10]:   # evaluate on first 10 all-missing sequences
+        targets = sample["targets"]   # [T, 1, H, W]  clean ground truth
+        ctx_first = targets[0]        # [1, H, W]
+        ctx_last  = targets[-1]       # [1, H, W]
+
+        recon = reconstruct_trajectory(model, ctx_first, ctx_last, T, device=device)
+        # [T, 1, H, W]
+
+        # PSNR over intermediate frames only
+        pred_mid   = recon[1:-1]           # [T-2, 1, H, W]
+        target_mid = targets[1:-1]         # [T-2, 1, H, W]
+        psnr = compute_psnr(pred_mid, target_mid)
+        psnr_list.append(psnr)
+
+    mean_psnr = sum(psnr_list) / len(psnr_list)
+    print(f"\nPer-sequence PSNR (intermediate frames vs ground truth):")
+    for i, p in enumerate(psnr_list):
+        print(f"  sequence {i:02d}: {p:.2f} dB")
+    print(f"\nMean PSNR over {len(psnr_list)} sequences: {mean_psnr:.2f} dB")
+    print(
+        "\nNote: all 14 intermediate frames were reconstructed from only the "
+        "first and last clean frames, using temporal position conditioning."
+    )
 
 
 if __name__ == "__main__":

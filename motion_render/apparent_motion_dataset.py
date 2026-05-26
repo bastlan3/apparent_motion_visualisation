@@ -9,7 +9,7 @@ from .scene import Scene
 from .camera import Camera
 from .renderer import Renderer
 
-CorruptionMode = Literal["none", "noisy", "missing", "mixed"]
+CorruptionMode = Literal["none", "noisy", "missing", "mixed", "all_missing"]
 
 _SHAPE_TYPES = ("cube", "sphere", "tetrahedron")
 _MOTION_MODES = ("translate", "rotate", "both")
@@ -92,15 +92,19 @@ class ApparentMotionDataset(Dataset):
         mask = torch.ones(self.T, dtype=torch.bool)
 
         # Corrupt intermediate frames only
-        for t in range(1, self.T - 1):
-            decision = self._corruption_decision()
-            if decision == "missing":
-                frames[t] = 0.0
-                mask[t] = False
-            elif decision == "noisy":
-                noise = torch.randn_like(frames[t]) * self.noise_std
-                frames[t] = (frames[t] + noise).clamp(0.0, 1.0)
-                # mask stays True — frame is present but degraded
+        if self.corruption_mode == "all_missing":
+            frames[1:-1] = 0.0
+            mask[1:-1] = False
+        else:
+            for t in range(1, self.T - 1):
+                decision = self._corruption_decision()
+                if decision == "missing":
+                    frames[t] = 0.0
+                    mask[t] = False
+                elif decision == "noisy":
+                    noise = torch.randn_like(frames[t]) * self.noise_std
+                    frames[t] = (frames[t] + noise).clamp(0.0, 1.0)
+                    # mask stays True — frame is present but degraded
 
         return {"frames": frames, "targets": targets, "mask": mask}
 
