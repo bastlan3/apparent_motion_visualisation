@@ -26,19 +26,24 @@ from motion_pose import (
 )
 
 # ── Config (mirrors experiment_grid.py) ───────────────────────────────────────
-N_TRAIN      = 200
-N_VAL        = 40
-N_TRAJ_EVAL  = 10
-T            = 16
-BATCH_SIZE   = 8
-N_EPOCHS     = 20
-LR           = 1e-3
-GRAD_CLIP    = 1.0
-SIGMA_START  = 0.15
-SIGMA_TARGET = 1.5
-WARMUP_FRAC  = 0.67
-MISSING_FRAC = 0.25
-BEST_CKPT    = "pose_best.pt"
+N_TRAIN        = 200
+N_VAL          = 40
+N_TRAJ_EVAL    = 10
+T              = 16
+BATCH_SIZE     = 8
+N_EPOCHS       = 20
+LR             = 1e-3
+GRAD_CLIP      = 1.0
+SIGMA_START    = 0.15
+SIGMA_TARGET   = 1.5
+WARMUP_FRAC    = 0.67
+MISSING_FRAC   = 0.25
+BEST_CKPT      = "pose_best.pt"
+
+# Rendering loss: turned on after RENDER_WARMUP_EPOCH so the DSM loss
+# has time to produce reasonable poses before pixel gradients are added.
+RENDER_LAMBDA       = 5.0    # pixel loss weight (images are in [0,1]²)
+RENDER_WARMUP_EPOCH = 8      # epochs before render loss is added
 
 
 class PrerenderedDataset(Dataset):
@@ -137,9 +142,11 @@ def main():
             epoch, N_EPOCHS, SIGMA_START, SIGMA_TARGET,
             schedule="cosine", warmup_frac=WARMUP_FRAC,
         )
+        rl = RENDER_LAMBDA if epoch > RENDER_WARMUP_EPOCH else 0.0
         tr_loss = train_pose_epoch(
             model, train_loader, optimizer, device,
-            grad_clip=GRAD_CLIP, sigma_max=smax, missing_frac=MISSING_FRAC,
+            grad_clip=GRAD_CLIP, sigma_max=smax,
+            missing_frac=MISSING_FRAC, render_lambda=rl,
         )
         val_loss, val_psnr = val_pose_epoch(model, val_loader, device)
         scheduler.step()
@@ -150,8 +157,9 @@ def main():
             best_state    = {k: v.cpu().clone() for k, v in model.state_dict().items()}
             marker = " *"
 
+        rl_tag = f" +render(λ={rl:.0f})" if rl > 0 else ""
         print(
-            f"  ep {epoch:02d}/{N_EPOCHS} | σ_max={smax:.3f} | "
+            f"  ep {epoch:02d}/{N_EPOCHS} | σ_max={smax:.3f}{rl_tag} | "
             f"tr={tr_loss:.4f} | val={val_loss:.4f} | pos-PSNR={val_psnr:.1f} dB{marker}"
         )
 
