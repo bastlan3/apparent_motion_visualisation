@@ -20,6 +20,7 @@ class MotionDataset(Dataset):
         camera_radius: float = 5.0,
         n_bodies: int = 2,
         motion_modes: tuple = ('translate', 'rotate', 'both'),
+        pivot_spread: float = 0.0,
         seed: int = None,
     ):
         self.n_sequences = n_sequences
@@ -31,6 +32,7 @@ class MotionDataset(Dataset):
         self.camera_radius = camera_radius
         self.n_bodies = n_bodies
         self.motion_modes = motion_modes
+        self.pivot_spread = pivot_spread
         self.seed = seed
 
     def __len__(self) -> int:
@@ -44,6 +46,7 @@ class MotionDataset(Dataset):
         scene = Scene.random(
             n_bodies=self.n_bodies,
             motion_modes=self.motion_modes,
+            pivot_spread=self.pivot_spread,
         )
         camera = Camera(self.image_height, self.image_width, self.fov_y)
         camera.place_random(self.camera_radius)
