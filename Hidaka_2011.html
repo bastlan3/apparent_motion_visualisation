@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hidaka et al. (2011) — Orientation Feature Interpolation</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#808080; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:140px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="560" height="320"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>SOA: <span id="lbl">200</span> ms &nbsp;<input type="range" id="soa" min="40" max="600" value="200" step="20"></label>
+  <label>θ₁: <span id="t1Lbl">0</span>° &nbsp;<input type="range" id="t1" min="-90" max="90" value="0" step="15"></label>
+  <label>θ₂: <span id="t2Lbl">60</span>° &nbsp;<input type="range" id="t2" min="-90" max="90" value="60" step="15"></label>
+</div>
+<div class="meta">Hidaka et al. (2011). Gabor patches at two orientations — the perceived orientation at the midpoint during AM interpolates between θ₁ and θ₂.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+const PATCH_R=70, LX=CX-150, RX=CX+150;
+let soaMs=200, running=true, phase='f1', phaseStart=performance.now();
+
+function drawGabor(cx,cy,angleDeg,sigma=30,lambda=18,contrast=0.9) {
+  const angle=angleDeg*Math.PI/180;
+  const img=ctx.createImageData(PATCH_R*2,PATCH_R*2);
+  const d=img.data;
+  for(let py=0;py<PATCH_R*2;py++){
+    for(let px=0;px<PATCH_R*2;px++){
+      const dx=px-PATCH_R, dy=py-PATCH_R;
+      const r2=dx*dx+dy*dy;
+      if(r2>PATCH_R*PATCH_R){d[(py*PATCH_R*2+px)*4+3]=0;continue;}
+      const xp= dx*Math.cos(angle)+dy*Math.sin(angle);
+      const yp=-dx*Math.sin(angle)+dy*Math.cos(angle);
+      const gauss=Math.exp(-r2/(2*sigma*sigma));
+      const sine=Math.cos(2*Math.PI*xp/lambda);
+      const val=Math.round(128+contrast*128*gauss*sine);
+      const i=(py*PATCH_R*2+px)*4;
+      d[i]=d[i+1]=d[i+2]=val;
+      d[i+3]=Math.round(gauss*255);
+    }
+  }
+  // Put on offscreen canvas then draw centered
+  const oc=new OffscreenCanvas(PATCH_R*2,PATCH_R*2);
+  oc.getContext('2d').putImageData(img,0,0);
+  ctx.drawImage(oc,cx-PATCH_R,cy-PATCH_R);
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const t1=+document.getElementById('t1').value;
+  const t2=+document.getElementById('t2').value;
+  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+
+  ctx.fillStyle='#808080'; ctx.fillRect(0,0,c.width,c.height);
+  if(phase==='f1') drawGabor(LX,CY,t1);
+  else if(phase==='f2') drawGabor(RX,CY,t2);
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
+document.getElementById('t1').addEventListener('input',e=>{document.getElementById('t1Lbl').textContent=e.target.value;});
+document.getElementById('t2').addEventListener('input',e=>{document.getElementById('t2Lbl').textContent=e.target.value;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

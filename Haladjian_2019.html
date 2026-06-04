@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Haladjian et al. (2019) — Tactile Motion Quartet</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#2a2a2a; display:block; border-radius:8px; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:520px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="460" height="400"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">50</span> ms &nbsp;<input type="range" id="isi" min="10" max="300" value="50" step="10"></label>
+</div>
+<div class="meta">Haladjian et al. (2019). Tactile motion quartet — vibrotactile stimulators at 4 fingertip positions. Apparent motion perceived as horizontal or vertical.</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const btn = document.getElementById('btn');
+const isiSlider = document.getElementById('isi');
+const lbl = document.getElementById('lbl');
+
+const CX = c.width / 2, CY = c.height / 2;
+const R = 28; // tactor radius
+const HW = 110, HH = 100; // layout half-spacing
+const FRAME_MS = 200;
+
+// Positions: TL, TR, BL, BR
+const POS = {
+  TL: [-HW, -HH], TR: [HW, -HH],
+  BL: [-HW,  HH], BR: [HW,  HH]
+};
+
+// Frame 1: TL + BR active
+// Frame 2: TR + BL active
+let isiMs = 50, running = true, phase = 'f1', phaseStart = performance.now();
+let pulseT = 0;
+
+function drawTactor(x, y, active, t) {
+  const bx = CX + x, by = CY + y;
+  // Outer ring
+  ctx.strokeStyle = active ? '#ccc' : '#555';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(bx, by, R, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Inner fill with vibration effect when active
+  if (active) {
+    const wobble = Math.sin(t * 0.04) * 3;
+    const grad = ctx.createRadialGradient(bx, by, 0, bx, by, R + wobble);
+    grad.addColorStop(0, '#fff');
+    grad.addColorStop(0.4, '#bbb');
+    grad.addColorStop(1, '#666');
+    ctx.fillStyle = grad;
+  } else {
+    ctx.fillStyle = '#444';
+  }
+  ctx.beginPath();
+  ctx.arc(bx, by, R - 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Vibration ripples when active
+  if (active) {
+    for (let i = 1; i <= 2; i++) {
+      const rr = R + i * 12 + ((t * 0.05) % 12);
+      const alpha = Math.max(0, 0.4 - i * 0.15 - ((t * 0.05) % 1) * 0.3);
+      ctx.strokeStyle = `rgba(220,220,220,${alpha.toFixed(2)})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(bx, by, rr, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  // Label
+  ctx.fillStyle = active ? '#fff' : '#666';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(x < 0 ? (y < 0 ? 'Index L' : 'Ring L') : (y < 0 ? 'Index R' : 'Ring R'), bx, by);
+}
+
+function draw(active, t) {
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  // Hand outline (simple oval suggestion)
+  ctx.strokeStyle = '#3a3a3a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(CX, CY + 20, 160, 130, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#303030';
+  ctx.fill();
+
+  for (const [key, [x, y]] of Object.entries(POS)) {
+    drawTactor(x, y, active.includes(key), t);
+  }
+}
+
+function tick(now) {
+  if (!running) { requestAnimationFrame(tick); return; }
+  pulseT++;
+  const elapsed = now - phaseStart;
+  const dur = { f1: FRAME_MS, isi1: isiMs, f2: FRAME_MS, isi2: isiMs };
+  if (elapsed >= dur[phase]) {
+    phaseStart = now;
+    const order = ['f1','isi1','f2','isi2'];
+    phase = order[(order.indexOf(phase)+1)%4];
+  }
+  if (phase === 'f1') draw(['TL','BR'], pulseT);
+  else if (phase === 'f2') draw(['TR','BL'], pulseT);
+  else draw([], 0);
+  requestAnimationFrame(tick);
+}
+
+isiSlider.addEventListener('input', () => { isiMs = +isiSlider.value; lbl.textContent = isiMs; });
+btn.addEventListener('click', () => { running = !running; btn.textContent = running ? 'Pause' : 'Play'; if (running) phaseStart = performance.now(); });
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

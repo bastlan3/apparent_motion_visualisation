@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Yantis & Nakama (1998) — AM Trace Masking</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#808080; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+select { background:#333; color:#ddd; border:1px solid #555; padding:5px 10px; border-radius:4px; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="540" height="300"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">80</span> ms &nbsp;<input type="range" id="isi" min="20" max="200" value="80" step="10"></label>
+  <select id="probe">
+    <option value="none">No probe</option>
+    <option value="on" selected>On-path probe</option>
+    <option value="off">Off-path probe</option>
+  </select>
+</div>
+<div class="meta">Yantis &amp; Nakama (1998). A→B apparent motion. A probe dot appearing mid-ISI on the motion path is harder to detect than one off the path.</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+const FRAME_MS=100, R=14, PROBE_R=7;
+const AX=CX-120, BX=CX+120; // A and B positions
+
+let isiMs=80, running=true, phase='f1', phaseStart=performance.now();
+let probeVisible=false;
+
+function probePos() {
+  const mode=document.getElementById('probe').value;
+  if(mode==='none') return null;
+  const mx=(AX+BX)/2, my=CY;
+  if(mode==='on') return [mx,my];
+  return [mx, my-60]; // off-path: above the midpoint
+}
+
+function drawScene(showA, showB) {
+  ctx.fillStyle='#808080'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#111';
+  if(showA){ ctx.beginPath(); ctx.arc(AX,CY,R,0,Math.PI*2); ctx.fill(); }
+  if(showB){ ctx.beginPath(); ctx.arc(BX,CY,R,0,Math.PI*2); ctx.fill(); }
+}
+
+function drawProbe() {
+  const pp=probePos(); if(!pp) return;
+  ctx.fillStyle='#e74c3c';
+  ctx.beginPath(); ctx.arc(pp[0],pp[1],PROBE_R,0,Math.PI*2); ctx.fill();
+}
+
+// Probe appears halfway through ISI
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const elapsed=now-phaseStart;
+  const dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(elapsed>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+
+  const showProbe = (phase==='isi1' || phase==='isi2') && elapsed > dur[phase]*0.3 && elapsed < dur[phase]*0.7;
+
+  if(phase==='f1') drawScene(true,false);
+  else if(phase==='f2') drawScene(false,true);
+  else drawScene(false,false);
+
+  if(showProbe) drawProbe();
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('isi').addEventListener('input',e=>{isiMs=+e.target.value;document.getElementById('lbl').textContent=isiMs;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

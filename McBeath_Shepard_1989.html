@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>McBeath & Shepard (1989) — Path Curvature in AM</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#111; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="560" height="380"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>SOA: <span id="lbl">300</span> ms &nbsp;<input type="range" id="soa" min="50" max="800" value="300" step="50"></label>
+  <label>Rotation: <span id="rotLbl">90</span>° &nbsp;<input type="range" id="rot" min="30" max="180" value="90" step="30"></label>
+  <label>Separation: <span id="sepLbl">120</span> px &nbsp;<input type="range" id="sep" min="60" max="200" value="120" step="20"></label>
+</div>
+<div class="meta">McBeath &amp; Shepard (1989). Shape at two positions and orientations — perceived path curves (kinematic geometry predicts a circular arc, not a straight line).</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+let soaMs=300, running=true, phase='f1', phaseStart=performance.now();
+
+// Ellipse shape to make orientation obvious
+function drawShape(cx,cy,angleDeg) {
+  const angle=angleDeg*Math.PI/180;
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.ellipse(0,0,50,22,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(180,200,255,0.15)';
+  ctx.fill();
+  ctx.strokeStyle='#a0b8ff';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  // Arrow to show orientation
+  ctx.strokeStyle='#6090ff';
+  ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(-30,0); ctx.lineTo(30,0);
+  ctx.moveTo(22,-6); ctx.lineTo(30,0); ctx.lineTo(22,6);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
+  const rot=+document.getElementById('rot').value;
+  const sep=+document.getElementById('sep').value;
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+
+  ctx.fillStyle='#111'; ctx.fillRect(0,0,c.width,c.height);
+
+  if(phase==='f1') drawShape(CX-sep/2, CY, 0);
+  else if(phase==='f2') drawShape(CX+sep/2, CY, rot);
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
+document.getElementById('rot').addEventListener('input',e=>{document.getElementById('rotLbl').textContent=e.target.value;});
+document.getElementById('sep').addEventListener('input',e=>{document.getElementById('sepLbl').textContent=e.target.value;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

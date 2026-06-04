@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shiffrar & Freyd (1993) — Body Photograph AM</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#c8c8c8; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="500" height="420"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>SOA: <span id="lbl">200</span> ms &nbsp;<input type="range" id="soa" min="40" max="800" value="200" step="40"></label>
+</div>
+<div class="meta">Shiffrar &amp; Freyd (1993). Body in two arm positions — at long SOA the anatomically possible path (around the body) is preferred over the shorter direct path.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+let soaMs=200, running=true, phase='f1', phaseStart=performance.now();
+
+// Draw a simple stick figure with arm at given angle from shoulder
+// armAngle: 0 = arm pointing down, negative = arm behind body, positive = arm in front
+function drawFigure(armAngle) {
+  ctx.fillStyle='#c8c8c8'; ctx.fillRect(0,0,c.width,c.height);
+
+  const ox=CX, oy=CY; // center of figure
+  ctx.strokeStyle='#222'; ctx.lineWidth=4; ctx.lineCap='round';
+
+  // Head
+  ctx.fillStyle='#222';
+  ctx.beginPath(); ctx.arc(ox, oy-120, 22, 0, Math.PI*2); ctx.fill();
+
+  // Torso
+  ctx.beginPath(); ctx.moveTo(ox,oy-98); ctx.lineTo(ox,oy-20); ctx.stroke();
+
+  // Legs
+  ctx.beginPath(); ctx.moveTo(ox,oy-20); ctx.lineTo(ox-30,oy+60); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox,oy-20); ctx.lineTo(ox+30,oy+60); ctx.stroke();
+
+  // Left arm (static, at rest)
+  ctx.beginPath(); ctx.moveTo(ox,oy-80); ctx.lineTo(ox-55,oy-30); ctx.stroke();
+
+  // Right arm (variable position)
+  const shoulderX=ox, shoulderY=oy-80;
+  const armLen=60;
+  const rad=armAngle * Math.PI/180;
+  const elbowX=shoulderX + Math.sin(rad)*armLen;
+  const elbowY=shoulderY + Math.cos(rad)*armLen;
+  const handX=elbowX + Math.sin(rad+0.4)*armLen*0.7;
+  const handY=elbowY + Math.cos(rad+0.4)*armLen*0.7;
+
+  ctx.beginPath(); ctx.moveTo(shoulderX,shoulderY); ctx.lineTo(elbowX,elbowY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(elbowX,elbowY); ctx.lineTo(handX,handY); ctx.stroke();
+
+  // Hand dot
+  ctx.beginPath(); ctx.arc(handX,handY,6,0,Math.PI*2); ctx.fill();
+}
+
+// Frame 1: arm pointing up-right (angle -60 from down = raised)
+// Frame 2: arm pointing down-left (angle 150 from down = behind body)
+// Short path = across the body (through body obstruction)
+// Long path = around the body (anatomically correct)
+const F1_ANGLE = -70;  // raised up
+const F2_ANGLE =  130; // lowered behind
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+  if(phase==='f1') drawFigure(F1_ANGLE);
+  else if(phase==='f2') drawFigure(F2_ANGLE);
+  else { ctx.fillStyle='#c8c8c8'; ctx.fillRect(0,0,c.width,c.height); }
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

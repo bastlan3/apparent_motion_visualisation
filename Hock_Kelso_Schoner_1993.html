@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hock, Kelso & Schöner (1993) — Motion Quartet</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#808080; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:520px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="520" height="400"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">45</span> ms &nbsp;<input type="range" id="isi" min="10" max="200" value="45" step="5"></label>
+  <label>H/V ratio: <span id="ratioLbl">1.0</span> &nbsp;<input type="range" id="ratio" min="0.3" max="3.0" value="1.0" step="0.1"></label>
+</div>
+<div class="meta">Hock, Kelso &amp; Schöner (1993). Frame: 195 ms. Bistable — wide rectangle favors H motion, tall rectangle favors V motion.</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const CX = c.width/2, CY = c.height/2, R = 9, BASE = 80, FRAME_MS = 195;
+let isiMs=45, running=true, phase='f1', phaseStart=performance.now();
+
+function dims() { const r=+document.getElementById('ratio').value; const scale=Math.sqrt(r); return {hw:BASE*scale, hh:BASE/scale}; }
+
+function draw(frame) {
+  const {hw,hh}=dims();
+  ctx.fillStyle='#808080'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#000';
+  const dots = frame===1 ? [[-hw,-hh],[hw,hh]] : [[hw,-hh],[-hw,hh]];
+  for(const [x,y] of dots){ ctx.beginPath(); ctx.arc(CX+x,CY+y,R,0,Math.PI*2); ctx.fill(); }
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+  if(phase==='f1')draw(1); else if(phase==='f2')draw(2);
+  else{ctx.fillStyle='#808080';ctx.fillRect(0,0,c.width,c.height);}
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('isi').addEventListener('input',e=>{isiMs=+e.target.value;document.getElementById('lbl').textContent=isiMs;});
+document.getElementById('ratio').addEventListener('input',e=>{document.getElementById('ratioLbl').textContent=(+e.target.value).toFixed(1);});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

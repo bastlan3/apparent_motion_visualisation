@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Madelain & Krauzlis (2003) — Illusory Contour AM</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#808080; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="580" height="340"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>SOA: <span id="lbl">400</span> ms &nbsp;<input type="range" id="soa" min="100" max="1000" value="400" step="50"></label>
+</div>
+<div class="meta">Madelain &amp; Krauzlis (2003). Illusory Kanizsa squares alternate left/right — apparent motion of the invisible contour drives smooth pursuit eye movements.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+const SQ=55; // half-size of illusory square
+const OFFSET=120; // horizontal offset from center
+const IND_R=22; // pac-man radius
+
+// Draw a pac-man inducer (notch facing inward toward illusory square center)
+function drawInducer(cx, cy, facingAngle) {
+  // facingAngle: angle toward the center of the illusory square
+  const gap = Math.PI/4; // 45° notch
+  ctx.fillStyle='#111';
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.arc(cx,cy,IND_R, facingAngle+gap, facingAngle-gap+Math.PI*2);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Draw Kanizsa square configuration centered at (ox, oy)
+function drawKanizsa(ox, oy) {
+  // 4 inducers at corners, notches facing inward
+  // TL corner: notch faces right+down = 45°
+  // TR: 135°, BL: 315°, BR: 225°
+  drawInducer(ox-SQ, oy-SQ, Math.PI*0.25);   // TL → SE
+  drawInducer(ox+SQ, oy-SQ, Math.PI*0.75);   // TR → SW
+  drawInducer(ox-SQ, oy+SQ, Math.PI*-0.25);  // BL → NE
+  drawInducer(ox+SQ, oy+SQ, Math.PI*1.25);   // BR → NW
+}
+
+let soaMs=400, running=true, phase='f1', phaseStart=performance.now();
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+  ctx.fillStyle='#808080'; ctx.fillRect(0,0,c.width,c.height);
+  if(phase==='f1') drawKanizsa(CX-OFFSET, CY);
+  else if(phase==='f2') drawKanizsa(CX+OFFSET, CY);
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

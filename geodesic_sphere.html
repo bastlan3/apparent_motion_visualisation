@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geodesic on S²</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght=8..60,300;8..60,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #12121e;
+    color: #c8c8d0;
+    font-family: 'Source Serif 4', serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  #canvas-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  canvas { display: block; }
+
+  #info-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(10, 10, 18, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 12px 14px;
+    width: 250px;
+    max-height: 85vh;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    z-index: 10;
+  }
+
+  #info-panel h2 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 300;
+    font-size: 16px;
+    color: #e0e0e8;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .coord-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 1px 0;
+  }
+
+  .label { color: #6a6a80; }
+  .value { color: #a0d8ef; }
+  .value-b { color: #efb0a0; }
+  .arc-val { color: #d0ef9a; font-weight: 600; }
+
+  #instructions {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 10, 18, 0.8);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #7a7a90;
+    z-index: 10;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  kbd {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10px;
+    color: #b0b0c0;
+  }
+
+  #reset-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: #9090a0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 8px 14px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+  }
+
+  #reset-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: #d0d0e0;
+  }
+
+  #view-buttons {
+    position: absolute;
+    top: 56px;
+    right: 20px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+
+  .view-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: #9090a0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .view-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: #d0d0e0;
+  }
+
+  #marker-toggle {
+    position: absolute;
+    top: 92px;
+    right: 20px;
+    display: flex;
+    background: rgba(10, 10, 18, 0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 6px;
+    padding: 2px;
+    z-index: 10;
+  }
+
+  .toggle-btn {
+    background: transparent;
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    color: #6a6a80;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .toggle-btn.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e0e0e8;
+  }
+
+  .toggle-btn:hover:not(.active) {
+    color: #b0b0c0;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* Slider Styling */
+  .slider-container {
+    margin-top: 6px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.08);
+    height: 3px;
+    border-radius: 1.5px;
+    outline: none;
+    transition: background 0.2s;
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #a0d8ef;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+</style>
+</head>
+<body>
+<div id="canvas-container">
+  <div id="info-panel">
+    <h2>Geodesic on S²</h2>
+    <div id="coords-display">
+      <div class="coord-line"><span class="label">status</span><span class="value">click sphere to place point A</span></div>
+    </div>
+    
+    <div id="controls-section" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
+      <div style="font-family: 'Source Serif 4', serif; font-size: 12px; margin-bottom: 4px; color: #e0e0e8;">Marker Settings</div>
+      
+      <!-- Box controls -->
+      <div id="box-sliders">
+        <div class="slider-container">
+          <div class="coord-line">
+            <span class="label">box width</span>
+            <span class="value" id="val-width">0.12</span>
+          </div>
+          <input type="range" id="slider-width" min="0.04" max="0.30" step="0.01" value="0.12">
+        </div>
+        
+        <div class="slider-container">
+          <div class="coord-line">
+            <span class="label">box length</span>
+            <span class="value" id="val-length">0.22</span>
+          </div>
+          <input type="range" id="slider-length" min="0.04" max="0.50" step="0.01" value="0.22">
+        </div>
+        
+        <div class="slider-container">
+          <div class="coord-line">
+            <span class="label">box height</span>
+            <span class="value" id="val-height">0.06</span>
+          </div>
+          <input type="range" id="slider-height" min="0.01" max="0.20" step="0.01" value="0.06">
+        </div>
+      </div>
+
+      <!-- Dot controls -->
+      <div id="dot-sliders" style="display: none;">
+        <div class="slider-container">
+          <div class="coord-line">
+            <span class="label">dot radius</span>
+            <span class="value" id="val-radius">0.07</span>
+          </div>
+          <input type="range" id="slider-radius" min="0.02" max="0.20" step="0.01" value="0.07">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button id="reset-btn">reset points</button>
+  <div id="view-buttons">
+    <button class="view-btn" id="view-pole">pole view</button>
+    <button class="view-btn" id="view-equator">equator view</button>
+  </div>
+  <div id="marker-toggle">
+    <button class="toggle-btn active" id="btn-style-box">box</button>
+    <button class="toggle-btn" id="btn-style-dot">dot</button>
+  </div>
+  <div id="instructions">
+    <kbd>click</kbd> to place markers &nbsp;·&nbsp; <kbd>drag marker</kbd> to move &nbsp;·&nbsp; <kbd>drag</kbd> to orbit &nbsp;·&nbsp; <kbd>scroll</kbd> to zoom
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  // --- Scene setup ---
+  const container = document.getElementById('canvas-container');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 4);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x12121e, 1);
+  container.appendChild(renderer.domElement);
+
+  // --- Lights ---
+  const ambientLight = new THREE.AmbientLight(0x6070a0, 0.9);
+  scene.add(ambientLight);
+  const dirLight = new THREE.DirectionalLight(0xc0c8ff, 1.1);
+  dirLight.position.set(3, 4, 5);
+  scene.add(dirLight);
+  const dirLight2 = new THREE.DirectionalLight(0xffd0b0, 0.5);
+  dirLight2.position.set(-3, -2, 3);
+  scene.add(dirLight2);
+
+  // --- Sphere ---
+  const RADIUS = 1.5;
+  const sphereGeo = new THREE.SphereGeometry(RADIUS, 96, 64);
+  const sphereMat = new THREE.MeshPhongMaterial({
+    color: 0x4a6ea8,
+    transparent: true,
+    opacity: 0.78,
+    shininess: 80,
+    specular: 0x6688bb,
+    side: THREE.FrontSide,
+  });
+  const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+  scene.add(sphere);
+
+  // Wireframe overlay
+  const wireGeo = new THREE.SphereGeometry(RADIUS * 1.001, 36, 18);
+  const wireMat = new THREE.MeshBasicMaterial({
+    color: 0x7090c0,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.2,
+  });
+  scene.add(new THREE.Mesh(wireGeo, wireMat));
+
+  // Latitude/longitude lines
+  function addGreatCircleRing(axis, angle, color, opacity) {
+    const curve = new THREE.EllipseCurve(0, 0, RADIUS * 1.002, RADIUS * 1.002, 0, 2 * Math.PI, false, 0);
+    const pts = curve.getPoints(128);
+    const geo = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p.x, p.y, 0)));
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+    const line = new THREE.Line(geo, mat);
+    if (axis === 'x') line.rotation.y = angle;
+    else if (axis === 'y') {
+      line.rotation.x = Math.PI / 2;
+      const r = RADIUS * Math.cos(angle) * 1.002;
+      const geo2 = new THREE.BufferGeometry().setFromPoints(
+        new THREE.EllipseCurve(0, 0, r, r, 0, 2 * Math.PI, false, 0).getPoints(128)
+          .map(p => new THREE.Vector3(p.x, p.y, 0))
+      );
+      const line2 = new THREE.Line(geo2, mat.clone());
+      line2.rotation.x = Math.PI / 2;
+      line2.position.y = RADIUS * Math.sin(angle) * 1.002;
+      scene.add(line2);
+      return;
+    }
+    scene.add(line);
+  }
+
+  // Equator and prime meridian
+  addGreatCircleRing('x', 0, 0x80a0cc, 0.4);
+  addGreatCircleRing('x', Math.PI / 2, 0x80a0cc, 0.25);
+  addGreatCircleRing('y', 0, 0x80a0cc, 0.4);
+
+  // Latitude lines
+  for (let lat of [-60, -30, 30, 60]) {
+    addGreatCircleRing('y', lat * Math.PI / 180, 0x6080aa, 0.2);
+  }
+
+  // --- Orbit Controls ---
+  let isDragging = false;
+  let prevMouse = { x: 0, y: 0 };
+  let spherical = new THREE.Spherical(4, Math.PI / 2.5, 0.3);
+
+  function updateCamera() {
+    camera.position.setFromSpherical(spherical);
+    camera.lookAt(0, 0, 0);
+  }
+  updateCamera();
+
+  function getMouseVec(e) {
+    return new THREE.Vector2(
+      (e.clientX / window.innerWidth) * 2 - 1,
+      -(e.clientY / window.innerHeight) * 2 + 1
+    );
+  }
+
+  function raycastSphere(e) {
+    raycaster.setFromCamera(getMouseVec(e), camera);
+    const hits = raycaster.intersectObject(sphere);
+    return hits.length > 0 ? hits[0].point.clone().normalize() : null;
+  }
+
+  renderer.domElement.addEventListener('wheel', e => {
+    spherical.radius = Math.max(2.2, Math.min(8, spherical.radius + e.deltaY * 0.003));
+    updateCamera();
+  }, { passive: true });
+
+  // --- Point placement (multi-pair) ---
+  const pairs = []; // { pointA, pointB, markerA, markerB, lines: [], colorA, colorB, colorLine }
+  let currentPair = null; // pair being built (has A, awaiting B)
+  let wasDragged = false;
+  let markerStyle = 'box'; // 'box' or 'dot'
+
+  // Current Sizes
+  let boxWidth = 0.12;
+  let boxLength = 0.22;
+  let boxHeight = 0.06;
+  let dotRadius = 0.07;
+
+  const PAIR_COLORS = [
+    { a: 0xa0d8ef, b: 0xefb0a0, line: 0xd0ef9a },
+    { a: 0xc8a0ef, b: 0xefd0a0, line: 0xefa0c8 },
+    { a: 0xa0efb8, b: 0xef80a0, line: 0xa0c8ef },
+    { a: 0xefc870, b: 0x70c8ef, line: 0xefef80 },
+    { a: 0xf090c0, b: 0x90f0c0, line: 0xc0c0f0 },
+    { a: 0x80e0d0, b: 0xe08080, line: 0xe0d080 },
+  ];
+
+  const raycaster = new THREE.Raycaster();
+
+  // Custom marker function: Contains both a highly styled box and a sleek dot representation
+  function createMarker(color) {
+    const group = new THREE.Group();
+
+    // 1. BOX REPRESENTATION
+    const boxGroup = new THREE.Group();
+    const width = 0.12;
+    const length = 0.22;
+    const height = 0.06;
+
+    const boxGeo = new THREE.BoxGeometry(width, length, height);
+    boxGeo.translate(0, 0, height / 2); // offset so it sits flat on surface
+
+    const boxMat = new THREE.MeshPhongMaterial({
+      color: color,
+      shininess: 90,
+      specular: 0xffffff,
+      transparent: true,
+      opacity: 0.9
+    });
+    const boxMesh = new THREE.Mesh(boxGeo, boxMat);
+    boxGroup.add(boxMesh);
+
+    const edgeGeo = new THREE.EdgesGeometry(boxGeo);
+    const edgeMat = new THREE.LineBasicMaterial({ color: color, linewidth: 2 });
+    const wireframe = new THREE.LineSegments(edgeGeo, edgeMat);
+    boxGroup.add(wireframe);
+    
+    // Scale box group to match initial settings
+    boxGroup.scale.set(boxWidth / 0.12, boxLength / 0.22, boxHeight / 0.06);
+    group.add(boxGroup);
+
+    // 2. DOT REPRESENTATION
+    const dotGroup = new THREE.Group();
+    const dotRadiusVal = 0.07;
+    const dotGeo = new THREE.SphereGeometry(dotRadiusVal, 24, 24);
+    dotGeo.translate(0, 0, dotRadiusVal); // offset to sit on surface
+    const dotMat = new THREE.MeshPhongMaterial({
+      color: color,
+      shininess: 90,
+      specular: 0xffffff,
+      transparent: true,
+      opacity: 0.95
+    });
+    const dotMesh = new THREE.Mesh(dotGeo, dotMat);
+    dotGroup.add(dotMesh);
+
+    // Scale dot group to match initial settings
+    dotGroup.scale.setScalar(dotRadius / 0.07);
+    group.add(dotGroup);
+
+    // Set visibility according to the current style
+    boxGroup.visible = (markerStyle === 'box');
+    dotGroup.visible = (markerStyle === 'dot');
+
+    scene.add(group);
+    return group;
+  }
+
+  // Aligns the box marker flat tangent to the sphere, turning to face its target along the geodesic path
+  function alignMarker(marker, pos, targetPos) {
+    const up = pos.clone().normalize(); // Outward sphere normal (Z-axis)
+    let forward;
+
+    if (targetPos) {
+      // Find direction towards the target projected onto the tangent plane at 'pos'
+      const proj = targetPos.clone().sub(up.clone().multiplyScalar(targetPos.dot(up)));
+      if (proj.lengthSq() > 1e-8) {
+        forward = proj.normalize(); // Forward tangent direction (Y-axis)
+      } else {
+        forward = new THREE.Vector3(0, 1, 0).projectOnPlane(up).normalize();
+        if (forward.lengthSq() < 1e-8) {
+          forward = new THREE.Vector3(1, 0, 0).projectOnPlane(up).normalize();
+        }
+      }
+    } else {
+      forward = new THREE.Vector3(0, 1, 0).projectOnPlane(up).normalize();
+      if (forward.lengthSq() < 1e-8) {
+        forward = new THREE.Vector3(1, 0, 0).projectOnPlane(up).normalize();
+      }
+    }
+
+    const right = new THREE.Vector3().crossVectors(forward, up).normalize(); // Right vector (X-axis)
+
+    // Build the custom 3D rotation matrix
+    const matrix = new THREE.Matrix4();
+    matrix.makeBasis(right, forward, up);
+    marker.quaternion.setFromRotationMatrix(matrix);
+  }
+
+  function updatePairMarkers(p) {
+    if (p.pointA) {
+      p.markerA.position.copy(p.pointA.clone().multiplyScalar(RADIUS * 1.005));
+      alignMarker(p.markerA, p.pointA, p.pointB);
+    }
+    if (p.pointB) {
+      p.markerB.position.copy(p.pointB.clone().multiplyScalar(RADIUS * 1.005));
+      alignMarker(p.markerB, p.pointB, p.pointA);
+    }
+  }
+
+  function updateMarkerStyles() {
+    const allPairs = currentPair ? [...pairs, currentPair] : pairs;
+    allPairs.forEach(p => {
+      if (p.markerA) {
+        p.markerA.children[0].visible = (markerStyle === 'box');
+        p.markerA.children[1].visible = (markerStyle === 'dot');
+      }
+      if (p.markerB) {
+        p.markerB.children[0].visible = (markerStyle === 'box');
+        p.markerB.children[1].visible = (markerStyle === 'dot');
+      }
+    });
+  }
+
+  function updateMarkerSizes() {
+    const allPairs = currentPair ? [...pairs, currentPair] : pairs;
+    allPairs.forEach(p => {
+      if (p.markerA) {
+        p.markerA.children[0].scale.set(boxWidth / 0.12, boxLength / 0.22, boxHeight / 0.06);
+        p.markerA.children[1].scale.setScalar(dotRadius / 0.07);
+      }
+      if (p.markerB) {
+        p.markerB.children[0].scale.set(boxWidth / 0.12, boxLength / 0.22, boxHeight / 0.06);
+        p.markerB.children[1].scale.setScalar(dotRadius / 0.07);
+      }
+    });
+  }
+
+  function toSphericalCoords(v) {
+    const n = v.clone().normalize();
+    const theta = Math.atan2(n.x, n.z);
+    const phi = Math.acos(Math.max(-1, Math.min(1, n.y)));
+    return { lat: 90 - phi * 180 / Math.PI, lon: theta * 180 / Math.PI };
+  }
+
+  // geodesic calculation using slerp formulation
+  function computeGeodesic(a, b, numPoints) {
+    const na = a.clone().normalize();
+    const nb = b.clone().normalize();
+    const dot = Math.max(-1, Math.min(1, na.dot(nb)));
+    const angle = Math.acos(dot);
+    const points = [];
+    if (angle < 1e-6) return { points: [na.clone().multiplyScalar(RADIUS)], angle: 0 };
+    for (let i = 0; i <= numPoints; i++) {
+      const t = i / numPoints;
+      const sinAngle = Math.sin(angle);
+      const wA = Math.sin((1 - t) * angle) / sinAngle;
+      const wB = Math.sin(t * angle) / sinAngle;
+      points.push(new THREE.Vector3(
+        wA * na.x + wB * nb.x, wA * na.y + wB * nb.y, wA * na.z + wB * nb.z
+      ).normalize().multiplyScalar(RADIUS * 1.003));
+    }
+    return { points, angle };
+  }
+
+  function clearPairLines(pair) {
+    pair.lines.forEach(l => scene.remove(l));
+    pair.lines = [];
+  }
+
+  function drawGeodesicForPair(pair) {
+    clearPairLines(pair);
+    if (!pair.pointA || !pair.pointB) return 0;
+
+    const { points, angle } = computeGeodesic(pair.pointA, pair.pointB, 128);
+    if (points.length < 2) return 0;
+
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({ color: pair.colorLine, linewidth: 2 });
+    const line = new THREE.Line(geo, mat);
+    scene.add(line);
+    pair.lines.push(line);
+
+    // Complementary arc (dashed)
+    const na = pair.pointA.clone().normalize();
+    const nb = pair.pointB.clone().normalize();
+    const dot = Math.max(-1, Math.min(1, na.dot(nb)));
+    const fullAngle = Math.acos(dot);
+    const complement = 2 * Math.PI - fullAngle;
+    if (complement > 0.01 && Math.sin(fullAngle) > 1e-6) {
+      const e1 = na.clone();
+      const e2 = nb.clone().sub(na.clone().multiplyScalar(dot)).normalize();
+      const fullPoints = [];
+      for (let i = 0; i <= 128; i++) {
+        const t = i / 128;
+        const ang = fullAngle + t * complement;
+        fullPoints.push(e1.clone().multiplyScalar(Math.cos(ang))
+          .add(e2.clone().multiplyScalar(Math.sin(ang)))
+          .normalize().multiplyScalar(RADIUS * 1.003));
+      }
+      const geoComp = new THREE.BufferGeometry().setFromPoints(fullPoints);
+      const matComp = new THREE.LineDashedMaterial({
+        color: pair.colorLine, transparent: true, opacity: 0.12,
+        dashSize: 0.05, gapSize: 0.03,
+      });
+      const compLine = new THREE.Line(geoComp, matComp);
+      compLine.computeLineDistances();
+      scene.add(compLine);
+      pair.lines.push(compLine);
+    }
+
+    return angle;
+  }
+
+  function updateDisplay() {
+    const display = document.getElementById('coords-display');
+    let html = '';
+    const allPairs = currentPair && !currentPair.pointB
+      ? [...pairs, currentPair] : pairs;
+
+    if (allPairs.length === 0) {
+      html = `<div class="coord-line"><span class="label">status</span><span class="value">click sphere to place point A</span></div>`;
+      display.innerHTML = html;
+      return;
+    }
+
+    allPairs.forEach((pair, i) => {
+      const idx = i + 1;
+      const cHex = '#' + pair.colorLine.toString(16).padStart(6, '0');
+      html += `<div style="color:${cHex}; font-weight:600; margin-top:${i > 0 ? 6 : 0}px;">pair ${idx}</div>`;
+      if (pair.pointA) {
+        const ca = toSphericalCoords(pair.pointA);
+        html += `<div class="coord-line"><span class="label">A</span><span style="color:${'#' + pair.colorA.toString(16).padStart(6,'0')}">(${ca.lat.toFixed(1)}°, ${ca.lon.toFixed(1)}°)</span></div>`;
+      }
+      if (pair.pointB) {
+        const cb = toSphericalCoords(pair.pointB);
+        html += `<div class="coord-line"><span class="label">B</span><span style="color:${'#' + pair.colorB.toString(16).padStart(6,'0')}">(${cb.lat.toFixed(1)}°, ${cb.lon.toFixed(1)}°)</span></div>`;
+        const na = pair.pointA.clone().normalize();
+        const nb = pair.pointB.clone().normalize();
+        const angle = Math.acos(Math.max(-1, Math.min(1, na.dot(nb))));
+        html += `<div class="coord-line"><span class="label">arc</span><span class="arc-val">${angle.toFixed(4)} rad · ${(angle * 180 / Math.PI).toFixed(1)}°</span></div>`;
+      } else {
+        html += `<div class="coord-line"><span class="label">status</span><span class="value">click to place point B</span></div>`;
+      }
+    });
+
+    display.innerHTML = html;
+  }
+
+  // --- Drag detection across all pairs ---
+  function findNearestMarker(e) {
+    const mv = getMouseVec(e);
+    let best = null, bestDist = 0.08;
+    const check = (marker, pair, which) => {
+      if (!marker) return;
+      const ms = marker.position.clone().project(camera);
+      const d = Math.sqrt((mv.x - ms.x) ** 2 + (mv.y - ms.y) ** 2);
+      if (d < bestDist) { bestDist = d; best = { pair, which }; }
+    };
+    pairs.forEach(p => { check(p.markerA, p, 'A'); check(p.markerB, p, 'B'); });
+    if (currentPair) { check(currentPair.markerA, currentPair, 'A'); }
+    return best;
+  }
+
+  let draggingTarget = null; // { pair, which: 'A'|'B' }
+
+  renderer.domElement.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    wasDragged = false;
+    prevMouse = { x: e.clientX, y: e.clientY };
+
+    const hit = findNearestMarker(e);
+    if (hit) {
+      draggingTarget = hit;
+      renderer.domElement.style.cursor = 'grabbing';
+      return;
+    }
+    isDragging = true;
+  });
+
+  renderer.domElement.addEventListener('pointermove', e => {
+    if (!isDragging && !draggingTarget) {
+      const hit = findNearestMarker(e);
+      renderer.domElement.style.cursor = hit ? 'grab' : 'default';
+    }
+
+    if (draggingTarget) {
+      const norm = raycastSphere(e);
+      if (!norm) return;
+      const p = draggingTarget.pair;
+      if (draggingTarget.which === 'A') {
+        p.pointA = norm;
+      } else {
+        p.pointB = norm;
+      }
+      updatePairMarkers(p);
+      if (p.pointA && p.pointB) drawGeodesicForPair(p);
+      updateDisplay();
+      wasDragged = true;
+      return;
+    }
+
+    if (!isDragging) return;
+    const dx = e.clientX - prevMouse.x;
+    const dy = e.clientY - prevMouse.y;
+    spherical.theta -= dx * 0.005;
+    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + dy * 0.005));
+    prevMouse = { x: e.clientX, y: e.clientY };
+    updateCamera();
+    wasDragged = true;
+  });
+
+  renderer.domElement.addEventListener('pointerup', () => {
+    isDragging = false;
+    if (draggingTarget) {
+      draggingTarget = null;
+      renderer.domElement.style.cursor = 'default';
+    }
+  });
+
+  renderer.domElement.addEventListener('click', e => {
+    if (wasDragged) return;
+    const norm = raycastSphere(e);
+    if (!norm) return;
+
+    if (!currentPair) {
+      // Start new pair
+      const ci = pairs.length % PAIR_COLORS.length;
+      const colors = PAIR_COLORS[ci];
+      currentPair = {
+        pointA: norm, pointB: null,
+        markerA: createMarker(colors.a), markerB: null,
+        lines: [],
+        colorA: colors.a, colorB: colors.b, colorLine: colors.line,
+      };
+      updatePairMarkers(currentPair);
+      updateDisplay();
+    } else {
+      // Finish current pair
+      currentPair.pointB = norm;
+      currentPair.markerB = createMarker(currentPair.colorB);
+      updatePairMarkers(currentPair);
+      drawGeodesicForPair(currentPair);
+      pairs.push(currentPair);
+      currentPair = null;
+      updateDisplay();
+    }
+  });
+
+  // Reset
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    pairs.forEach(p => {
+      if (p.markerA) scene.remove(p.markerA);
+      if (p.markerB) scene.remove(p.markerB);
+      clearPairLines(p);
+    });
+    pairs.length = 0;
+    if (currentPair) {
+      if (currentPair.markerA) scene.remove(currentPair.markerA);
+      currentPair = null;
+    }
+    updateDisplay();
+  });
+
+  // --- Style Toggles ---
+  const btnStyleBox = document.getElementById('btn-style-box');
+  const btnStyleDot = document.getElementById('btn-style-dot');
+  const boxSliders = document.getElementById('box-sliders');
+  const dotSliders = document.getElementById('dot-sliders');
+
+  function setMarkerStyle(style) {
+    markerStyle = style;
+    if (style === 'box') {
+      btnStyleBox.classList.add('active');
+      btnStyleDot.classList.remove('active');
+      boxSliders.style.display = 'block';
+      dotSliders.style.display = 'none';
+    } else {
+      btnStyleBox.classList.remove('active');
+      btnStyleDot.classList.add('active');
+      boxSliders.style.display = 'none';
+      dotSliders.style.display = 'block';
+    }
+    updateMarkerStyles();
+  }
+
+  btnStyleBox.addEventListener('click', () => setMarkerStyle('box'));
+  btnStyleDot.addEventListener('click', () => setMarkerStyle('dot'));
+
+  // --- Slider Listeners ---
+  const sliderWidth = document.getElementById('slider-width');
+  const sliderLength = document.getElementById('slider-length');
+  const sliderHeight = document.getElementById('slider-height');
+  const sliderRadius = document.getElementById('slider-radius');
+
+  const valWidth = document.getElementById('val-width');
+  const valLength = document.getElementById('val-length');
+  const valHeight = document.getElementById('val-height');
+  const valRadius = document.getElementById('val-radius');
+
+  sliderWidth.addEventListener('input', (e) => {
+    boxWidth = parseFloat(e.target.value);
+    valWidth.textContent = boxWidth.toFixed(2);
+    updateMarkerSizes();
+  });
+
+  sliderLength.addEventListener('input', (e) => {
+    boxLength = parseFloat(e.target.value);
+    valLength.textContent = boxLength.toFixed(2);
+    updateMarkerSizes();
+  });
+
+  sliderHeight.addEventListener('input', (e) => {
+    boxHeight = parseFloat(e.target.value);
+    valHeight.textContent = boxHeight.toFixed(2);
+    updateMarkerSizes();
+  });
+
+  sliderRadius.addEventListener('input', (e) => {
+    dotRadius = parseFloat(e.target.value);
+    valRadius.textContent = dotRadius.toFixed(2);
+    updateMarkerSizes();
+  });
+
+  // --- View buttons ---
+  function animateCamera(targetPhi, targetTheta, duration) {
+    const startPhi = spherical.phi;
+    const startTheta = spherical.theta;
+    const startTime = performance.now();
+    function step(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // ease in-out quad
+      spherical.phi = startPhi + (targetPhi - startPhi) * ease;
+      spherical.theta = startTheta + (targetTheta - startTheta) * ease;
+      updateCamera();
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  document.getElementById('view-pole').addEventListener('click', () => {
+    animateCamera(0.01, spherical.theta, 600);
+  });
+
+  document.getElementById('view-equator').addEventListener('click', () => {
+    animateCamera(Math.PI / 2, 0, 600);
+  });
+
+  // --- Resize ---
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // --- Animate ---
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>

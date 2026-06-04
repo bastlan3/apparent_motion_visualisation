@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chatterjee, Freyd & Shiffrar (1996) — Biological Motion AM</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#c8c8c8; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="500" height="420"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>SOA: <span id="lbl">300</span> ms &nbsp;<input type="range" id="soa" min="40" max="800" value="300" step="40"></label>
+</div>
+<div class="meta">Chatterjee, Freyd &amp; Shiffrar (1996). Whole-body position changes — biomechanically plausible paths are preferred even when they are longer than the direct path.</div>
+<script>
+const c=document.getElementById('c');
+const ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2+20;
+let soaMs=300, running=true, phase='f1', phaseStart=performance.now();
+
+// Pose: {headY, torsoAngle, lArmAngle, rArmAngle, lLegAngle, rLegAngle}
+// All angles in degrees from vertical
+const POSE1 = { lArm:-40, rArm:30, lLeg:-20, rLeg:15 };  // step A
+const POSE2 = { lArm: 30, rArm:-40, lLeg: 15, rLeg:-20 }; // step B (opposite gait)
+
+function drawFigure(pose) {
+  ctx.fillStyle='#c8c8c8'; ctx.fillRect(0,0,c.width,c.height);
+  const ox=CX, oy=CY;
+  ctx.strokeStyle='#222'; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round';
+
+  // Head
+  ctx.fillStyle='#222';
+  ctx.beginPath(); ctx.arc(ox,oy-120,22,0,Math.PI*2); ctx.fill();
+
+  // Torso
+  ctx.beginPath(); ctx.moveTo(ox,oy-98); ctx.lineTo(ox,oy-20); ctx.stroke();
+
+  function limb(sx,sy,angle,len,segs=1) {
+    let x=sx,y=sy;
+    for(let s=0;s<segs;s++){
+      const r=angle*Math.PI/180;
+      const nx=x+Math.sin(r)*len, ny=y+Math.cos(r)*len;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(nx,ny); ctx.stroke();
+      x=nx; y=ny;
+    }
+    return [x,y];
+  }
+
+  // Arms from shoulder (ox, oy-80)
+  const [lhx,lhy]=limb(ox-10,oy-80, pose.lArm+180, 55);
+  ctx.beginPath(); ctx.arc(lhx,lhy,5,0,Math.PI*2); ctx.fill();
+  const [rhx,rhy]=limb(ox+10,oy-80, pose.rArm+180, 55);
+  ctx.beginPath(); ctx.arc(rhx,rhy,5,0,Math.PI*2); ctx.fill();
+
+  // Forearms
+  limb(lhx,lhy, pose.lArm+180+20, 40);
+  limb(rhx,rhy, pose.rArm+180-20, 40);
+
+  // Legs from hip (ox, oy-20)
+  const [lkx,lky]=limb(ox-10,oy-20, pose.lLeg+180, 55);
+  const [rfx,rfy]=limb(lkx,lky, pose.lLeg+180+15, 45); // lower leg
+  const [rkx,rky]=limb(ox+10,oy-20, pose.rLeg+180, 55);
+  limb(rkx,rky, pose.rLeg+180-15, 45);
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+  if(phase==='f1') drawFigure(POSE1);
+  else if(phase==='f2') drawFigure(POSE2);
+  else { ctx.fillStyle='#c8c8c8'; ctx.fillRect(0,0,c.width,c.height); }
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

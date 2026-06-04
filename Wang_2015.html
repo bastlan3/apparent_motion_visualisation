@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wang et al. (2015) — Ternus + Auditory Glide</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#000; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:20px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:150px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="540" height="300"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">80</span> ms &nbsp;<input type="range" id="isi" min="0" max="200" value="80" step="10"></label>
+  <select id="audio" style="background:#333;color:#ddd;border:1px solid #555;padding:5px 10px;border-radius:4px;font-size:13px;">
+    <option value="none">No sound</option>
+    <option value="continuous">Continuous glide</option>
+    <option value="gapped" selected>Gapped glide</option>
+  </select>
+</div>
+<div class="meta">Wang et al. (2015). Frame: 200 ms. Auditory glide during ISI modulates Ternus grouping — gapped glide promotes group motion.</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const btn = document.getElementById('btn');
+const isiSlider = document.getElementById('isi');
+const lbl = document.getElementById('lbl');
+const audioSel = document.getElementById('audio');
+
+const CX = c.width / 2, CY = c.height / 2;
+const SEP = 54;
+const R = 13;
+const FRAME_MS = 200;
+
+let isiMs = 80, running = true, phase = 'f1', phaseStart = performance.now();
+let audioCtx = null;
+
+const F1 = [-SEP, 0, SEP];
+const F2 = [0, SEP, 2 * SEP];
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playGlide(isiDuration) {
+  const mode = audioSel.value;
+  if (mode === 'none') return;
+  const ac = getAudioCtx();
+  const now = ac.currentTime;
+  const dur = isiDuration / 1000;
+
+  function makeGlide(startT, endT) {
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, now + startT);
+    osc.frequency.linearRampToValueAtTime(880, now + endT);
+    gain.gain.setValueAtTime(0.15, now + startT);
+    gain.gain.setValueAtTime(0.15, now + endT - 0.005);
+    gain.gain.linearRampToValueAtTime(0, now + endT);
+    osc.start(now + startT);
+    osc.stop(now + endT);
+  }
+
+  if (mode === 'continuous') {
+    makeGlide(0, dur);
+  } else {
+    // gapped: play first 40%, silent middle 20%, play last 40%
+    makeGlide(0, dur * 0.4);
+    makeGlide(dur * 0.6, dur);
+  }
+}
+
+function draw(xs) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#fff';
+  for (const x of xs) {
+    ctx.beginPath();
+    ctx.arc(CX + x, CY, R, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBlank() {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, c.width, c.height);
+}
+
+function tick(now) {
+  if (!running) { requestAnimationFrame(tick); return; }
+  const elapsed = now - phaseStart;
+  const dur = { f1: FRAME_MS, isi1: isiMs, f2: FRAME_MS, isi2: isiMs };
+  if (elapsed >= dur[phase]) {
+    const prev = phase;
+    phaseStart = now;
+    const order = ['f1','isi1','f2','isi2'];
+    phase = order[(order.indexOf(phase)+1)%4];
+    if (phase === 'isi1' || phase === 'isi2') playGlide(isiMs);
+  }
+  if (phase === 'f1') draw(F1);
+  else if (phase === 'f2') draw(F2);
+  else drawBlank();
+  requestAnimationFrame(tick);
+}
+
+isiSlider.addEventListener('input', () => { isiMs = +isiSlider.value; lbl.textContent = isiMs; });
+btn.addEventListener('click', () => {
+  running = !running;
+  btn.textContent = running ? 'Pause' : 'Play';
+  if (running) phaseStart = performance.now();
+});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

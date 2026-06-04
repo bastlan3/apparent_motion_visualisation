@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Burt & Sperling (1981) — Competing AM Paths</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#000; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="560" height="360"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">25</span> ms &nbsp;<input type="range" id="isi" min="5" max="200" value="25" step="5"></label>
+</div>
+<div class="meta">Burt &amp; Sperling (1981). Two dot rows — competing horizontal and vertical apparent motion paths. Short ISI favors the shorter spatial path.</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const CX=c.width/2, CY=c.height/2;
+const FRAME_MS=50, R=7;
+// Row A (top): 9 dots spaced 75px apart —extends beyond screen edges
+// Row B (bottom): same dots shifted right by 37.5px (half-spacing), 80px below
+const N=9, HSPACE=75, VSPACE=90;
+const rowA = Array.from({length:N}, (_,i) => [CX + (i-(N-1)/2)*HSPACE, CY-VSPACE/2]);
+const rowB = Array.from({length:N}, (_,i) => [CX + (i-(N-1)/2)*HSPACE + HSPACE/2, CY+VSPACE/2]);
+
+let isiMs=25, running=true, phase='f1', phaseStart=performance.now();
+
+function drawDots(dots) {
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#fff';
+  for(const [x,y] of dots){ ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill(); }
+}
+
+function tick(now) {
+  if(!running){requestAnimationFrame(tick);return;}
+  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
+  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+  if(phase==='f1') drawDots(rowA);
+  else if(phase==='f2') drawDots(rowB);
+  else { ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height); }
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('isi').addEventListener('input',e=>{isiMs=+e.target.value;document.getElementById('lbl').textContent=isiMs;});
+document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

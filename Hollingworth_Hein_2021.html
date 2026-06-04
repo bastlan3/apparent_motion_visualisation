@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hollingworth & Hein (2021) — Ternus + VWM</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#808080; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:16px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:150px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+.vwm-btn { width:38px; height:38px; border-radius:50%; border:2px solid #666; cursor:pointer; }
+.vwm-label { font-size:11px; color:#888; margin-top:4px; text-align:center; }
+.vwm-group { display:flex; flex-direction:column; align-items:center; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="560" height="300"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">80</span> ms &nbsp;<input type="range" id="isi" min="40" max="160" value="80" step="10"></label>
+  <span style="font-size:12px;color:#888;">VWM item:</span>
+  <div class="vwm-group"><button class="vwm-btn" id="vRed" style="background:#c0392b;" onclick="setVWM('red')"></button><div class="vwm-label">Red</div></div>
+  <div class="vwm-group"><button class="vwm-btn" id="vBlue" style="background:#2980b9;" onclick="setVWM('blue')"></button><div class="vwm-label">Blue</div></div>
+  <div class="vwm-group"><button class="vwm-btn" id="vGreen" style="background:#27ae60;" onclick="setVWM('green')"></button><div class="vwm-label">Green</div></div>
+  <div class="vwm-group"><button class="vwm-btn" id="vNone" style="background:#555;" onclick="setVWM('none')"></button><div class="vwm-label">None</div></div>
+</div>
+<div class="meta">Hollingworth &amp; Hein (2021). Frame: 150 ms. Red unique element in F1 — does VWM content bias its perceived trajectory?</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const btn = document.getElementById('btn');
+const isiSlider = document.getElementById('isi');
+const lbl = document.getElementById('lbl');
+
+const CX = c.width / 2, CY = c.height / 2;
+const SEP = 54;
+const R = 15;
+const FRAME_MS = 150;
+
+let isiMs = 80, running = true, phase = 'f1', phaseStart = performance.now();
+let vwmColor = 'none';
+
+// F1: x = -SEP, 0, +SEP (leftmost is unique = RED)
+// F2: x = 0, +SEP, +2*SEP
+const F1 = [-SEP, 0, SEP];
+const F2 = [0, SEP, 2 * SEP];
+
+function setVWM(color) { vwmColor = color; }
+
+function drawVWMIndicator() {
+  // Small colored square top-right
+  const colors = { red:'#c0392b', blue:'#2980b9', green:'#27ae60', none:'#555' };
+  const col = colors[vwmColor];
+  const size = 28;
+  const px = c.width - 16 - size, py = 16;
+  ctx.fillStyle = '#333';
+  ctx.fillRect(px - 4, py - 4, size + 8, size + 8);
+  ctx.fillStyle = col;
+  ctx.fillRect(px, py, size, size);
+  if (vwmColor === 'none') {
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px+size, py+size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px+size, py); ctx.lineTo(px, py+size); ctx.stroke();
+  }
+}
+
+function draw(xs, isF1) {
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, c.width, c.height);
+  xs.forEach((x, i) => {
+    const isUnique = isF1 && i === 0; // leftmost in F1 is the unique red dot
+    ctx.fillStyle = isUnique ? '#c0392b' : '#fff';
+    ctx.beginPath();
+    ctx.arc(CX + x, CY, R, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  drawVWMIndicator();
+}
+
+function drawBlank() {
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, c.width, c.height);
+  drawVWMIndicator();
+}
+
+function tick(now) {
+  if (!running) { requestAnimationFrame(tick); return; }
+  const elapsed = now - phaseStart;
+  const dur = { f1: FRAME_MS, isi1: isiMs, f2: FRAME_MS, isi2: isiMs };
+  if (elapsed >= dur[phase]) {
+    phaseStart = now;
+    const order = ['f1','isi1','f2','isi2'];
+    phase = order[(order.indexOf(phase)+1)%4];
+  }
+  if (phase === 'f1') draw(F1, true);
+  else if (phase === 'f2') draw(F2, false);
+  else drawBlank();
+  requestAnimationFrame(tick);
+}
+
+isiSlider.addEventListener('input', () => { isiMs = +isiSlider.value; lbl.textContent = isiMs; });
+btn.addEventListener('click', () => { running = !running; btn.textContent = running ? 'Pause' : 'Play'; if (running) phaseStart = performance.now(); });
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

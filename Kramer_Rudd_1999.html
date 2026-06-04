@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kramer & Rudd (1999) — Ternus Lines</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
+canvas { background:#000; display:block; }
+.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+input[type=range] { width:160px; accent-color:#888; }
+button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
+select { background:#333; color:#ddd; border:1px solid #555; padding:5px 10px; border-radius:4px; font-size:13px; }
+.meta { margin-top:16px; font-size:11px; color:#555; max-width:520px; text-align:center; line-height:1.5; }
+</style>
+</head>
+<body>
+<canvas id="c" width="520" height="280"></canvas>
+<div class="controls">
+  <button id="btn">Pause</button>
+  <label>ISI: <span id="lbl">139</span> ms &nbsp;<input type="range" id="isi" min="0" max="300" value="139" step="1"></label>
+  <select id="cond">
+    <option value="equal">Equal height</option>
+    <option value="center">Center tall</option>
+    <option value="outer">Outer tall</option>
+  </select>
+</div>
+<div class="meta">Kramer &amp; Rudd (1999). Frame: 153 ms. 3 vertical lines on black — element vs group motion.</div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const btn = document.getElementById('btn');
+const isiSlider = document.getElementById('isi');
+const lbl = document.getElementById('lbl');
+const condSel = document.getElementById('cond');
+
+const CX = c.width / 2, CY = c.height / 2;
+const SEP = 60;
+const FRAME_MS = 153;
+const LW = 3;
+
+const F1 = [-SEP, 0, SEP];
+const F2 = [0, SEP, 2 * SEP];
+
+let isiMs = 139, running = true, phase = 'f1', phaseStart = performance.now();
+
+function heights() {
+  const cond = condSel.value;
+  const base = 36, tall = 70;
+  if (cond === 'equal') return [base, base, base];
+  if (cond === 'center') return [base, tall, base];
+  return [tall, base, tall];
+}
+
+function draw(xs) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, c.width, c.height);
+  const h = heights();
+  ctx.fillStyle = '#fff';
+  xs.forEach((x, i) => {
+    const hh = h[i] / 2;
+    ctx.fillRect(CX + x - LW / 2, CY - hh, LW, h[i]);
+  });
+}
+
+function drawBlank() {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, c.width, c.height);
+}
+
+function tick(now) {
+  if (!running) { requestAnimationFrame(tick); return; }
+  const elapsed = now - phaseStart;
+  const dur = { f1: FRAME_MS, isi1: isiMs, f2: FRAME_MS, isi2: isiMs };
+  if (elapsed >= dur[phase]) {
+    phaseStart = now;
+    const order = ['f1','isi1','f2','isi2'];
+    phase = order[(order.indexOf(phase)+1)%4];
+  }
+  if (phase === 'f1') draw(F1);
+  else if (phase === 'f2') draw(F2);
+  else drawBlank();
+  requestAnimationFrame(tick);
+}
+
+isiSlider.addEventListener('input', () => { isiMs = +isiSlider.value; lbl.textContent = isiMs; });
+btn.addEventListener('click', () => { running = !running; btn.textContent = running ? 'Pause' : 'Play'; if (running) phaseStart = performance.now(); });
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
