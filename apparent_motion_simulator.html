@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apparent Motion & Drag Simulator</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for real-time objective plotting -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <div class="bg-amber-500 p-2 rounded-lg text-slate-950">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight">Apparent Motion & Kinematics Simulator</h1>
+        <p class="text-xs text-slate-400">Simultaneous Translation-Rotation Model Solver</p>
+      </div>
+    </div>
+    <div class="text-xs bg-amber-500/10 text-amber-400 px-3 py-1.5 rounded-full border border-amber-500/20 font-semibold uppercase tracking-wider">
+      Unified Pivot Model
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 overflow-x-hidden">
+    
+    <!-- Sidebar Controls -->
+    <div class="lg:col-span-4 bg-slate-950 p-6 rounded-2xl border border-slate-800 flex flex-col space-y-6">
+      
+      <!-- Section: Rectangle Dimensions (NEW!) -->
+      <div>
+        <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center">
+          <span class="w-1.5 h-3 bg-indigo-500 rounded-full mr-2"></span>
+          Rectangle Physical Sizing
+        </h2>
+        
+        <div class="space-y-4">
+          <!-- Length L -->
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+              <span>Rectangle Length ($L$)</span>
+              <span id="val-L" class="text-indigo-400">60 px</span>
+            </div>
+            <input type="range" id="param-L" min="15" max="120" value="60" class="w-full accent-indigo-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+          </div>
+
+          <!-- Width W -->
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+              <span>Rectangle Width ($W$)</span>
+              <span id="val-W" class="text-indigo-400">15 px</span>
+            </div>
+            <input type="range" id="param-W" min="3" max="50" value="15" class="w-full accent-indigo-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+          </div>
+
+          <!-- Sweep Angle Theta -->
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+              <span>Sweep Angle ($\theta$)</span>
+              <span id="val-theta" class="text-indigo-400">90°</span>
+            </div>
+            <input type="range" id="param-theta" min="30" max="180" value="90" class="w-full accent-indigo-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Drag Coefficients -->
+      <div>
+        <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center">
+          <span class="w-1.5 h-3 bg-emerald-500 rounded-full mr-2"></span>
+          Drag Scaling Factors
+        </h2>
+        
+        <div class="space-y-4">
+          <!-- Streamlined Drag Coefficient -->
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+              <span>Streamlined Drag Factor ($c_{\parallel}$)</span>
+              <span id="val-c-para" class="text-emerald-400">0.08</span>
+            </div>
+            <input type="range" id="param-c-para" min="0.01" max="0.5" step="0.01" value="0.08" class="w-full accent-emerald-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+            <p class="text-[10px] text-slate-500 mt-1">Calculated $\gamma_{\parallel}$ (scales with Width $W$): <span id="calc-gamma-para" class="font-semibold text-emerald-400">1.20</span></p>
+          </div>
+
+          <!-- Broadside Drag Coefficient -->
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+              <span>Broadside Drag Factor ($c_{\perp}$)</span>
+              <span id="val-c-perp" class="text-emerald-400">0.25</span>
+            </div>
+            <input type="range" id="param-c-perp" min="0.05" max="1.0" step="0.01" value="0.25" class="w-full accent-emerald-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+            <p class="text-[10px] text-slate-500 mt-1">Calculated $\gamma_{\perp}$ (scales with Length $L$): <span id="calc-gamma-perp" class="font-semibold text-emerald-400">15.00</span></p>
+          </div>
+
+          <!-- Rotational Drag Coefficient -->
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+              <span>Rotational Inertia Factor ($c_{\theta}$)</span>
+              <span id="val-c-theta" class="text-emerald-400">0.05</span>
+            </div>
+            <input type="range" id="param-c-theta" min="0.01" max="0.3" step="0.01" value="0.05" class="w-full accent-emerald-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+            <p class="text-[10px] text-slate-500 mt-1">Calculated $\gamma_{\theta}$ (scales with Moment of Inertia): <span id="calc-gamma-theta" class="font-semibold text-emerald-400">1.68</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Interactive Optimization -->
+      <div class="pt-4 border-t border-slate-800">
+        <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center">
+          <span class="w-1.5 h-3 bg-amber-500 rounded-full mr-2"></span>
+          Trajectory Optimization ($r$-tuning)
+        </h2>
+        
+        <div class="space-y-4">
+          <!-- Parameter r -->
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+              <span>Inner Pivot Radius ($r$)</span>
+              <span id="val-r" class="text-amber-400">75 px</span>
+            </div>
+            <input type="range" id="param-r" min="0" max="150" value="75" class="w-full accent-amber-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+          </div>
+
+          <!-- Solver Actions -->
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btn-optimize" class="bg-amber-500 hover:bg-amber-600 active:scale-95 transition text-slate-950 font-bold text-xs py-3 px-3 rounded-lg flex items-center justify-center space-x-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Auto-Optimize $r^*$</span>
+            </button>
+            <button id="btn-play" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition text-white font-bold text-xs py-3 px-3 rounded-lg flex items-center justify-center space-x-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              </svg>
+              <span id="play-text">Animate Motion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Workspace Area -->
+    <div class="lg:col-span-8 flex flex-col space-y-6">
+      
+      <!-- Top Section: Interactive Canvas and Live Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <!-- Interactive Canvas Viewport -->
+        <div class="md:col-span-8 bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-between relative min-h-[420px]">
+          <span class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur border border-slate-800 text-[10px] tracking-wider uppercase font-semibold text-slate-400 px-2 py-1 rounded">
+            Interactive Kinematic Canvas
+          </span>
+          <div class="w-full flex-1 flex items-center justify-center mt-6">
+            <canvas id="motionCanvas" class="bg-slate-950 max-w-full h-auto"></canvas>
+          </div>
+          <!-- Canvas Info Overlay -->
+          <div class="w-full flex justify-between items-center text-xs text-slate-400 mt-2 border-t border-slate-900 pt-2 px-2">
+            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-violet-500 mr-1.5"></span>CM Path</span>
+            <span class="flex items-center"><span class="w-2.5 h-0.5 bg-dashed border-t-2 border-dashed border-amber-500 mr-1.5"></span>Pivot Path</span>
+            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>Start / End</span>
+          </div>
+        </div>
+
+        <!-- Cost Breakdown HUD -->
+        <div class="md:col-span-4 bg-slate-950 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center">
+              <span class="w-1.5 h-3 bg-red-500 rounded-full mr-2"></span>
+              Live Cost Monitor
+            </h2>
+
+            <div class="space-y-4">
+              <!-- Total Cost Metric -->
+              <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <span class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">Total Drag Cost $\mathcal{J}_{\text{motion}}$</span>
+                <div class="text-3xl font-extrabold text-red-500 mt-1" id="metric-total-cost">0.00</div>
+              </div>
+
+              <!-- Translating Pivot Component -->
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Translation Term ($\mathcal{J}_{\text{trans}}$)</span>
+                  <span id="metric-p1-cost" class="font-bold text-indigo-400">0.00</span>
+                </div>
+                <div class="w-full bg-slate-900 rounded-full h-1.5">
+                  <div id="bar-p1-cost" class="bg-indigo-500 h-1.5 rounded-full" style="width: 50%"></div>
+                </div>
+              </div>
+
+              <!-- Rotational Component -->
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Rotational Term ($\mathcal{J}_{\text{rot}}$)</span>
+                  <span id="metric-p2-cost" class="font-bold text-amber-500">0.00</span>
+                </div>
+                <div class="w-full bg-slate-900 rounded-full h-1.5">
+                  <div id="bar-p2-cost" class="bg-amber-500 h-1.5 rounded-full" style="width: 50%"></div>
+                </div>
+              </div>
+
+              <!-- Active Pivot Radius Indicator -->
+              <div class="border-t border-slate-800 pt-3">
+                <div class="flex justify-between text-xs text-slate-400">
+                  <span>Pivot Path Chord ($d_{\text{pivot}}$)</span>
+                  <span id="metric-pivot-dist" class="font-bold text-emerald-400">0 px</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">The linear travel distance of your translating pivot point.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Status -->
+          <div class="text-[10px] text-slate-500 border-t border-slate-900 pt-3 mt-4">
+            * Simultaneous rotation and translation creates physical drag relative to local body-fixed axes.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Plot Area: Cost Function vs. r -->
+      <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6">
+        <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center">
+          <span class="w-1.5 h-3 bg-violet-500 rounded-full mr-2"></span>
+          Objective Function Space: $\mathcal{J}_{\text{motion}}(r)$
+        </h2>
+        <div class="w-full h-[220px]">
+          <canvas id="costChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Script logic for equations, canvas rendering and dynamic graphing -->
+  <script>
+    // System parameters (Outer Radius R and baseline angle Phi are fixed under the hood now)
+    const params = {
+      R: 150,               // Constant Outer Radius
+      phi: 5 * Math.PI / 4, // Constant baseline angle (225 degrees)
+      theta: Math.PI / 2,   // 90 deg (adjustable)
+      L: 60,                // Rectangle Length (adjustable)
+      W: 15,                // Rectangle Width (adjustable)
+      c_para: 0.08,         // Streamlined coefficient factor
+      c_perp: 0.25,         // Broadside coefficient factor
+      c_theta: 0.05,        // Rotational factor
+      r: 75,                // Inner pivot radius (adjustable)
+      t: 0,                 // animation clock progress [0, 1]
+    };
+
+    // Elements
+    const canvas = document.getElementById('motionCanvas');
+    const ctx = canvas.getContext('2d');
+    const costChartCanvas = document.getElementById('costChart');
+    let costChart = null;
+
+    // Set canvas dimensions
+    function resizeCanvas() {
+      canvas.width = 460;
+      canvas.height = 360;
+    }
+    resizeCanvas();
+
+    // Helper: Compute dynamic dimensions-proportional drag coefficients
+    function getBodyDragCoefficients() {
+      // 1. Streamlined drag scales with front-facing width W (slicing forward)
+      const gamma_para = params.W * params.c_para;
+      
+      // 2. Broadside drag scales with broad surface length L (pushing flat)
+      const gamma_perp = params.L * params.c_perp;
+
+      // 3. Rotational inertia drag scales with polar moment of inertia profile:
+      // Moment of inertia for thin plate: Area * (L^2 + W^2) / 12
+      const mass = params.L * params.W;
+      const inertia = mass * (params.L * params.L + params.W * params.W) / 10000;
+      const gamma_theta = inertia * params.c_theta;
+
+      return { gamma_para, gamma_perp, gamma_theta };
+    }
+
+    // Setup input listeners
+    const inputs = [
+      { id: 'param-L', key: 'L', valId: 'val-L', unit: ' px' },
+      { id: 'param-W', key: 'W', valId: 'val-W', unit: ' px' },
+      { id: 'param-theta', key: 'theta', valId: 'val-theta', unit: '°', scale: Math.PI / 180 },
+      { id: 'param-c-para', key: 'c_para', valId: 'val-c-para' },
+      { id: 'param-c-perp', key: 'c_perp', valId: 'val-c-perp' },
+      { id: 'param-c-theta', key: 'c_theta', valId: 'val-c-theta' },
+      { id: 'param-r', key: 'r', valId: 'val-r', unit: ' px' },
+    ];
+
+    inputs.forEach(input => {
+      const el = document.getElementById(input.id);
+      el.addEventListener('input', (e) => {
+        let val = parseFloat(e.target.value);
+        params[input.key] = input.scale ? val * input.scale : val;
+        
+        // Update labels
+        const displayVal = input.scale ? Math.round(val) : val;
+        document.getElementById(input.valId).textContent = displayVal + (input.unit || '');
+        
+        updateMetricsAndPlots();
+      });
+    });
+
+    // Solve for analytical components in the simultaneous translation-rotation model
+    function calculateCosts(rVal) {
+      const theta = params.theta;
+      const R = params.R;
+      
+      // Get dynamically-scaled body drag metrics
+      const { gamma_para, gamma_perp, gamma_theta } = getBodyDragCoefficients();
+
+      // Distance the pivot point itself translates linearly
+      const d_pivot = 2 * (R - rVal) * Math.sin(theta / 2);
+
+      // Coefficients derived from integrals of cos^2 and sin^2 over [-1/2, 1/2]
+      const int_cos2 = 0.5 + Math.sin(theta) / (2 * theta);
+      const int_sin2 = 0.5 - Math.sin(theta) / (2 * theta);
+
+      // Analytical translational cost components
+      const term1 = d_pivot * d_pivot * (gamma_para * int_cos2 + gamma_perp * int_sin2);
+      const term2 = 8 * gamma_para * rVal * (R - rVal) * Math.pow(Math.sin(theta / 2), 2);
+      const term3 = gamma_para * rVal * rVal * theta * theta;
+
+      const trans_cost = term1 + term2 + term3;
+      const rot_cost = gamma_theta * theta * theta;
+
+      return {
+        trans: trans_cost,
+        rot: rot_cost,
+        total: trans_cost + rot_cost
+      };
+    }
+
+    // Auto-Optimize r* analytical solver
+    document.getElementById('btn-optimize').addEventListener('click', () => {
+      const R = params.R;
+      let bestR = 0;
+      let minCost = Infinity;
+      
+      for (let i = 0; i <= 200; i++) {
+        const candidateR = (i / 200) * R;
+        const c = calculateCosts(candidateR).total;
+        if (c < minCost) {
+          minCost = c;
+          bestR = candidateR;
+        }
+      }
+
+      // Update parameter and UI slider
+      params.r = bestR;
+      const rEl = document.getElementById('param-r');
+      rEl.value = bestR;
+      document.getElementById('val-r').textContent = Math.round(bestR) + ' px';
+      
+      updateMetricsAndPlots();
+    });
+
+    // Animation variables
+    let isPlaying = false;
+    let animFrameId = null;
+
+    document.getElementById('btn-play').addEventListener('click', () => {
+      if (isPlaying) {
+        isPlaying = false;
+        document.getElementById('play-text').textContent = 'Animate Motion';
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+      } else {
+        isPlaying = true;
+        document.getElementById('play-text').textContent = 'Stop Animation';
+        animateLoop();
+      }
+    });
+
+    function animateLoop() {
+      params.t += 0.006;
+      if (params.t > 1) {
+        params.t = 0;
+      }
+      drawCanvas();
+      animFrameId = requestAnimationFrame(animateLoop);
+    }
+
+    // Simultaneous Trajectory Coordinate Math
+    function getTrajectoryPositionAndAngle(tVal) {
+      const R = params.R;
+      const r = params.r;
+      const theta = params.theta;
+      const phi = params.phi;
+
+      // Start and end positions centered in Canvas
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2 + 30;
+
+      // Start and end positions of the pivot point
+      const c0_x = (R - r) * Math.cos(phi);
+      const c0_y = (R - r) * Math.sin(phi);
+      const c1_x = (R - r) * Math.cos(phi + theta);
+      const c1_y = (R - r) * Math.sin(phi + theta);
+
+      // Constant translation velocity of the pivot
+      const px = c0_x + tVal * (c1_x - c0_x);
+      const py = c0_y + tVal * (c1_y - c0_y);
+
+      // Constant angular velocity of the object around the pivot
+      const localAngle = phi + tVal * theta;
+      const x = cx + px + r * Math.cos(localAngle);
+      const y = cy + py + r * Math.sin(localAngle);
+      const angle = localAngle + Math.PI / 2;
+
+      return { 
+        x, 
+        y, 
+        angle, 
+        pivotX: cx + px, 
+        pivotY: cy + py 
+      };
+    }
+
+    // Main Draw Function
+    function drawCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2 + 30;
+
+      const R = params.R;
+      const r = params.r;
+      const phi = params.phi;
+      const theta = params.theta;
+
+      // Draw original circle arc boundary
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, phi, phi + theta);
+      ctx.strokeStyle = 'rgba(71, 85, 105, 0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Start / End of overall travel
+      const xStart = cx + R * Math.cos(phi);
+      const yStart = cy + R * Math.sin(phi);
+      const xEnd = cx + R * Math.cos(phi + theta);
+      const yEnd = cy + R * Math.sin(phi + theta);
+
+      // Start and end of the pivot point translation
+      const c0_x = cx + (R - r) * Math.cos(phi);
+      const c0_y = cy + (R - r) * Math.sin(phi);
+      const c1_x = cx + (R - r) * Math.cos(phi + theta);
+      const c1_y = cy + (R - r) * Math.sin(phi + theta);
+
+      // Draw Pivot Point linear track (Dashed Orange Chord)
+      ctx.beginPath();
+      ctx.moveTo(c0_x, c0_y);
+      ctx.lineTo(c1_x, c1_y);
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw actual continuous center-of-mass trajectory of the stimulus
+      ctx.beginPath();
+      for (let s = 0; s <= 100; s++) {
+        const pt = getTrajectoryPositionAndAngle(s / 100);
+        if (s === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.strokeStyle = '#8b5cf6'; // Violet trajectory path
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Highlight endpoints
+      ctx.beginPath();
+      ctx.arc(xStart, yStart, 5, 0, 2*Math.PI);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(xEnd, yEnd, 5, 0, 2*Math.PI);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+
+      // Draw active animating coordinates
+      const stim = getTrajectoryPositionAndAngle(params.t);
+
+      // Draw the moving pivot center (Orange)
+      ctx.beginPath();
+      ctx.arc(stim.pivotX, stim.pivotY, 4, 0, 2*Math.PI);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+
+      // Draw mechanical tether arm connecting pivot to object
+      ctx.beginPath();
+      ctx.moveTo(stim.pivotX, stim.pivotY);
+      ctx.lineTo(stim.x, stim.y);
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Draw the rotating stimulus
+      ctx.save();
+      ctx.translate(stim.x, stim.y);
+      ctx.rotate(stim.angle);
+
+      // Draw local coordinate axes for drag orientation feedback
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(30, 0); // Longitudinal Axis (slicing direction)
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -20); // Lateral Axis (broadside)
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw the Rectangular Stimulus Body (using dynamic Length & Width parameters)
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.85)';
+      ctx.strokeStyle = '#c7d2fe';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(-params.L/2, -params.W/2, params.L, params.W, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Info overlay
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(`Animation Clock t: ${params.t.toFixed(2)}`, 16, 25);
+    }
+
+    // Calculations & Graph updating
+    function updateMetricsAndPlots() {
+      const data = calculateCosts(params.r);
+      const d_pivot = 2 * (params.R - params.r) * Math.sin(params.theta / 2);
+      
+      // Calculate scaled drag coefficients for text feedback
+      const { gamma_para, gamma_perp, gamma_theta } = getBodyDragCoefficients();
+
+      // Update text indicators showing calculated physical drag values (proportional to dimensions)
+      document.getElementById('calc-gamma-para').textContent = gamma_para.toFixed(2);
+      document.getElementById('calc-gamma-perp').textContent = gamma_perp.toFixed(2);
+      document.getElementById('calc-gamma-theta').textContent = gamma_theta.toFixed(2);
+
+      // Update UI Metric HUDs
+      document.getElementById('metric-total-cost').textContent = data.total.toFixed(2);
+      document.getElementById('metric-p1-cost').textContent = data.trans.toFixed(2);
+      document.getElementById('metric-p2-cost').textContent = data.rot.toFixed(2);
+      document.getElementById('metric-pivot-dist').textContent = `${Math.round(d_pivot)} px`;
+
+      const maxMetric = Math.max(data.trans, data.rot, 1);
+      document.getElementById('bar-p1-cost').style.width = `${(data.trans / maxMetric) * 100}%`;
+      document.getElementById('bar-p2-cost').style.width = `${(data.rot / maxMetric) * 100}%`;
+
+      // Draw visual components on Canvas
+      drawCanvas();
+
+      // Re-populate Chart.js Cost Plot
+      const R = params.R;
+      const chartPoints = [];
+      
+      for (let i = 0; i <= 40; i++) {
+        const candidateR = (i / 40) * R;
+        const computed = calculateCosts(candidateR).total;
+        chartPoints.push({ x: candidateR, y: computed });
+      }
+
+      costChart.data.datasets[0].data = chartPoints;
+      costChart.data.datasets[1].data = [{ x: params.r, y: data.total }];
+      costChart.update();
+    }
+
+    // Chart.js Configuration
+    function initChart() {
+      const ctxChart = costChartCanvas.getContext('2d');
+      costChart = new Chart(ctxChart, {
+        type: 'line',
+        data: {
+          datasets: [
+            {
+              label: 'Total Drag Cost J(r)',
+              data: [],
+              borderColor: '#a78bfa',
+              borderWidth: 2.5,
+              tension: 0.3,
+              fill: false,
+              pointRadius: 0,
+            },
+            {
+              label: 'Active Radius r',
+              data: [],
+              backgroundColor: '#f59e0b',
+              borderColor: '#ffffff',
+              borderWidth: 2,
+              pointRadius: 7,
+              pointHoverRadius: 9,
+              showLine: false,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              position: 'bottom',
+              title: {
+                display: true,
+                text: 'Pivot Radius r (px)',
+                color: '#94a3b8',
+                font: { size: 10, weight: 'bold' }
+              },
+              grid: { color: 'rgba(51, 65, 85, 0.15)' },
+              ticks: { color: '#94a3b8' }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Cost J',
+                color: '#94a3b8',
+                font: { size: 10, weight: 'bold' }
+              },
+              grid: { color: 'rgba(51, 65, 85, 0.15)' },
+              ticks: { color: '#94a3b8' }
+            }
+          }
+        }
+      });
+    }
+
+    // Init runtime
+    window.onload = function() {
+      initChart();
+      updateMetricsAndPlots();
+    };
+  </script>
+</body>
+</html>
