@@ -399,10 +399,17 @@ function computeScene() {
     driveVecA = dA2; driveVecB = dB2;
     ({ pivot, auto_drive, shortResidual } = r);
   } else {
-    // auto: pick the axis whose pivot gives the smaller short-axis residual
+    // auto: pick the axis whose full centroid path is shorter
     const r1 = calcForAxis(dA1, dB1);
     const r2 = calcForAxis(dA2, dB2);
-    if (Math.abs(r1.shortResidual) <= Math.abs(r2.shortResidual)) {
+    const makeCandidate = (dAx, dBx, r) => ({
+      A, pivot: r.pivot, radA, Δθ, ax1, ax2,
+      driveVecA: dAx, driveVecB: dBx,
+      driveDist: r.auto_drive * st.driveMult,
+    });
+    const len1 = pathLength(makeCandidate(dA1, dB1, r1));
+    const len2 = pathLength(makeCandidate(dA2, dB2, r2));
+    if (len1 <= len2) {
       driveVecA = dA1; driveVecB = dB1;
       ({ pivot, auto_drive, shortResidual } = r1);
     } else {
@@ -415,6 +422,19 @@ function computeScene() {
 
   return { A, B, pivot, radA, radB, Δθ, ax1, ax2, dA1, dA2, dB1, dB2,
            driveVecA, driveVecB, driveDist, shortResidual };
+}
+
+// total centroid path length for a candidate scene (numerical, N steps)
+function pathLength(sc, N) {
+  N = N || 28;
+  let len = 0, prev = poseAt(sc, 0);
+  for (let i = 1; i <= N; i++) {
+    const cur = poseAt(sc, i / N);
+    const dx = cur.x - prev.x, dy = cur.y - prev.y;
+    len += Math.sqrt(dx * dx + dy * dy);
+    prev = cur;
+  }
+  return len;
 }
 
 // position + angle at interpolation parameter t ∈ [0,1]
