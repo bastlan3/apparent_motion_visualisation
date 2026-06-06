@@ -93,6 +93,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
       </div>
     </div>
 
+    <div class="control">
+      <label>Drive mode</label><span class="v">&nbsp;</span>
+      <div class="seg" id="dMode">
+        <button class="on" data-v="rotating">rotating</button>
+        <button data-v="fixedA">fixed (A)</button>
+        <button data-v="fixedB">fixed (B)</button>
+      </div>
+    </div>
+
     <div class="control"><label>Drive mult.</label><span class="v" id="dMv">1.0×</span><input type="range" id="dM" min="-200" max="300" value="100"></div>
     <div class="control"><label>SOA (ms)</label><span class="v" id="dSOAv">700</span><input type="range" id="dSOA" min="200" max="1500" value="700"></div>
 
@@ -141,6 +150,7 @@ const st = {
   TS: 70,
   d: 300, phi: 60,
   driveAxis: '1',   // '1'=min moment, '2'=max moment, 'auto'
+  driveMode: 'rotating', // 'rotating'=car-like, 'fixedA'=A's axis, 'fixedB'=B's axis
   driveMult: 1.0,
   soa: 700,
   showOver: true,
@@ -169,6 +179,7 @@ bindSeg('dShape', v => {
   document.getElementById('sg-' + v).classList.add('on');
 });
 bindSeg('dAxis',  v => { st.driveAxis = v; });
+bindSeg('dMode',  v => { st.driveMode = v; });
 bindSeg('dOver',  v => { st.showOver = v === 'on'; });
 
 bindRange('dW',   'dWv',   v => v + ' px',  v => { st.W  = v; });
@@ -362,54 +373,87 @@ function computeScene() {
   // principal axes rotated to each shape's orientation
   const dA1 = rotVec(ax1, radA), dA2 = rotVec(ax2, radA);
   const dB1 = rotVec(ax1, radB), dB2 = rotVec(ax2, radB);
-
-  // pivot: intersection of axis-1 lines (the min-moment axis)
-  let pivot = lineIntersect(A, dA1, B, dB1);
-  if (!pivot) pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
-  // clamp if wildly out of range
   const diagSq = w*w + h*h;
-  if ((pivot.x-cx)**2 + (pivot.y-cy)**2 > 9*diagSq)
-    pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
 
-  // after pure rotation around pivot, where does A's centroid land?
-  const A_rot = rotPt(A, pivot, Δθ);
-  const residual = { x: B.x - A_rot.x, y: B.y - A_rot.y };
-
-  // choose drive vector (in B's final orientation)
-  let driveVecB, driveVecA;
-  if (st.driveAxis === '1') {
-    driveVecB = dB1; driveVecA = dA1;
-  } else if (st.driveAxis === '2') {
-    driveVecB = dB2; driveVecA = dA2;
-  } else {
-    // 'auto': pick whichever axis has the larger residual component
-    const comp1 = Math.abs(dot(residual, dB1));
-    const comp2 = Math.abs(dot(residual, dB2));
-    if (comp1 >= comp2) { driveVecB = dB1; driveVecA = dA1; }
-    else                { driveVecB = dB2; driveVecA = dA2; }
+  // compute pivot + residuals for a given axis pair
+  function calcForAxis(dAx, dBx) {
+    let pivot = lineIntersect(A, dAx, B, dBx);
+    if (!pivot) pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
+    if ((pivot.x-cx)**2 + (pivot.y-cy)**2 > 9*diagSq)
+      pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
+    const A_rot = rotPt(A, pivot, Δθ);
+    const residual = { x: B.x - A_rot.x, y: B.y - A_rot.y };
+    const auto_drive   = dot(residual, dBx);
+    const shortResidual = dot(residual, perp(dBx));
+    return { pivot, auto_drive, shortResidual };
   }
 
-  // auto drive distance: project residual onto chosen drive axis at final angle
-  const auto_drive = dot(residual, driveVecB);
-  const driveDist  = auto_drive * st.driveMult;
+  // choose the axis — pivot is always from the same axis used for driving
+  let driveVecA, driveVecB, pivot, auto_drive, shortResidual;
+  if (st.driveAxis === '1') {
+    const r = calcForAxis(dA1, dB1);
+    driveVecA = dA1; driveVecB = dB1;
+    ({ pivot, auto_drive, shortResidual } = r);
+  } else if (st.driveAxis === '2') {
+    const r = calcForAxis(dA2, dB2);
+    driveVecA = dA2; driveVecB = dB2;
+    ({ pivot, auto_drive, shortResidual } = r);
+  } else {
+    // auto: pick the axis whose full centroid path is shorter
+    const r1 = calcForAxis(dA1, dB1);
+    const r2 = calcForAxis(dA2, dB2);
+    const makeCandidate = (dAx, dBx, r) => ({
+      A, pivot: r.pivot, radA, Δθ, ax1, ax2,
+      driveVecA: dAx, driveVecB: dBx,
+      driveDist: r.auto_drive * st.driveMult,
+    });
+    const len1 = pathLength(makeCandidate(dA1, dB1, r1));
+    const len2 = pathLength(makeCandidate(dA2, dB2, r2));
+    if (len1 <= len2) {
+      driveVecA = dA1; driveVecB = dB1;
+      ({ pivot, auto_drive, shortResidual } = r1);
+    } else {
+      driveVecA = dA2; driveVecB = dB2;
+      ({ pivot, auto_drive, shortResidual } = r2);
+    }
+  }
 
-  // short-axis residual (component not covered by driving along chosen axis)
-  const shortResidual = dot(residual, perp(driveVecB));
+  const driveDist = auto_drive * st.driveMult;
 
   return { A, B, pivot, radA, radB, Δθ, ax1, ax2, dA1, dA2, dB1, dB2,
            driveVecA, driveVecB, driveDist, shortResidual };
 }
 
+// total centroid path length for a candidate scene (numerical, N steps)
+function pathLength(sc, N) {
+  N = N || 28;
+  let len = 0, prev = poseAt(sc, 0);
+  for (let i = 1; i <= N; i++) {
+    const cur = poseAt(sc, i / N);
+    const dx = cur.x - prev.x, dy = cur.y - prev.y;
+    len += Math.sqrt(dx * dx + dy * dy);
+    prev = cur;
+  }
+  return len;
+}
+
 // position + angle at interpolation parameter t ∈ [0,1]
 function poseAt(sc, t) {
-  const { A, pivot, radA, Δθ, ax1, ax2, driveVecA, driveDist } = sc;
+  const { A, pivot, radA, Δθ, ax1, ax2, driveVecA, driveVecB, driveDist } = sc;
   const θt = radA + t * Δθ;
 
   // 1. rotate A around pivot
   const rotA = rotPt(A, pivot, t * Δθ);
 
-  // 2. drive along current orientation of chosen axis
-  const curDrive = rotVec(driveVecA, t * Δθ);  // axis rotates with shape
+  // 2. drive direction depends on mode
+  let curDrive;
+  if (st.driveMode === 'fixedA') {
+    curDrive = driveVecA;                  // A's axis, constant
+  } else if (st.driveMode === 'fixedB') {
+    curDrive = driveVecB;                  // B's axis, constant
+  } else {
+    curDrive = rotVec(driveVecA, t * Δθ); // car: rotates with shape
+  }
   const driveAmt = t * driveDist;
 
   return {
