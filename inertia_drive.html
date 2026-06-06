@@ -93,6 +93,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
       </div>
     </div>
 
+    <div class="control">
+      <label>Drive mode</label><span class="v">&nbsp;</span>
+      <div class="seg" id="dMode">
+        <button class="on" data-v="rotating">rotating</button>
+        <button data-v="fixedA">fixed (A)</button>
+        <button data-v="fixedB">fixed (B)</button>
+      </div>
+    </div>
+
     <div class="control"><label>Drive mult.</label><span class="v" id="dMv">1.0×</span><input type="range" id="dM" min="-200" max="300" value="100"></div>
     <div class="control"><label>SOA (ms)</label><span class="v" id="dSOAv">700</span><input type="range" id="dSOA" min="200" max="1500" value="700"></div>
 
@@ -141,6 +150,7 @@ const st = {
   TS: 70,
   d: 300, phi: 60,
   driveAxis: '1',   // '1'=min moment, '2'=max moment, 'auto'
+  driveMode: 'rotating', // 'rotating'=car-like, 'fixedA'=A's axis, 'fixedB'=B's axis
   driveMult: 1.0,
   soa: 700,
   showOver: true,
@@ -169,6 +179,7 @@ bindSeg('dShape', v => {
   document.getElementById('sg-' + v).classList.add('on');
 });
 bindSeg('dAxis',  v => { st.driveAxis = v; });
+bindSeg('dMode',  v => { st.driveMode = v; });
 bindSeg('dOver',  v => { st.showOver = v === 'on'; });
 
 bindRange('dW',   'dWv',   v => v + ' px',  v => { st.W  = v; });
@@ -402,14 +413,21 @@ function computeScene() {
 
 // position + angle at interpolation parameter t ∈ [0,1]
 function poseAt(sc, t) {
-  const { A, pivot, radA, Δθ, ax1, ax2, driveVecA, driveDist } = sc;
+  const { A, pivot, radA, Δθ, ax1, ax2, driveVecA, driveVecB, driveDist } = sc;
   const θt = radA + t * Δθ;
 
   // 1. rotate A around pivot
   const rotA = rotPt(A, pivot, t * Δθ);
 
-  // 2. drive along current orientation of chosen axis
-  const curDrive = rotVec(driveVecA, t * Δθ);  // axis rotates with shape
+  // 2. drive direction depends on mode
+  let curDrive;
+  if (st.driveMode === 'fixedA') {
+    curDrive = driveVecA;                  // A's axis, constant
+  } else if (st.driveMode === 'fixedB') {
+    curDrive = driveVecB;                  // B's axis, constant
+  } else {
+    curDrive = rotVec(driveVecA, t * Δθ); // car: rotates with shape
+  }
   const driveAmt = t * driveDist;
 
   return {
