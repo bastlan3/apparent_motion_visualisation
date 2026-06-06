@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apparent Motion — Mori (1982) Kinematic Arc</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#08080d;color:#d4d4d8;min-height:100vh}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.back{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3f3f46;text-decoration:none}
+.back:hover{color:#6d8aff}
+.title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#52525b;letter-spacing:1.5px;text-transform:uppercase}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid #1e1e26;margin-top:18px}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:11px;background:transparent;border:none;color:#52525b;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;letter-spacing:.3px}
+.tab.on{color:#6d8aff;border-bottom-color:#6d8aff}
+.panel-wrap{padding-top:40px}
+.stage{display:flex;justify-content:center;margin-bottom:32px;position:relative}
+canvas{display:block;background:#08080d}
+.controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;align-items:flex-end;padding:18px 8px;border-top:1px solid #14141c;border-bottom:1px solid #14141c}
+.control{display:flex;flex-direction:column;gap:6px;min-width:128px}
+.control label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3f3f46;letter-spacing:1.4px;text-transform:uppercase}
+.control .v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a1a1aa;text-align:right;height:14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;background:#27272a;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+.seg{display:flex;gap:3px;flex-wrap:wrap}
+.seg button{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 9px;background:transparent;border:1px solid #27272a;border-radius:4px;color:#52525b;cursor:pointer;transition:all .15s}
+.seg button:hover{color:#a1a1aa;border-color:#3f3f46}
+.seg button.on{color:#6d8aff;border-color:#6d8aff50;background:#6d8aff08}
+.cite{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-align:center;margin-top:22px;line-height:1.7}
+.shape-controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:10px 8px 0;min-height:52px}
+.shape-group{display:none}
+.shape-group.on{display:contents}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="back" href="index.html">← back to experiments</a>
+  <span class="title">participant view</span>
+</header>
+
+<nav class="tabs">
+  <button class="tab on">Mori (1982) — Kinematic Arc</button>
+</nav>
+
+<div class="panel-wrap">
+  <div class="stage"><canvas id="mCv"></canvas></div>
+
+  <div class="controls">
+    <div class="control">
+      <label>Shape</label><span class="v">&nbsp;</span>
+      <div class="seg" id="mShape">
+        <button class="on" data-v="rect">rect</button>
+        <button data-v="pacman">pac-man</button>
+        <button data-v="tri">triangle</button>
+      </div>
+    </div>
+
+    <div class="shape-controls">
+      <div class="shape-group on" id="sg-rect">
+        <div class="control"><label>Width (px)</label><span class="v" id="mWv">30</span><input type="range" id="mW" min="10" max="180" value="30"></div>
+        <div class="control"><label>Height (px)</label><span class="v" id="mHv">90</span><input type="range" id="mH" min="10" max="180" value="90"></div>
+      </div>
+      <div class="shape-group" id="sg-pacman">
+        <div class="control"><label>Radius (px)</label><span class="v" id="mPRv">50</span><input type="range" id="mPR" min="20" max="110" value="50"></div>
+        <div class="control"><label>Mouth (°)</label><span class="v" id="mPAv">40</span><input type="range" id="mPA" min="5" max="150" value="40"></div>
+      </div>
+      <div class="shape-group" id="sg-tri">
+        <div class="control"><label>Scale (px)</label><span class="v" id="mTSv">70</span><input type="range" id="mTS" min="20" max="130" value="70"></div>
+      </div>
+    </div>
+
+    <div class="control"><label>Separation (px)</label><span class="v" id="mDv">300</span><input type="range" id="mD" min="60" max="580" value="300"></div>
+    <div class="control"><label>Orient. Δ (°)</label><span class="v" id="mPhiv">60</span><input type="range" id="mPhi" min="-170" max="170" value="60"></div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="mSOAv">700</span><input type="range" id="mSOA" min="200" max="1500" value="700"></div>
+
+    <div class="control">
+      <label>Overlays</label><span class="v">&nbsp;</span>
+      <div class="seg" id="mOver">
+        <button class="on" data-v="on">on</button>
+        <button data-v="off">off</button>
+      </div>
+    </div>
+  </div>
+
+  <span class="cite">
+    Mori (1982) · Biol. Cybern. 44, 31–34 · McBeath &amp; Shepard (1989) · Perc. &amp; Psychophys. 46, 333–337<br>
+    Pole P = midpoint(A,B) + [|AB| / (2·tan(Δθ/2))] · ê⊥  ·  path = circular arc about P
+  </span>
+</div>
+
+</div>
+
+<script>
+// ─── canvas ───────────────────────────────────────────────
+function initCv(id, w, h) {
+  const cv = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = w * dpr; cv.height = h * dpr;
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { cv, ctx, w, h };
+}
+const mC = initCv('mCv', 860, 500);
+
+const BG   = '#08080d';
+const STIM = '#e4e4e7';
+const COL_A   = '#6d8aff';
+const COL_B   = '#ff8a6d';
+const COL_POL = '#a0e080';
+const COL_ARC = '#ffffff';
+const COL_BIS = '#ffcc44';
+
+const st = {
+  shape: 'rect',
+  W: 30, H: 90,
+  PR: 50, PA: 40,
+  TS: 70,
+  d: 300, phi: 60,
+  soa: 700,
+  showOver: true,
+  t: 0,
+  trail: [],
+};
+
+// ─── bindings ─────────────────────────────────────────────
+function bindSeg(id, fn) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function bindRange(id, vid, fmt, fn) {
+  const el = document.getElementById(id), vEl = document.getElementById(vid);
+  const upd = () => { const v = +el.value; vEl.textContent = fmt(v); fn(v); };
+  el.addEventListener('input', upd); upd();
+}
+
+bindSeg('mShape', v => {
+  st.shape = v;
+  document.querySelectorAll('.shape-group').forEach(g => g.classList.remove('on'));
+  document.getElementById('sg-' + v).classList.add('on');
+});
+bindSeg('mOver', v => { st.showOver = v === 'on'; });
+bindRange('mW',   'mWv',   v => v + ' px', v => { st.W  = v; });
+bindRange('mH',   'mHv',   v => v + ' px', v => { st.H  = v; });
+bindRange('mPR',  'mPRv',  v => v + ' px', v => { st.PR = v; });
+bindRange('mPA',  'mPAv',  v => v + '°',   v => { st.PA = v; });
+bindRange('mTS',  'mTSv',  v => v + ' px', v => { st.TS = v; });
+bindRange('mD',   'mDv',   v => v + ' px', v => { st.d  = v; });
+bindRange('mPhi', 'mPhiv', v => v + '°',   v => { st.phi = v; });
+bindRange('mSOA', 'mSOAv', v => v + ' ms', v => { st.soa = v; });
+
+// ═══════════════════════════════════════════════════════════
+// MATH
+// ═══════════════════════════════════════════════════════════
+
+function rotPt(p, c, a) {
+  const cos = Math.cos(a), sin = Math.sin(a);
+  const dx = p.x - c.x, dy = p.y - c.y;
+  return { x: c.x + cos*dx - sin*dy, y: c.y + sin*dx + cos*dy };
+}
+
+// ─── kinematic pole (Mori / McBeath & Shepard) ────────────
+// Given centroid A, centroid B, and orientation change Δθ (radians),
+// returns the unique center of pure rotation P such that rotating
+// A by Δθ about P maps the shape exactly onto B.
+// Formula: P = midpoint(A,B) + r * ê_perp
+//          r = |AB| / (2 * tan(Δθ/2))
+//          ê_perp = unit vector perpendicular to AB (CCW 90°)
+function kineticPole(A, B, deltaTheta) {
+  if (Math.abs(deltaTheta) < 1e-4) return null; // Δθ≈0 → straight line
+  const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+  const dx = B.x - A.x, dy = B.y - A.y;
+  const d  = Math.sqrt(dx*dx + dy*dy);
+  if (d < 1e-4) return null;
+  const r  = d / (2 * Math.tan(deltaTheta / 2));
+  // perpendicular to AB, CCW 90°
+  const px = -dy / d, py = dx / d;
+  return { x: mx + r * px, y: my + r * py, r: Math.sqrt((mx + r*px - A.x)**2 + (my + r*py - A.y)**2) };
+}
+
+// pose at parameter t ∈ [0,1]
+// A = start centroid, B = end centroid, pole = kinetic pole (or null)
+// thetaA = start angle (rad), deltaTheta = orientation change (rad)
+function poseAt(A, B, thetaA, deltaTheta, pole, t) {
+  const angleDeg = (thetaA + t * deltaTheta) * 180 / Math.PI;
+  if (!pole) {
+    return { x: A.x + t*(B.x-A.x), y: A.y + t*(B.y-A.y), angleDeg };
+  }
+  const pos = rotPt(A, pole, t * deltaTheta);
+  return { x: pos.x, y: pos.y, angleDeg };
+}
+
+// ─── inertia helpers (for principal-axis overlay only) ────
+
+function tensorRect(W, H)  { return { Ixx: W*H*H*H/12, Iyy: H*W*W*W/12, Ixy: 0 }; }
+function tensorPacman(R, alphaDeg) {
+  const a = alphaDeg * Math.PI / 180;
+  return { Ixx: R**4/4*(Math.PI-a+.5*Math.sin(2*a)), Iyy: R**4/4*(Math.PI-a-.5*Math.sin(2*a)) - R*R*(Math.PI-a)*(-(2*R*Math.sin(a))/(3*(Math.PI-a)))**2, Ixy: 0 };
+}
+function tensorPoly(pts) {
+  let A=0,Cx=0,Cy=0; const n=pts.length;
+  for(let i=0;i<n;i++){const j=(i+1)%n,cr=pts[i].x*pts[j].y-pts[j].x*pts[i].y;A+=cr;Cx+=(pts[i].x+pts[j].x)*cr;Cy+=(pts[i].y+pts[j].y)*cr;}
+  A/=2;Cx/=6*A;Cy/=6*A;const q=pts.map(p=>({x:p.x-Cx,y:p.y-Cy}));
+  let Ixx=0,Iyy=0,Ixy=0;
+  for(let i=0;i<n;i++){const j=(i+1)%n,xi=q[i].x,yi=q[i].y,xj=q[j].x,yj=q[j].y,cr=xi*yj-xj*yi;Ixx+=(yi*yi+yi*yj+yj*yj)*cr;Iyy+=(xi*xi+xi*xj+xj*xj)*cr;Ixy+=(xi*yj+2*xi*yi+2*xj*yj+xj*yi)*cr;}
+  return{Ixx:Math.abs(Ixx)/12,Iyy:Math.abs(Iyy)/12,Ixy:Ixy/24};
+}
+function principalAxisMin(Ixx, Iyy, Ixy) {
+  const b=(-Ixy), diff=(Ixx-Iyy)/2, rad=Math.sqrt(diff*diff+b*b);
+  if(rad < 1e-6*Math.max(Ixx,Iyy,1)) return {x:1,y:0};
+  const lmin=(Ixx+Iyy)/2-rad, vx=-Ixy, vy=Ixx-lmin, l=Math.sqrt(vx*vx+vy*vy)||1;
+  return {x:vx/l, y:vy/l};
+}
+function rotVec(v, a) { const c=Math.cos(a),s=Math.sin(a); return {x:c*v.x-s*v.y,y:s*v.x+c*v.y}; }
+
+function getShapePrincipalAxis() {
+  if (st.shape === 'rect') {
+    const t = tensorRect(st.W, st.H);
+    return principalAxisMin(t.Ixx, t.Iyy, t.Ixy);
+  }
+  if (st.shape === 'pacman') {
+    const t = tensorPacman(st.PR, st.PA);
+    return principalAxisMin(t.Ixx, t.Iyy, t.Ixy);
+  }
+  const s=st.TS, pts=[{x:0,y:-s},{x:s*.7,y:s*.6},{x:-s*.55,y:s*.45}];
+  const t=tensorPoly(pts);
+  return principalAxisMin(t.Ixx, t.Iyy, t.Ixy);
+}
+
+// ─── draw helpers ─────────────────────────────────────────
+
+function drawShape(ctx, cx, cy, angleDeg, color, lw) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angleDeg * Math.PI / 180);
+  ctx.strokeStyle = color; ctx.lineWidth = lw||2.2;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (st.shape === 'rect') {
+    ctx.rect(-st.W/2, -st.H/2, st.W, st.H);
+  } else if (st.shape === 'pacman') {
+    const R=st.PR, alpha=st.PA*Math.PI/180;
+    // centroid offset from geometric centre
+    const cx_off = -(2*R*Math.sin(alpha))/(3*(Math.PI-alpha));
+    ctx.translate(-cx_off, 0);
+    ctx.moveTo(0,0); ctx.arc(0,0,R,alpha,2*Math.PI-alpha); ctx.closePath();
+  } else {
+    const s=st.TS, pts=[{x:0,y:-s},{x:s*.7,y:s*.6},{x:-s*.55,y:s*.45}];
+    const t=tensorPoly(pts);
+    pts.forEach((p,i)=>{const x=p.x-t.cx,y=p.y-t.cy; i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.closePath();
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDashedLine(ctx, x1, y1, x2, y2, color, alpha) {
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=1;
+  ctx.globalAlpha=alpha||0.4; ctx.setLineDash([4,6]);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha=1; ctx.restore();
+}
+
+function drawArcOverlay(ctx, pole, r, thetaStart, deltaTheta, color) {
+  if (!pole) return;
+  // angle from pole to start position
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=1;
+  ctx.globalAlpha=0.2; ctx.setLineDash([3,5]);
+  ctx.beginPath(); ctx.arc(pole.x, pole.y, r, 0, 2*Math.PI); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha=1; ctx.restore();
+}
+
+function drawTrail(ctx, trail) {
+  if (trail.length < 2) return;
+  ctx.save(); ctx.strokeStyle=STIM; ctx.lineWidth=1.2;
+  ctx.globalAlpha=0.22; ctx.setLineDash([2,4]);
+  ctx.beginPath();
+  trail.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; ctx.restore();
+}
+
+function drawPole(ctx, pole, color) {
+  if (!pole) return;
+  ctx.save(); ctx.fillStyle=color;
+  ctx.beginPath(); ctx.arc(pole.x,pole.y,5,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawAxisLine(ctx, cx, cy, d, color, alpha) {
+  const L=280;
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=1;
+  ctx.globalAlpha=alpha||0.45; ctx.setLineDash([4,6]);
+  ctx.beginPath();
+  ctx.moveTo(cx-d.x*L, cy-d.y*L); ctx.lineTo(cx+d.x*L, cy+d.y*L);
+  ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; ctx.restore();
+}
+
+// perpendicular bisector of segment AB
+function drawPerpendicularBisector(ctx, A, B, color) {
+  const mx=(A.x+B.x)/2, my=(A.y+B.y)/2;
+  const dx=B.x-A.x, dy=B.y-A.y, d=Math.sqrt(dx*dx+dy*dy)||1;
+  // perpendicular direction
+  const px=-dy/d, py=dx/d;
+  const L=400;
+  drawDashedLine(ctx, mx-px*L, my-py*L, mx+px*L, my+py*L, color, 0.3);
+  // midpoint tick
+  ctx.save(); ctx.fillStyle=color; ctx.globalAlpha=0.5;
+  ctx.beginPath(); ctx.arc(mx,my,3,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1; ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN DRAW
+// ═══════════════════════════════════════════════════════════
+
+function drawMori() {
+  const { ctx, w, h } = mC;
+  ctx.fillStyle = BG; ctx.fillRect(0,0,w,h);
+
+  const cx=w/2, cy=h/2;
+  const A = { x: cx - st.d/2, y: cy };
+  const B = { x: cx + st.d/2, y: cy };
+  const thetaA = 0;
+  const deltaTheta = st.phi * Math.PI / 180;
+
+  const pole = kineticPole(A, B, deltaTheta);
+
+  const FLASH = Math.min(110, st.soa * 0.18);
+  const cycle = 2 * st.soa;
+  const phase = st.t % cycle;
+  const inA   = phase < st.soa;
+  const local = inA ? phase : phase - st.soa;
+  const flashOn  = local < FLASH;
+  const isiRaw   = flashOn ? 0 : (local - FLASH) / Math.max(1, st.soa - FLASH);
+  const tt       = inA ? isiRaw : (1 - isiRaw);  // 0=A, 1=B
+
+  // principal axis for overlay (doesn't affect the motion path)
+  const localAx = getShapePrincipalAxis();
+  const dA = rotVec(localAx, thetaA);
+  const dB = rotVec(localAx, thetaA + deltaTheta);
+
+  if (flashOn) {
+    st.trail = [];
+    const pos   = inA ? A : B;
+    const ang   = inA ? thetaA*180/Math.PI : (thetaA+deltaTheta)*180/Math.PI;
+    const col   = inA ? COL_A : COL_B;
+    const axDir = inA ? dA : dB;
+
+    drawShape(ctx, pos.x, pos.y, ang, STIM, 2.2);
+
+    if (st.showOver) {
+      // principal axis of the flashed shape
+      drawAxisLine(ctx, pos.x, pos.y, axDir, col, 0.5);
+      // during flash A also show B ghost + perpendicular bisector
+      if (inA) {
+        drawShape(ctx, B.x, B.y, (thetaA+deltaTheta)*180/Math.PI, '#e4e4e720', 1.2);
+        drawAxisLine(ctx, B.x, B.y, dB, COL_B, 0.25);
+        // perpendicular bisector of centroid displacement = construction line for pole
+        drawPerpendicularBisector(ctx, A, B, COL_BIS);
+        drawArcOverlay(ctx, pole, pole ? pole.r : 0, 0, deltaTheta, COL_ARC);
+        drawPole(ctx, pole, COL_POL);
+      }
+    }
+  } else {
+    const pose = poseAt(A, B, thetaA, deltaTheta, pole, tt);
+
+    const last = st.trail[st.trail.length - 1];
+    if (!last || (pose.x-last.x)**2+(pose.y-last.y)**2 > 2) {
+      st.trail.push({x:pose.x, y:pose.y});
+      if (st.trail.length > 400) st.trail.shift();
+    }
+
+    if (st.showOver) {
+      drawTrail(ctx, st.trail);
+      drawPole(ctx, pole, COL_POL);
+      // current principal axis
+      const curAx = rotVec(localAx, thetaA + tt*deltaTheta);
+      drawAxisLine(ctx, pose.x, pose.y, curAx, '#ffffff', 0.25);
+    }
+
+    drawShape(ctx, pose.x, pose.y, pose.angleDeg, STIM, 2);
+  }
+}
+
+// ─── loop ─────────────────────────────────────────────────
+let lastTs = 0;
+function frame(ts) {
+  const dt = lastTs ? ts - lastTs : 16; lastTs = ts;
+  st.t += dt;
+  drawMori();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
