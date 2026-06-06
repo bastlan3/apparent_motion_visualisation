@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apparent Motion — Inertia-Axis Rotation</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#08080d;color:#d4d4d8;min-height:100vh}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.back{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3f3f46;text-decoration:none}
+.back:hover{color:#6d8aff}
+.title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#52525b;letter-spacing:1.5px;text-transform:uppercase}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid #1e1e26;margin-top:18px}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:11px;background:transparent;border:none;color:#52525b;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;letter-spacing:.3px}
+.tab:hover{color:#a1a1aa}
+.tab.on{color:#6d8aff;border-bottom-color:#6d8aff}
+.panel-wrap{display:none;padding-top:40px}
+.panel-wrap.on{display:block}
+.stage{display:flex;justify-content:center;margin-bottom:32px}
+canvas{display:block;background:#08080d}
+.controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;align-items:flex-end;padding:18px 8px;border-top:1px solid #14141c;border-bottom:1px solid #14141c}
+.control{display:flex;flex-direction:column;gap:6px;min-width:128px}
+.control label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3f3f46;letter-spacing:1.4px;text-transform:uppercase}
+.control .v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a1a1aa;text-align:right;height:14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;background:#27272a;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+.seg{display:flex;gap:3px;flex-wrap:wrap}
+.seg button{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 9px;background:transparent;border:1px solid #27272a;border-radius:4px;color:#52525b;cursor:pointer;transition:all .15s}
+.seg button:hover{color:#a1a1aa;border-color:#3f3f46}
+.seg button.on{color:#6d8aff;border-color:#6d8aff50;background:#6d8aff08}
+.cite{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-align:center;margin-top:22px;line-height:1.7}
+.shape-controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:10px 8px 0;min-height:52px}
+.shape-group{display:none}
+.shape-group.on{display:contents}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="back" href="index.html">← back to experiments</a>
+  <span class="title">participant view</span>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-tab="inertia">Inertia-Axis Rotation</button>
+</nav>
+
+<div class="panel-wrap on" id="p-inertia">
+  <div class="stage"><canvas id="iCv"></canvas></div>
+
+  <div class="controls">
+    <!-- shape picker -->
+    <div class="control">
+      <label>Shape</label>
+      <span class="v">&nbsp;</span>
+      <div class="seg" id="iShape">
+        <button class="on" data-v="rect">rect</button>
+        <button data-v="pacman">pac-man</button>
+        <button data-v="tri">triangle</button>
+      </div>
+    </div>
+
+    <!-- per-shape size params (shown/hidden by JS) -->
+    <div class="shape-controls" id="shapeControls">
+      <!-- rect -->
+      <div class="shape-group on" id="sg-rect">
+        <div class="control"><label>Width (px)</label><span class="v" id="iWv">80</span><input type="range" id="iW" min="20" max="200" value="80"></div>
+        <div class="control"><label>Height (px)</label><span class="v" id="iHv">40</span><input type="range" id="iH" min="20" max="200" value="40"></div>
+      </div>
+      <!-- pacman -->
+      <div class="shape-group" id="sg-pacman">
+        <div class="control"><label>Radius (px)</label><span class="v" id="iPRv">50</span><input type="range" id="iPR" min="20" max="120" value="50"></div>
+        <div class="control"><label>Mouth (°)</label><span class="v" id="iPAv">40</span><input type="range" id="iPA" min="5" max="150" value="40"></div>
+      </div>
+      <!-- triangle: no extra params, uses fixed vertex ratios -->
+      <div class="shape-group" id="sg-tri">
+        <div class="control"><label>Scale (px)</label><span class="v" id="iTSv">70</span><input type="range" id="iTS" min="20" max="140" value="70"></div>
+      </div>
+    </div>
+
+    <!-- common controls -->
+    <div class="control"><label>Separation (px)</label><span class="v" id="iDv">300</span><input type="range" id="iD" min="80" max="600" value="300"></div>
+    <div class="control"><label>Orient. Δ (°)</label><span class="v" id="iPhiv">60</span><input type="range" id="iPhi" min="-180" max="180" value="60"></div>
+    <div class="control"><label>Slide (px)</label><span class="v" id="iSlv">0</span><input type="range" id="iSl" min="-150" max="150" value="0"></div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="iSOAv">600</span><input type="range" id="iSOA" min="200" max="1500" value="600"></div>
+    <div class="control">
+      <label>Show axes</label>
+      <span class="v">&nbsp;</span>
+      <div class="seg" id="iAxes">
+        <button class="on" data-v="on">on</button>
+        <button data-v="off">off</button>
+      </div>
+    </div>
+  </div>
+
+  <span class="cite">
+    Inertia-axis rotation policy · pivot = intersection of principal axes (min eigenvalue of 2-D inertia tensor)
+  </span>
+</div>
+
+</div><!-- .wrap -->
+
+<script>
+// ─── canvas ───────────────────────────────────────────────
+function initCv(id, w, h) {
+  const cv = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  cv.width  = w * dpr; cv.height = h * dpr;
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { cv, ctx, w, h };
+}
+const iC = initCv('iCv', 860, 480);
+
+const BG   = '#08080d';
+const STIM = '#e4e4e7';
+const AX_A = '#6d8aff88';
+const AX_B = '#ff8a6d88';
+const PIV  = '#a0e080cc';
+
+// ─── state ────────────────────────────────────────────────
+const st = {
+  shape: 'rect',
+  W: 80, H: 40,          // rect
+  PR: 50, PA: 40,        // pac-man radius / mouth half-angle (degrees)
+  TS: 70,                // triangle scale
+  d: 300, phi: 60,       // separation, orientation delta
+  slide: 0, soa: 600,
+  showAxes: true,
+  t: 0
+};
+
+// ─── tabs (trivial, only one tab) ─────────────────────────
+document.querySelectorAll('#tabs .tab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#tabs .tab').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+}));
+
+// ─── seg buttons ──────────────────────────────────────────
+function bindSeg(id, onChange) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    onChange(b.dataset.v);
+  }));
+}
+function bindRange(id, valId, fmt, onChange) {
+  const el = document.getElementById(id);
+  const vEl = document.getElementById(valId);
+  const upd = () => { const v = +el.value; vEl.textContent = fmt(v); onChange(v); };
+  el.addEventListener('input', upd); upd();
+}
+
+bindSeg('iShape', v => {
+  st.shape = v;
+  document.querySelectorAll('.shape-group').forEach(g => g.classList.remove('on'));
+  document.getElementById('sg-' + v).classList.add('on');
+});
+bindSeg('iAxes', v => { st.showAxes = v === 'on'; });
+
+bindRange('iW',   'iWv',   v => v + ' px',  v => { st.W  = v; });
+bindRange('iH',   'iHv',   v => v + ' px',  v => { st.H  = v; });
+bindRange('iPR',  'iPRv',  v => v + ' px',  v => { st.PR = v; });
+bindRange('iPA',  'iPAv',  v => v + '°',    v => { st.PA = v; });
+bindRange('iTS',  'iTSv',  v => v + ' px',  v => { st.TS = v; });
+bindRange('iD',   'iDv',   v => v + ' px',  v => { st.d  = v; });
+bindRange('iPhi', 'iPhiv', v => v + '°',    v => { st.phi = v; });
+bindRange('iSl',  'iSlv',  v => v + ' px',  v => { st.slide = v; });
+bindRange('iSOA', 'iSOAv', v => v + ' ms',  v => { st.soa  = v; });
+
+// ═══════════════════════════════════════════════════════════
+// MATH HELPERS
+// ═══════════════════════════════════════════════════════════
+
+// 2×2 symmetric inertia tensor → principal axis of minimum moment
+// returns unit vector {x, y}
+function principalAxisMin(Ixx, Iyy, Ixy) {
+  const b    = -Ixy;
+  const diff = (Ixx - Iyy) / 2;
+  const rad  = Math.sqrt(diff * diff + b * b);
+  const tol  = 1e-6 * Math.max(Ixx, Iyy, 1);
+  if (rad < tol) return { x: 1, y: 0 }; // degenerate: every axis equal
+  const lmin = (Ixx + Iyy) / 2 - rad;
+  // eigenvector for lmin from (M - lmin·I)v = 0
+  // row 0: (Ixx - lmin)·vx - Ixy·vy = 0
+  const vx = -Ixy;
+  const vy =  Ixx - lmin;
+  const len = Math.sqrt(vx * vx + vy * vy);
+  if (len < 1e-12) return { x: 1, y: 0 };
+  return { x: vx / len, y: vy / len };
+}
+
+// line–line intersection in 2D
+// P1 + t·d1  and  P2 + s·d2
+// returns null if parallel/near-parallel (|cross| < sinTol)
+function lineIntersect(P1, d1, P2, d2, sinTol) {
+  sinTol = sinTol || 0.015; // ~1°
+  const cross = d1.x * d2.y - d1.y * d2.x;
+  if (Math.abs(cross) < sinTol) return null;
+  const wx = P2.x - P1.x, wy = P2.y - P1.y;
+  const t = (wx * d2.y - wy * d2.x) / cross;
+  return { x: P1.x + t * d1.x, y: P1.y + t * d1.y };
+}
+
+// ─── inertia tensors (about centroid, uniform density) ────
+
+function inertiaTensorRect(W, H) {
+  // Ixx = WH³/12, Iyy = HW³/12, Ixy = 0
+  return { Ixx: W * H * H * H / 12, Iyy: H * W * W * W / 12, Ixy: 0 };
+}
+
+function inertiaTensorPacman(R, alphaDeg) {
+  const alpha = (alphaDeg * Math.PI / 180);
+  // Moments about geometric centre O (disk minus removed sector):
+  const Ixx_O = (R*R*R*R / 4) * (Math.PI - alpha + 0.5 * Math.sin(2 * alpha));
+  const Iyy_O = (R*R*R*R / 4) * (Math.PI - alpha - 0.5 * Math.sin(2 * alpha));
+  // centroid offset (on -x side, mouth faces +x)
+  const area = R * R * (Math.PI - alpha);
+  const cx   = -(2 * R * Math.sin(alpha)) / (3 * (Math.PI - alpha));
+  // parallel-axis: Iyy shifts, Ixx unchanged (offset is purely in x)
+  const Ixx = Ixx_O;
+  const Iyy = Iyy_O - area * cx * cx;
+  return { Ixx, Iyy, Ixy: 0, cx, cy: 0 };
+}
+
+// polygon second moments via shoelace (centroid-relative)
+function inertiaTensorPoly(pts) {
+  // compute signed area and centroid
+  let A = 0, cx = 0, cy = 0;
+  const n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const cross = pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+    A  += cross;
+    cx += (pts[i].x + pts[j].x) * cross;
+    cy += (pts[i].y + pts[j].y) * cross;
+  }
+  A  /= 2; cx /= (6 * A); cy /= (6 * A);
+  const absA = Math.abs(A);
+  // translate to centroid
+  const q = pts.map(p => ({ x: p.x - cx, y: p.y - cy }));
+  let Ixx = 0, Iyy = 0, Ixy = 0;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const xi = q[i].x, yi = q[i].y, xj = q[j].x, yj = q[j].y;
+    const cross = xi * yj - xj * yi;
+    Ixx += (yi * yi + yi * yj + yj * yj) * cross;
+    Iyy += (xi * xi + xi * xj + xj * xj) * cross;
+    Ixy += (xi * yj + 2*xi*yi + 2*xj*yj + xj*yi) * cross;
+  }
+  Ixx = Math.abs(Ixx) / 12;
+  Iyy = Math.abs(Iyy) / 12;
+  Ixy = Ixy / 24; // keep sign for off-diagonal
+  return { Ixx, Iyy, Ixy, cx, cy };
+}
+
+// ─── shape geometry (returns {axis, centroidOffset}) ──────
+// axis: unit vector of principal axis of min inertia
+// centroidOffset: {x,y} shift from the draw-centre to the true centroid
+
+function shapeAxis() {
+  if (st.shape === 'rect') {
+    const t = inertiaTensorRect(st.W, st.H);
+    const ax = principalAxisMin(t.Ixx, t.Iyy, t.Ixy);
+    return { axis: ax, co: { x: 0, y: 0 } };
+  }
+  if (st.shape === 'pacman') {
+    const t = inertiaTensorPacman(st.PR, st.PA);
+    const ax = principalAxisMin(t.Ixx, t.Iyy, t.Ixy);
+    return { axis: ax, co: { x: t.cx, y: t.cy } };
+  }
+  // triangle — fixed scalene shape (interesting, non-symmetric)
+  const s = st.TS;
+  const pts = [
+    { x:  0,        y: -s },
+    { x:  s * 0.7,  y:  s * 0.6 },
+    { x: -s * 0.55, y:  s * 0.45 },
+  ];
+  const t = inertiaTensorPoly(pts);
+  const ax = principalAxisMin(t.Ixx, t.Iyy, t.Ixy);
+  return { axis: ax, co: { x: t.cx, y: t.cy } };
+}
+
+// ─── draw helpers ─────────────────────────────────────────
+
+// rotate a point around a centre
+function rotPt(p, c, a) {
+  const cos = Math.cos(a), sin = Math.sin(a);
+  const dx = p.x - c.x, dy = p.y - c.y;
+  return { x: c.x + cos*dx - sin*dy, y: c.y + sin*dx + cos*dy };
+}
+
+function setStroke(ctx, color, lw) {
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+}
+
+// draw shape at position (cx,cy) with orientation angle (radians)
+function drawShape(ctx, cx, cy, angleDeg, color, lw) {
+  const a = angleDeg * Math.PI / 180;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(a);
+  setStroke(ctx, color, lw || 2.2);
+  ctx.beginPath();
+
+  if (st.shape === 'rect') {
+    const W = st.W, H = st.H;
+    ctx.rect(-W/2, -H/2, W, H);
+  } else if (st.shape === 'pacman') {
+    const R = st.PR;
+    const alpha = st.PA * Math.PI / 180;
+    // centroid offset — already baked into cx/cy, so draw body from geometric centre
+    const t = inertiaTensorPacman(R, st.PA);
+    // shift draw origin to geometric centre (centroid is where we put cx,cy)
+    ctx.translate(-t.cx, -t.cy);
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, R, alpha, 2*Math.PI - alpha);
+    ctx.closePath();
+  } else {
+    const s = st.TS;
+    const pts = [
+      { x:  0,        y: -s },
+      { x:  s * 0.7,  y:  s * 0.6 },
+      { x: -s * 0.55, y:  s * 0.45 },
+    ];
+    const t = inertiaTensorPoly(pts);
+    // centroid is at t.{cx,cy} in the pts coordinate frame
+    // draw with centroid at origin
+    pts.forEach((p, i) => {
+      const x = p.x - t.cx, y = p.y - t.cy;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// draw principal-axis line through (cx,cy) with direction d (unit vec)
+function drawAxis(ctx, cx, cy, d, color) {
+  const len = 300;
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  ctx.setLineDash([4, 6]);
+  ctx.globalAlpha = 0.6;
+  ctx.beginPath();
+  ctx.moveTo(cx - d.x * len, cy - d.y * len);
+  ctx.lineTo(cx + d.x * len, cy + d.y * len);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawPivot(ctx, px, py) {
+  ctx.save();
+  ctx.fillStyle = PIV;
+  ctx.beginPath();
+  ctx.arc(px, py, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN DRAW
+// ═══════════════════════════════════════════════════════════
+function drawInertia() {
+  const { ctx, w, h } = iC;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
+
+  const cx = w / 2, cy = h / 2;
+
+  // shape A and B positions (centroid positions)
+  const Ax = cx - st.d / 2, Ay = cy;
+  const Bx = cx + st.d / 2, By = cy;
+
+  // orientation angles
+  const angleA = 0;
+  const angleB = st.phi;
+  const radA   = angleA * Math.PI / 180;
+  const radB   = angleB * Math.PI / 180;
+
+  // principal axis (in local frame, before rotation)
+  const { axis: localAxis } = shapeAxis();
+
+  // rotate axis by shape orientation
+  const rotAxis = (ax, rad) => {
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    return { x: cos*ax.x - sin*ax.y, y: sin*ax.x + cos*ax.y };
+  };
+  const dA = rotAxis(localAxis, radA);
+  const dB = rotAxis(localAxis, radB);
+
+  // pivot = intersection of the two principal-axis lines
+  const PA = { x: Ax, y: Ay };
+  const PB = { x: Bx, y: By };
+  let pivot = lineIntersect(PA, dA, PB, dB);
+  if (!pivot) pivot = { x: (Ax + Bx) / 2, y: (Ay + By) / 2 }; // fallback
+
+  // clamp pivot if it's absurdly far (>3× canvas diagonal)
+  const diagSq = w*w + h*h;
+  const distSq = (pivot.x - cx)**2 + (pivot.y - cy)**2;
+  if (distSq > 9 * diagSq) pivot = { x: (Ax + Bx) / 2, y: (Ay + By) / 2 };
+
+  // ─── animation timing ─────────────────────────────────
+  const FLASH = Math.min(110, st.soa * 0.25);
+  const cycle = 2 * st.soa;
+  const phase = st.t % cycle;
+  const inA   = phase < st.soa;
+  const local = inA ? phase : phase - st.soa;
+  const flashOn = local < FLASH;
+  const isiPhase = flashOn ? 0 : (local - FLASH) / Math.max(1, st.soa - FLASH);
+  const tt = inA ? isiPhase : (1 - isiPhase); // 0=A, 1=B
+
+  // interpolated rotation angle and slide
+  const interp_theta = tt * st.phi * Math.PI / 180;
+  const interp_slide = tt * st.slide;
+
+  if (flashOn) {
+    // ─── flash: draw static A or static B ─────────────
+    const fx = inA ? Ax : Bx;
+    const fy = inA ? Ay : By;
+    const fa = inA ? angleA : angleB;
+    drawShape(ctx, fx, fy, fa, STIM, 2.2);
+
+    if (st.showAxes) {
+      const fd = inA ? dA : dB;
+      drawAxis(ctx, fx, fy, fd, inA ? AX_A : AX_B);
+      if (inA) drawAxis(ctx, Bx, By, dB, AX_B);
+      drawPivot(ctx, pivot.x, pivot.y);
+    }
+  } else {
+    // ─── ISI: animate rotation about pivot + slide ────
+    // current orientation = angleA + interp_theta (in degrees for drawShape)
+    const curAngleDeg = angleA + interp_theta * 180 / Math.PI;
+
+    // position: rotate centroid A around pivot by interp_theta
+    const rotA = rotPt({ x: Ax, y: Ay }, pivot, interp_theta);
+
+    // slide along current (rotated) principal axis
+    const curAxis = rotAxis(localAxis, interp_theta);
+    const curX = rotA.x + curAxis.x * interp_slide;
+    const curY = rotA.y + curAxis.y * interp_slide;
+
+    drawShape(ctx, curX, curY, curAngleDeg, STIM, 2);
+
+    if (st.showAxes) {
+      drawAxis(ctx, curX, curY, curAxis, '#ffffff44');
+      drawPivot(ctx, pivot.x, pivot.y);
+    }
+  }
+}
+
+// ─── master loop ──────────────────────────────────────────
+let lastTs = 0;
+function frame(ts) {
+  const dt = lastTs ? (ts - lastTs) : 16;
+  lastTs = ts;
+  st.t += dt;
+  drawInertia();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
