@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apparent Motion — Inertia-Axis Drive</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#08080d;color:#d4d4d8;min-height:100vh}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.back{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3f3f46;text-decoration:none}
+.back:hover{color:#6d8aff}
+.title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#52525b;letter-spacing:1.5px;text-transform:uppercase}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid #1e1e26;margin-top:18px}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:11px;background:transparent;border:none;color:#52525b;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;letter-spacing:.3px}
+.tab:hover{color:#a1a1aa}
+.tab.on{color:#6d8aff;border-bottom-color:#6d8aff}
+.panel-wrap{display:none;padding-top:40px}
+.panel-wrap.on{display:block}
+.stage{display:flex;justify-content:center;margin-bottom:32px}
+canvas{display:block;background:#08080d}
+.controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;align-items:flex-end;padding:18px 8px;border-top:1px solid #14141c;border-bottom:1px solid #14141c}
+.control{display:flex;flex-direction:column;gap:6px;min-width:128px}
+.control label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3f3f46;letter-spacing:1.4px;text-transform:uppercase}
+.control .v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a1a1aa;text-align:right;height:14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;background:#27272a;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+.seg{display:flex;gap:3px;flex-wrap:wrap}
+.seg button{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 9px;background:transparent;border:1px solid #27272a;border-radius:4px;color:#52525b;cursor:pointer;transition:all .15s}
+.seg button:hover{color:#a1a1aa;border-color:#3f3f46}
+.seg button.on{color:#6d8aff;border-color:#6d8aff50;background:#6d8aff08}
+.cite{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-align:center;margin-top:22px;line-height:1.7}
+.shape-controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:10px 8px 0;min-height:52px}
+.shape-group{display:none}
+.shape-group.on{display:contents}
+/* residual indicator */
+.residual{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#52525b;text-align:center;margin-top:10px}
+.residual span{color:#ff8a6d}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="back" href="index.html">← back to experiments</a>
+  <span class="title">participant view</span>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-tab="drive">Inertia-Axis Drive</button>
+</nav>
+
+<div class="panel-wrap on" id="p-drive">
+  <div class="stage"><canvas id="dCv"></canvas></div>
+
+  <div class="controls">
+    <div class="control">
+      <label>Shape</label><span class="v">&nbsp;</span>
+      <div class="seg" id="dShape">
+        <button class="on" data-v="rect">rect</button>
+        <button data-v="pacman">pac-man</button>
+        <button data-v="tri">triangle</button>
+      </div>
+    </div>
+
+    <div class="shape-controls">
+      <div class="shape-group on" id="sg-rect">
+        <div class="control"><label>Width (px)</label><span class="v" id="dWv">80</span><input type="range" id="dW" min="20" max="200" value="80"></div>
+        <div class="control"><label>Height (px)</label><span class="v" id="dHv">40</span><input type="range" id="dH" min="20" max="200" value="40"></div>
+      </div>
+      <div class="shape-group" id="sg-pacman">
+        <div class="control"><label>Radius (px)</label><span class="v" id="dPRv">50</span><input type="range" id="dPR" min="20" max="120" value="50"></div>
+        <div class="control"><label>Mouth (°)</label><span class="v" id="dPAv">40</span><input type="range" id="dPA" min="5" max="150" value="40"></div>
+      </div>
+      <div class="shape-group" id="sg-tri">
+        <div class="control"><label>Scale (px)</label><span class="v" id="dTSv">70</span><input type="range" id="dTS" min="20" max="140" value="70"></div>
+      </div>
+    </div>
+
+    <div class="control"><label>Separation (px)</label><span class="v" id="dDv">300</span><input type="range" id="dD" min="80" max="600" value="300"></div>
+    <div class="control"><label>Orient. Δ (°)</label><span class="v" id="dPhiv">60</span><input type="range" id="dPhi" min="-180" max="180" value="60"></div>
+
+    <div class="control">
+      <label>Drive axis</label><span class="v">&nbsp;</span>
+      <div class="seg" id="dAxis">
+        <button class="on" data-v="1">axis 1 (min)</button>
+        <button data-v="2">axis 2 (max)</button>
+        <button data-v="auto">auto</button>
+      </div>
+    </div>
+
+    <div class="control"><label>Drive mult.</label><span class="v" id="dMv">1.0×</span><input type="range" id="dM" min="-200" max="300" value="100"></div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="dSOAv">700</span><input type="range" id="dSOA" min="200" max="1500" value="700"></div>
+
+    <div class="control">
+      <label>Overlays</label><span class="v">&nbsp;</span>
+      <div class="seg" id="dOver">
+        <button class="on" data-v="on">on</button>
+        <button data-v="off">off</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="residual">short-axis residual: <span id="residualVal">—</span></div>
+  <span class="cite">
+    Pivot = intersection of principal axes (min eigenvalue, 2-D inertia tensor) ·
+    shape drives along chosen axis while rotating around pivot
+  </span>
+</div>
+
+</div>
+
+<script>
+// ─── canvas ───────────────────────────────────────────────
+function initCv(id, w, h) {
+  const cv = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = w * dpr; cv.height = h * dpr;
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { cv, ctx, w, h };
+}
+const dC = initCv('dCv', 860, 480);
+
+const BG    = '#08080d';
+const STIM  = '#e4e4e7';
+const COL_A = '#6d8aff';
+const COL_B = '#ff8a6d';
+const COL_P = '#a0e080';
+const TRAIL = '#ffffff';
+
+const st = {
+  shape: 'rect',
+  W: 80, H: 40,
+  PR: 50, PA: 40,
+  TS: 70,
+  d: 300, phi: 60,
+  driveAxis: '1',   // '1'=min moment, '2'=max moment, 'auto'
+  driveMult: 1.0,
+  soa: 700,
+  showOver: true,
+  t: 0,
+  // trail buffer: array of {x,y} sampled during ISI
+  trail: [],
+};
+
+// ─── bindings ─────────────────────────────────────────────
+function bindSeg(id, fn) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function bindRange(id, vid, fmt, fn) {
+  const el = document.getElementById(id);
+  const vEl = document.getElementById(vid);
+  const upd = () => { const v = +el.value; vEl.textContent = fmt(v); fn(v); };
+  el.addEventListener('input', upd); upd();
+}
+
+bindSeg('dShape', v => {
+  st.shape = v;
+  document.querySelectorAll('.shape-group').forEach(g => g.classList.remove('on'));
+  document.getElementById('sg-' + v).classList.add('on');
+});
+bindSeg('dAxis',  v => { st.driveAxis = v; });
+bindSeg('dOver',  v => { st.showOver = v === 'on'; });
+
+bindRange('dW',   'dWv',   v => v + ' px',  v => { st.W  = v; });
+bindRange('dH',   'dHv',   v => v + ' px',  v => { st.H  = v; });
+bindRange('dPR',  'dPRv',  v => v + ' px',  v => { st.PR = v; });
+bindRange('dPA',  'dPAv',  v => v + '°',    v => { st.PA = v; });
+bindRange('dTS',  'dTSv',  v => v + ' px',  v => { st.TS = v; });
+bindRange('dD',   'dDv',   v => v + ' px',  v => { st.d  = v; });
+bindRange('dPhi', 'dPhiv', v => v + '°',    v => { st.phi = v; });
+bindRange('dM',   'dMv',   v => (v/100).toFixed(1) + '×', v => { st.driveMult = v / 100; });
+bindRange('dSOA', 'dSOAv', v => v + ' ms',  v => { st.soa = v; });
+
+// ═══════════════════════════════════════════════════════════
+// MATH
+// ═══════════════════════════════════════════════════════════
+
+function dot(a, b) { return a.x * b.x + a.y * b.y; }
+function len(v)    { return Math.sqrt(v.x*v.x + v.y*v.y); }
+function norm(v)   { const l = len(v) || 1; return { x: v.x/l, y: v.y/l }; }
+function perp(v)   { return { x: -v.y, y: v.x }; }
+function rotVec(v, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return { x: c*v.x - s*v.y, y: s*v.x + c*v.y };
+}
+function rotPt(p, c, a) {
+  const dx = p.x - c.x, dy = p.y - c.y;
+  const cos = Math.cos(a), sin = Math.sin(a);
+  return { x: c.x + cos*dx - sin*dy, y: c.y + sin*dx + cos*dy };
+}
+
+function lineIntersect(P1, d1, P2, d2, tol) {
+  tol = tol || 0.015;
+  const cross = d1.x*d2.y - d1.y*d2.x;
+  if (Math.abs(cross) < tol) return null;
+  const wx = P2.x - P1.x, wy = P2.y - P1.y;
+  const t = (wx*d2.y - wy*d2.x) / cross;
+  return { x: P1.x + t*d1.x, y: P1.y + t*d1.y };
+}
+
+// ─── inertia tensors ──────────────────────────────────────
+
+function tensorRect(W, H) {
+  return { Ixx: W*H*H*H/12, Iyy: H*W*W*W/12, Ixy: 0 };
+}
+
+function tensorPacman(R, alphaDeg) {
+  const alpha = alphaDeg * Math.PI / 180;
+  const Ixx_O = (R**4/4) * (Math.PI - alpha + 0.5*Math.sin(2*alpha));
+  const Iyy_O = (R**4/4) * (Math.PI - alpha - 0.5*Math.sin(2*alpha));
+  const area  = R*R*(Math.PI - alpha);
+  const cx    = -(2*R*Math.sin(alpha)) / (3*(Math.PI - alpha));
+  return { Ixx: Ixx_O, Iyy: Iyy_O - area*cx*cx, Ixy: 0, cx, cy: 0 };
+}
+
+function tensorPoly(pts) {
+  let A = 0, Cx = 0, Cy = 0;
+  const n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const j = (i+1) % n;
+    const cr = pts[i].x*pts[j].y - pts[j].x*pts[i].y;
+    A += cr; Cx += (pts[i].x + pts[j].x)*cr; Cy += (pts[i].y + pts[j].y)*cr;
+  }
+  A /= 2; Cx /= 6*A; Cy /= 6*A;
+  const q = pts.map(p => ({ x: p.x-Cx, y: p.y-Cy }));
+  let Ixx = 0, Iyy = 0, Ixy = 0;
+  for (let i = 0; i < n; i++) {
+    const j = (i+1) % n;
+    const xi = q[i].x, yi = q[i].y, xj = q[j].x, yj = q[j].y;
+    const cr = xi*yj - xj*yi;
+    Ixx += (yi*yi + yi*yj + yj*yj) * cr;
+    Iyy += (xi*xi + xi*xj + xj*xj) * cr;
+    Ixy += (xi*yj + 2*xi*yi + 2*xj*yj + xj*yi) * cr;
+  }
+  return { Ixx: Math.abs(Ixx)/12, Iyy: Math.abs(Iyy)/12, Ixy: Ixy/24, cx: Cx, cy: Cy };
+}
+
+// both principal axes (min and max moment)
+function principalAxes(Ixx, Iyy, Ixy) {
+  const b    = -Ixy;
+  const diff = (Ixx - Iyy) / 2;
+  const rad  = Math.sqrt(diff*diff + b*b);
+  const tol  = 1e-6 * Math.max(Ixx, Iyy, 1);
+  if (rad < tol) return { ax1: {x:1,y:0}, ax2: {x:0,y:1} };
+  const lmin = (Ixx + Iyy)/2 - rad;
+  const vx = -Ixy, vy = Ixx - lmin;
+  const l  = Math.sqrt(vx*vx + vy*vy) || 1;
+  const ax1 = { x: vx/l, y: vy/l };   // min moment
+  const ax2 = perp(ax1);               // max moment (perpendicular)
+  return { ax1, ax2 };
+}
+
+function getShapeInfo() {
+  if (st.shape === 'rect') {
+    const t = tensorRect(st.W, st.H);
+    const { ax1, ax2 } = principalAxes(t.Ixx, t.Iyy, t.Ixy);
+    return { ax1, ax2, co: {x:0, y:0} };
+  }
+  if (st.shape === 'pacman') {
+    const t = tensorPacman(st.PR, st.PA);
+    const { ax1, ax2 } = principalAxes(t.Ixx, t.Iyy, t.Ixy);
+    return { ax1, ax2, co: {x: t.cx, y: t.cy} };
+  }
+  const s = st.TS;
+  const pts = [{x:0,y:-s},{x:s*0.7,y:s*0.6},{x:-s*0.55,y:s*0.45}];
+  const t = tensorPoly(pts);
+  const { ax1, ax2 } = principalAxes(t.Ixx, t.Iyy, t.Ixy);
+  return { ax1, ax2, co: {x: t.cx, y: t.cy} };
+}
+
+// ─── draw shape ───────────────────────────────────────────
+
+function drawShape(ctx, cx, cy, angleDeg, color, lw) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angleDeg * Math.PI / 180);
+  ctx.strokeStyle = color; ctx.lineWidth = lw || 2.2;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (st.shape === 'rect') {
+    ctx.rect(-st.W/2, -st.H/2, st.W, st.H);
+  } else if (st.shape === 'pacman') {
+    const R = st.PR, alpha = st.PA * Math.PI / 180;
+    const t = tensorPacman(R, st.PA);
+    ctx.translate(-t.cx, -t.cy);
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, R, alpha, 2*Math.PI - alpha);
+    ctx.closePath();
+  } else {
+    const s = st.TS;
+    const pts = [{x:0,y:-s},{x:s*0.7,y:s*0.6},{x:-s*0.55,y:s*0.45}];
+    const t = tensorPoly(pts);
+    pts.forEach((p, i) => {
+      const x = p.x - t.cx, y = p.y - t.cy;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawAxisLine(ctx, cx, cy, d, color) {
+  const len = 320;
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  ctx.setLineDash([4, 6]); ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx - d.x*len, cy - d.y*len);
+  ctx.lineTo(cx + d.x*len, cy + d.y*len);
+  ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawPivot(ctx, px, py, color) {
+  ctx.save();
+  ctx.fillStyle = color || COL_P;
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawTrail(ctx, trail) {
+  if (trail.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = TRAIL; ctx.lineWidth = 1.2;
+  ctx.globalAlpha = 0.25;
+  ctx.setLineDash([2, 4]);
+  ctx.beginPath();
+  trail.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MOTION COMPUTATION
+// ═══════════════════════════════════════════════════════════
+
+function computeScene() {
+  const { w, h } = dC;
+  const cx = w/2, cy = h/2;
+
+  const A = { x: cx - st.d/2, y: cy };
+  const B = { x: cx + st.d/2, y: cy };
+  const radA = 0;
+  const radB = st.phi * Math.PI / 180;
+  const Δθ   = radB - radA;
+
+  const { ax1, ax2 } = getShapeInfo();
+
+  // principal axes rotated to each shape's orientation
+  const dA1 = rotVec(ax1, radA), dA2 = rotVec(ax2, radA);
+  const dB1 = rotVec(ax1, radB), dB2 = rotVec(ax2, radB);
+
+  // pivot: intersection of axis-1 lines (the min-moment axis)
+  let pivot = lineIntersect(A, dA1, B, dB1);
+  if (!pivot) pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
+  // clamp if wildly out of range
+  const diagSq = w*w + h*h;
+  if ((pivot.x-cx)**2 + (pivot.y-cy)**2 > 9*diagSq)
+    pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
+
+  // after pure rotation around pivot, where does A's centroid land?
+  const A_rot = rotPt(A, pivot, Δθ);
+  const residual = { x: B.x - A_rot.x, y: B.y - A_rot.y };
+
+  // choose drive vector (in B's final orientation)
+  let driveVecB, driveVecA;
+  if (st.driveAxis === '1') {
+    driveVecB = dB1; driveVecA = dA1;
+  } else if (st.driveAxis === '2') {
+    driveVecB = dB2; driveVecA = dA2;
+  } else {
+    // 'auto': pick whichever axis has the larger residual component
+    const comp1 = Math.abs(dot(residual, dB1));
+    const comp2 = Math.abs(dot(residual, dB2));
+    if (comp1 >= comp2) { driveVecB = dB1; driveVecA = dA1; }
+    else                { driveVecB = dB2; driveVecA = dA2; }
+  }
+
+  // auto drive distance: project residual onto chosen drive axis at final angle
+  const auto_drive = dot(residual, driveVecB);
+  const driveDist  = auto_drive * st.driveMult;
+
+  // short-axis residual (component not covered by driving along chosen axis)
+  const shortResidual = dot(residual, perp(driveVecB));
+
+  return { A, B, pivot, radA, radB, Δθ, ax1, ax2, dA1, dA2, dB1, dB2,
+           driveVecA, driveVecB, driveDist, shortResidual };
+}
+
+// position + angle at interpolation parameter t ∈ [0,1]
+function poseAt(sc, t) {
+  const { A, pivot, radA, Δθ, ax1, ax2, driveVecA, driveDist } = sc;
+  const θt = radA + t * Δθ;
+
+  // 1. rotate A around pivot
+  const rotA = rotPt(A, pivot, t * Δθ);
+
+  // 2. drive along current orientation of chosen axis
+  const curDrive = rotVec(driveVecA, t * Δθ);  // axis rotates with shape
+  const driveAmt = t * driveDist;
+
+  return {
+    x: rotA.x + curDrive.x * driveAmt,
+    y: rotA.y + curDrive.y * driveAmt,
+    angleDeg: θt * 180 / Math.PI,
+    ax1: rotVec(ax1, θt),
+    ax2: rotVec(ax2, θt),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// DRAW FRAME
+// ═══════════════════════════════════════════════════════════
+
+function drawDrive() {
+  const { ctx, w, h } = dC;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
+
+  const sc = computeScene();
+  const { A, B, pivot, dA1, dA2, dB1, dB2, shortResidual } = sc;
+
+  // update residual display
+  document.getElementById('residualVal').textContent =
+    Math.abs(shortResidual) < 0.5 ? '0 px ✓' : Math.abs(shortResidual).toFixed(1) + ' px';
+
+  const FLASH  = Math.min(110, st.soa * 0.18);
+  const cycle  = 2 * st.soa;
+  const phase  = st.t % cycle;
+  const inA    = phase < st.soa;
+  const local  = inA ? phase : phase - st.soa;
+  const flashOn = local < FLASH;
+  const isiRaw  = flashOn ? 0 : (local - FLASH) / Math.max(1, st.soa - FLASH);
+  const tt      = inA ? isiRaw : (1 - isiRaw);  // 0 = A, 1 = B
+
+  if (flashOn) {
+    st.trail = [];  // reset trail each flash
+
+    const isA = inA;
+    const pos = isA ? A : B;
+    const ang = isA ? 0 : st.phi;
+    const d1  = isA ? dA1 : dB1;
+    const d2  = isA ? dA2 : dB2;
+
+    drawShape(ctx, pos.x, pos.y, ang, STIM, 2.2);
+
+    if (st.showOver) {
+      drawAxisLine(ctx, pos.x, pos.y, d1, isA ? COL_A : COL_B);
+      drawAxisLine(ctx, pos.x, pos.y, d2, isA ? COL_A+'55' : COL_B+'55');
+      if (isA) {
+        drawAxisLine(ctx, B.x, B.y, dB1, COL_B);
+        drawAxisLine(ctx, B.x, B.y, dB2, COL_B + '55');
+      }
+      drawPivot(ctx, pivot.x, pivot.y, COL_P);
+    }
+  } else {
+    const pose = poseAt(sc, tt);
+
+    // accumulate trail every few ms
+    const lastP = st.trail[st.trail.length - 1];
+    if (!lastP || (pose.x - lastP.x)**2 + (pose.y - lastP.y)**2 > 4) {
+      st.trail.push({ x: pose.x, y: pose.y });
+      if (st.trail.length > 300) st.trail.shift();
+    }
+
+    if (st.showOver) {
+      drawTrail(ctx, st.trail);
+      drawPivot(ctx, pivot.x, pivot.y, COL_P);
+      // show current axes faintly
+      drawAxisLine(ctx, pose.x, pose.y, pose.ax1, '#ffffff33');
+      drawAxisLine(ctx, pose.x, pose.y, pose.ax2, '#ffffff1a');
+    }
+
+    drawShape(ctx, pose.x, pose.y, pose.angleDeg, STIM, 2);
+  }
+}
+
+// ─── master loop ──────────────────────────────────────────
+let lastTs = 0;
+function frame(ts) {
+  const dt = lastTs ? ts - lastTs : 16;
+  lastTs = ts;
+  st.t += dt;
+  drawDrive();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
