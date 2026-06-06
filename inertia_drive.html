@@ -373,39 +373,45 @@ function computeScene() {
   // principal axes rotated to each shape's orientation
   const dA1 = rotVec(ax1, radA), dA2 = rotVec(ax2, radA);
   const dB1 = rotVec(ax1, radB), dB2 = rotVec(ax2, radB);
-
-  // pivot: intersection of axis-1 lines (the min-moment axis)
-  let pivot = lineIntersect(A, dA1, B, dB1);
-  if (!pivot) pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
-  // clamp if wildly out of range
   const diagSq = w*w + h*h;
-  if ((pivot.x-cx)**2 + (pivot.y-cy)**2 > 9*diagSq)
-    pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
 
-  // after pure rotation around pivot, where does A's centroid land?
-  const A_rot = rotPt(A, pivot, Δθ);
-  const residual = { x: B.x - A_rot.x, y: B.y - A_rot.y };
-
-  // choose drive vector (in B's final orientation)
-  let driveVecB, driveVecA;
-  if (st.driveAxis === '1') {
-    driveVecB = dB1; driveVecA = dA1;
-  } else if (st.driveAxis === '2') {
-    driveVecB = dB2; driveVecA = dA2;
-  } else {
-    // 'auto': pick whichever axis has the larger residual component
-    const comp1 = Math.abs(dot(residual, dB1));
-    const comp2 = Math.abs(dot(residual, dB2));
-    if (comp1 >= comp2) { driveVecB = dB1; driveVecA = dA1; }
-    else                { driveVecB = dB2; driveVecA = dA2; }
+  // compute pivot + residuals for a given axis pair
+  function calcForAxis(dAx, dBx) {
+    let pivot = lineIntersect(A, dAx, B, dBx);
+    if (!pivot) pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
+    if ((pivot.x-cx)**2 + (pivot.y-cy)**2 > 9*diagSq)
+      pivot = { x: (A.x+B.x)/2, y: (A.y+B.y)/2 };
+    const A_rot = rotPt(A, pivot, Δθ);
+    const residual = { x: B.x - A_rot.x, y: B.y - A_rot.y };
+    const auto_drive   = dot(residual, dBx);
+    const shortResidual = dot(residual, perp(dBx));
+    return { pivot, auto_drive, shortResidual };
   }
 
-  // auto drive distance: project residual onto chosen drive axis at final angle
-  const auto_drive = dot(residual, driveVecB);
-  const driveDist  = auto_drive * st.driveMult;
+  // choose the axis — pivot is always from the same axis used for driving
+  let driveVecA, driveVecB, pivot, auto_drive, shortResidual;
+  if (st.driveAxis === '1') {
+    const r = calcForAxis(dA1, dB1);
+    driveVecA = dA1; driveVecB = dB1;
+    ({ pivot, auto_drive, shortResidual } = r);
+  } else if (st.driveAxis === '2') {
+    const r = calcForAxis(dA2, dB2);
+    driveVecA = dA2; driveVecB = dB2;
+    ({ pivot, auto_drive, shortResidual } = r);
+  } else {
+    // auto: pick the axis whose pivot gives the smaller short-axis residual
+    const r1 = calcForAxis(dA1, dB1);
+    const r2 = calcForAxis(dA2, dB2);
+    if (Math.abs(r1.shortResidual) <= Math.abs(r2.shortResidual)) {
+      driveVecA = dA1; driveVecB = dB1;
+      ({ pivot, auto_drive, shortResidual } = r1);
+    } else {
+      driveVecA = dA2; driveVecB = dB2;
+      ({ pivot, auto_drive, shortResidual } = r2);
+    }
+  }
 
-  // short-axis residual (component not covered by driving along chosen axis)
-  const shortResidual = dot(residual, perp(driveVecB));
+  const driveDist = auto_drive * st.driveMult;
 
   return { A, B, pivot, radA, radB, Δθ, ax1, ax2, dA1, dA2, dB1, dB2,
            driveVecA, driveVecB, driveDist, shortResidual };
