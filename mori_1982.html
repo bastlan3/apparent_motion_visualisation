@@ -239,9 +239,14 @@ function poseMori(A, B, thetaA, deltaTheta, localAxis, t) {
   const dx = B.x - A.x, dy = B.y - A.y;
   const speed = denom > 1e-8 ? (dx*sx1 + dy*sy1) / denom : 0;
 
+  // Raw integral position at t and at t=1
+  const rawX = A.x + speed * sxt,  rawY = A.y + speed * syt;
+  const rawEndX = A.x + speed * sx1, rawEndY = A.y + speed * sy1;
+
+  // Linear correction: 0 at t=0, full at t=1 — pins endpoint exactly to B
   return {
-    x: A.x + speed * sxt,
-    y: A.y + speed * syt,
+    x: rawX + t * (B.x - rawEndX),
+    y: rawY + t * (B.y - rawEndY),
   };
 }
 
