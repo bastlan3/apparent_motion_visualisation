@@ -82,6 +82,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
       </div>
     </div>
     <div class="control"><label>Separation (px)</label><span class="v" id="mDv">300</span><input type="range" id="mD" min="60" max="580" value="300"></div>
+    <div class="control"><label>Vert. offset (px)</label><span class="v" id="mVv">0</span><input type="range" id="mV" min="-200" max="200" value="0"></div>
     <div class="control"><label>Orient. Δ (°)</label><span class="v" id="mPhiv">60</span><input type="range" id="mPhi" min="-170" max="170" value="60"></div>
     <div class="control">
       <label>Animate</label><span class="v">&nbsp;</span>
@@ -130,7 +131,7 @@ const COL_KINE   = '#ff8a6d';   // orange: kinematic pole
 
 const st = {
   shape:'rect', W:30, H:90, PR:50, PA:40, TS:70,
-  d:300, phi:60, soa:800,
+  d:300, vertOff:0, phi:60, soa:800,
   animModel:'mori',  // which model drives the live shape
   showAll:true,
   t:0,
@@ -162,6 +163,7 @@ bindRange('mPR', 'mPRv', v=>v+' px', v=>{st.PR=v;});
 bindRange('mPA', 'mPAv', v=>v+'°',   v=>{st.PA=v;});
 bindRange('mTS', 'mTSv', v=>v+' px', v=>{st.TS=v;});
 bindRange('mD',  'mDv',  v=>v+' px', v=>{st.d=v;});
+bindRange('mV',  'mVv',  v=>v+' px', v=>{st.vertOff=v;});
 bindRange('mPhi','mPhiv',v=>v+'°',   v=>{st.phi=v;});
 bindRange('mSOA','mSOAv',v=>v+' ms', v=>{st.soa=v;});
 
@@ -325,8 +327,8 @@ function drawFrame() {
   ctx.fillStyle=BG; ctx.fillRect(0,0,w,h);
 
   const cx=w/2, cy=h/2;
-  const A = { x:cx-st.d/2, y:cy };
-  const B = { x:cx+st.d/2, y:cy };
+  const A = { x:cx-st.d/2, y:cy - st.vertOff/2 };
+  const B = { x:cx+st.d/2, y:cy + st.vertOff/2 };
   const thetaA = 0;
   const deltaTheta = st.phi * Math.PI / 180;
   const localAxis = getLocalAxis();
