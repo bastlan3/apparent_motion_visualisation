@@ -216,43 +216,65 @@ function getLocalAxis(){
 // ═══════════════════════════════════════════════════════════
 
 // 1. MORI (1982) — serial concatenation
-//    Shape drives along its current principal axis direction while rotating
-//    at constant rate. Path = ∫ rotVec(localAxis, θ(t)) dt
-//    Speed calibrated by least-squares projection onto B.
+//    Unique path where the centroid is driven by two speed components —
+//    along and perpendicular to the rotating principal axis — solved
+//    exactly so the path starts at A and ends at B.
+//    Integral identities: Im_x = ∫cos, Im_y = ∫sin, Ip_x = ∫(-sin), Ip_y = ∫cos = Im_x
+//    Matrix [[Im_x1, Ip_x1],[-Ip_x1, Im_x1]] is always invertible for Δθ ≠ 2kπ.
 function poseMori(A, B, thetaA, deltaTheta, localAxis, t) {
   if (Math.abs(deltaTheta) < 1e-4) {
     return { x: A.x + t*(B.x-A.x), y: A.y + t*(B.y-A.y) };
   }
-  // World-frame heading direction at start
   const axA = rotVec(localAxis, thetaA);
-  const phi0 = Math.atan2(axA.y, axA.x);
+  const p0  = Math.atan2(axA.y, axA.x);
 
-  // Integral of cos(φ₀ + t'·Δθ) and sin(φ₀ + t'·Δθ) from 0 to t
-  const sinInt = (t2, t1) => (Math.sin(phi0 + t2*deltaTheta) - Math.sin(phi0 + t1*deltaTheta)) / deltaTheta;
-  const cosInt = (t2, t1) => (-Math.cos(phi0 + t2*deltaTheta) + Math.cos(phi0 + t1*deltaTheta)) / deltaTheta;
+  // Integral of main axis (cos,sin) and perp axis (-sin,cos) from 0 to s
+  const Im_x = s => (Math.sin(p0 + s*deltaTheta) - Math.sin(p0)) / deltaTheta;
+  const Im_y = s => (-Math.cos(p0 + s*deltaTheta) + Math.cos(p0)) / deltaTheta;
+  const Ip_x = s => (Math.cos(p0 + s*deltaTheta) - Math.cos(p0)) / deltaTheta;
+  // Ip_y = Im_x  (identity for orthogonal pair)
 
-  const sx1 = sinInt(1, 0),  sy1 = cosInt(1, 0);   // integrals at t=1
-  const sxt = sinInt(t, 0),  syt = cosInt(t, 0);   // integrals at t
+  const mx1 = Im_x(1), px1 = Ip_x(1);
+  const det = mx1*mx1 + px1*px1;
+  if (det < 1e-10) return { x: A.x + t*(B.x-A.x), y: A.y + t*(B.y-A.y) };
 
-  // Least-squares speed: minimises |A + speed*(sx1,sy1) - B|²
-  const denom = sx1*sx1 + sy1*sy1;
   const dx = B.x - A.x, dy = B.y - A.y;
-  const speed = denom > 1e-8 ? (dx*sx1 + dy*sy1) / denom : 0;
+  // Solve 2×2: [[mx1, px1],[-px1, mx1]] * [s1,s2]' = [dx,dy]'
+  const s1 = ( dx*mx1 - dy*px1) / det;
+  const s2 = ( dy*mx1 + dx*px1) / det;
 
   return {
-    x: A.x + speed * sxt,
-    y: A.y + speed * syt,
+    x: A.x + s1*Im_x(t) + s2*Ip_x(t),
+    y: A.y + s1*Im_y(t) + s2*Im_x(t),  // Im_x = Ip_y
   };
 }
 
-// 2. INERTIA PIVOT — rotate centroid about principal-axis intersection
-function poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, t, cx, cy) {
+// 2. INERTIA PIVOT — rotate about principal-axis intersection, then drive
+//    along both axis directions (rotating with shape) to land exactly at B.
+function poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, localAxis, t, cx, cy) {
   let pivot = lineIntersect(A, dA, B, dB);
   if (!pivot) pivot = { x:(A.x+B.x)/2, y:(A.y+B.y)/2 };
-  // clamp pivot to 3× canvas diagonal
   const diagSq = mC.w*mC.w + mC.h*mC.h;
   if ((pivot.x-cx)**2+(pivot.y-cy)**2 > 9*diagSq) pivot = {x:(A.x+B.x)/2,y:(A.y+B.y)/2};
-  return rotPt(A, pivot, t * deltaTheta);
+
+  // Where pure rotation about pivot lands at t=1
+  const rotEnd = rotPt(A, pivot, deltaTheta);
+  const residual = { x: B.x - rotEnd.x, y: B.y - rotEnd.y };
+
+  // Decompose residual onto dB (final axis) and its perpendicular
+  const dB_perp = { x:-dB.y, y:dB.x };
+  const drive1 = dot(residual, dB);        // along final axis
+  const drive2 = dot(residual, dB_perp);   // perpendicular
+
+  // At time t: rotate + drive along current (rotating) axis directions
+  const rotPos  = rotPt(A, pivot, t * deltaTheta);
+  const curAxis = rotVec(localAxis, thetaA + t * deltaTheta);
+  const curPerp = { x:-curAxis.y, y:curAxis.x };
+
+  return {
+    x: rotPos.x + t * (drive1*curAxis.x + drive2*curPerp.x),
+    y: rotPos.y + t * (drive1*curAxis.y + drive2*curPerp.y),
+  };
 }
 
 // 3. KINEMATIC POLE ARC — circular arc (McBeath & Shepard 1989)
@@ -313,7 +335,7 @@ function computeAllTrails(A, B, thetaA, deltaTheta, dA, dB, localAxis, N) {
   for (let i=0; i<=N; i++) {
     const t = i/N;
     mori.push(poseMori(A, B, thetaA, deltaTheta, localAxis, t));
-    pivot.push(poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, t, cx, cy));
+    pivot.push(poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, localAxis, t, cx, cy));
     kinematic.push(poseKinematic(A, B, deltaTheta, t));
   }
   return { mori, pivot, kinematic };
@@ -358,18 +380,8 @@ function drawFrame() {
       drawTrailPath(ctx, allTrails.kinematic, COL_KINE,  0.25);
       drawTrailPath(ctx, allTrails.pivot,     COL_PIVOT, 0.4);
       drawTrailPath(ctx, allTrails.mori,      COL_MORI,  0.55);
-      // each model's natural endpoint (may differ from B)
-      const km = allTrails.kinematic[allTrails.kinematic.length-1];
-      const pv = allTrails.pivot    [allTrails.pivot    .length-1];
-      const mr = allTrails.mori     [allTrails.mori     .length-1];
-      drawEndpoint(ctx, km.x, km.y, COL_KINE);
-      drawEndpoint(ctx, pv.x, pv.y, COL_PIVOT);
-      drawEndpoint(ctx, mr.x, mr.y, COL_MORI);
-      // B = target flash position (ring, not filled — separate from model endpoints)
-      ctx.save(); ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5; ctx.globalAlpha=0.5;
-      ctx.setLineDash([3,4]);
-      ctx.beginPath(); ctx.arc(B.x, B.y, 8, 0, Math.PI*2); ctx.stroke();
-      ctx.setLineDash([]); ctx.globalAlpha=1; ctx.restore();
+      // all three models end at B — mark the shared endpoint
+      drawEndpoint(ctx, B.x, B.y, '#ffffff');
     }
   } else {
     // draw ghost trails
@@ -384,7 +396,7 @@ function drawFrame() {
     if (st.animModel==='mori') {
       pos = poseMori(A, B, thetaA, deltaTheta, localAxis, tt);
     } else if (st.animModel==='pivot') {
-      pos = poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, tt, cx, cy);
+      pos = poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, localAxis, tt, cx, cy);
     } else {
       pos = poseKinematic(A, B, deltaTheta, tt);
     }
