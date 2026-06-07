@@ -54,9 +54,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 
   <!-- legend -->
   <div class="legend">
-    <div class="legend-item"><div class="swatch" style="background:#a0e080"></div><span style="color:#a0e080">Mori (1982) serial concatenation</span></div>
-    <div class="legend-item"><div class="swatch" style="background:#6d8aff"></div><span style="color:#6d8aff">Inertia pivot (principal-axis intersection)</span></div>
-    <div class="legend-item"><div class="swatch" style="background:#ff8a6d; opacity:0.5"></div><span style="color:#ff8a6d88">Kinematic pole arc (McBeath &amp; Shepard)</span></div>
+    <div class="legend-item"><div class="swatch" style="background:#a0e080"></div><span style="color:#a0e080">Mori (1982) — arc about P<sub>PA</sub>, may miss B</span></div>
+    <div class="legend-item"><div class="swatch" style="background:#6d8aff"></div><span style="color:#6d8aff">Inertia corrected — same arc + drift to B</span></div>
+    <div class="legend-item"><div class="swatch" style="background:#ff8a6d"></div><span style="color:#ff8a6d">Kinematic arc (McBeath &amp; Shepard) — always ends at B</span></div>
   </div>
 
   <div class="controls">
@@ -100,12 +100,18 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
         <button data-v="off">off</button>
       </div>
     </div>
+    <div class="control">
+      <label>Preset</label><span class="v">&nbsp;</span>
+      <div class="seg">
+        <button id="btnPaperSetup">Mori 1982 demo</button>
+      </div>
+    </div>
   </div>
 
   <span class="cite">
-    Mori (1982) Biol. Cybern. 44:31–34 — serial concatenation of translations (along current principal axis) + rotations<br>
-    Path = ∫ rotate(localAxis, θ(t)) dt  ·  θ(t) = θ_A + t·Δθ  ·  speed calibrated by least-squares to B<br>
-    Inertia pivot = principal-axis-intersection model (from inertia_rotation.html)  ·  Kinematic pole = McBeath &amp; Shepard (1989)
+    <span style="color:#a0e080">Mori (1982)</span> — circular arc centred at principal-axis intersection P_PA · arc sweeps Δθ from A; does <em>not</em> necessarily end at B (green dot = predicted endpoint)<br>
+    <span style="color:#6d8aff">Inertia corrected</span> — same P_PA arc + linear drift to reach B · shows the discrepancy between Mori and the stimulus<br>
+    <span style="color:#ff8a6d">Kinematic arc</span> — McBeath &amp; Shepard (1989) · circular arc designed to connect A→B exactly; centre on perpendicular bisector at dist |AB|/(2·tan Δθ/2)
   </span>
 </div>
 </div>
@@ -167,6 +173,22 @@ bindRange('mV',  'mVv',  v=>v+' px', v=>{st.vertOff=v;});
 bindRange('mPhi','mPhiv',v=>v+'°',   v=>{st.phi=v;});
 bindRange('mSOA','mSOAv',v=>v+' ms', v=>{st.soa=v;});
 
+// Paper demo preset — tall thin bar, moderate rotation, matches Mori (1982) stimulus type
+document.getElementById('btnPaperSetup').addEventListener('click', () => {
+  st.shape='rect'; st.W=18; st.H=110; st.d=260; st.vertOff=0; st.phi=45; st.showAll=true;
+  document.getElementById('mW').value=18;    document.getElementById('mWv').textContent='18 px';
+  document.getElementById('mH').value=110;   document.getElementById('mHv').textContent='110 px';
+  document.getElementById('mD').value=260;   document.getElementById('mDv').textContent='260 px';
+  document.getElementById('mV').value=0;     document.getElementById('mVv').textContent='0 px';
+  document.getElementById('mPhi').value=45;  document.getElementById('mPhiv').textContent='45°';
+  document.querySelectorAll('#mShape button').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#mShape button[data-v="rect"]').classList.add('on');
+  document.querySelectorAll('.shape-group').forEach(g=>g.classList.remove('on'));
+  document.getElementById('sg-rect').classList.add('on');
+  document.querySelectorAll('#mAll button').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#mAll button[data-v="on"]').classList.add('on');
+});
+
 // ═══════════════════════════════════════════════════════════
 // MATH
 // ═══════════════════════════════════════════════════════════
@@ -215,65 +237,38 @@ function getLocalAxis(){
 // THREE PATH MODELS
 // ═══════════════════════════════════════════════════════════
 
-// 1. MORI (1982) — serial concatenation
-//    Unique path where the centroid is driven by two speed components —
-//    along and perpendicular to the rotating principal axis — solved
-//    exactly so the path starts at A and ends at B.
-//    Integral identities: Im_x = ∫cos, Im_y = ∫sin, Ip_x = ∫(-sin), Ip_y = ∫cos = Im_x
-//    Matrix [[Im_x1, Ip_x1],[-Ip_x1, Im_x1]] is always invertible for Δθ ≠ 2kπ.
-function poseMori(A, B, thetaA, deltaTheta, localAxis, t) {
-  if (Math.abs(deltaTheta) < 1e-4) {
-    return { x: A.x + t*(B.x-A.x), y: A.y + t*(B.y-A.y) };
-  }
-  const axA = rotVec(localAxis, thetaA);
-  const p0  = Math.atan2(axA.y, axA.x);
-
-  // Integral of main axis (cos,sin) and perp axis (-sin,cos) from 0 to s
-  const Im_x = s => (Math.sin(p0 + s*deltaTheta) - Math.sin(p0)) / deltaTheta;
-  const Im_y = s => (-Math.cos(p0 + s*deltaTheta) + Math.cos(p0)) / deltaTheta;
-  const Ip_x = s => (Math.cos(p0 + s*deltaTheta) - Math.cos(p0)) / deltaTheta;
-  // Ip_y = Im_x  (identity for orthogonal pair)
-
-  const mx1 = Im_x(1), px1 = Ip_x(1);
-  const det = mx1*mx1 + px1*px1;
-  if (det < 1e-10) return { x: A.x + t*(B.x-A.x), y: A.y + t*(B.y-A.y) };
-
-  const dx = B.x - A.x, dy = B.y - A.y;
-  // Solve 2×2: [[mx1, px1],[-px1, mx1]] * [s1,s2]' = [dx,dy]'
-  const s1 = ( dx*mx1 - dy*px1) / det;
-  const s2 = ( dy*mx1 + dx*px1) / det;
-
-  return {
-    x: A.x + s1*Im_x(t) + s2*Ip_x(t),
-    y: A.y + s1*Im_y(t) + s2*Im_x(t),  // Im_x = Ip_y
-  };
+// Helper: compute principal-axis pivot (intersection of A's and B's axis lines)
+function getPAPivot(A, B, dA, dB, cx, cy) {
+  let pivot = lineIntersect(A, dA, B, dB);
+  if (!pivot) return null;  // parallel axes → no pivot (pure translation)
+  const diagSq = mC.w*mC.w + mC.h*mC.h;
+  if ((pivot.x-cx)**2+(pivot.y-cy)**2 > 9*diagSq) return null;
+  return pivot;
 }
 
-// 2. INERTIA PIVOT — rotate about principal-axis intersection, then drive
-//    along both axis directions (rotating with shape) to land exactly at B.
-function poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, localAxis, t, cx, cy) {
-  let pivot = lineIntersect(A, dA, B, dB);
-  if (!pivot) pivot = { x:(A.x+B.x)/2, y:(A.y+B.y)/2 };
-  const diagSq = mC.w*mC.w + mC.h*mC.h;
-  if ((pivot.x-cx)**2+(pivot.y-cy)**2 > 9*diagSq) pivot = {x:(A.x+B.x)/2,y:(A.y+B.y)/2};
+// 1. MORI (1982) — circular arc about principal-axis intersection P_PA.
+//    This is what participants actually perceive. The arc is centred at P_PA
+//    with radius |A − P_PA|, and sweeps by Δθ. It does NOT necessarily end at B;
+//    the discrepancy between the arc endpoint and B is Mori's key result.
+function poseMori(A, B, deltaTheta, dA, dB, t, cx, cy) {
+  if (Math.abs(deltaTheta) < 1e-4) return { x: A.x+t*(B.x-A.x), y: A.y+t*(B.y-A.y) };
+  const pivot = getPAPivot(A, B, dA, dB, cx, cy);
+  if (!pivot) return { x: A.x+t*(B.x-A.x), y: A.y+t*(B.y-A.y) };
+  return rotPt(A, pivot, t * deltaTheta);
+}
 
-  // Where pure rotation about pivot lands at t=1
+// 2. INERTIA PIVOT (corrected) — same circular arc as Mori (same P_PA centre)
+//    but with a linear drift added so the path lands exactly at B.
+//    Shows the "correction" the brain would need to apply on top of Mori.
+function poseInertiaPivot(A, B, deltaTheta, dA, dB, t, cx, cy) {
+  if (Math.abs(deltaTheta) < 1e-4) return { x: A.x+t*(B.x-A.x), y: A.y+t*(B.y-A.y) };
+  const pivot = getPAPivot(A, B, dA, dB, cx, cy);
+  if (!pivot) return { x: A.x+t*(B.x-A.x), y: A.y+t*(B.y-A.y) };
+  const rotCur = rotPt(A, pivot, t * deltaTheta);
   const rotEnd = rotPt(A, pivot, deltaTheta);
-  const residual = { x: B.x - rotEnd.x, y: B.y - rotEnd.y };
-
-  // Decompose residual onto dB (final axis) and its perpendicular
-  const dB_perp = { x:-dB.y, y:dB.x };
-  const drive1 = dot(residual, dB);        // along final axis
-  const drive2 = dot(residual, dB_perp);   // perpendicular
-
-  // At time t: rotate + drive along current (rotating) axis directions
-  const rotPos  = rotPt(A, pivot, t * deltaTheta);
-  const curAxis = rotVec(localAxis, thetaA + t * deltaTheta);
-  const curPerp = { x:-curAxis.y, y:curAxis.x };
-
   return {
-    x: rotPos.x + t * (drive1*curAxis.x + drive2*curPerp.x),
-    y: rotPos.y + t * (drive1*curAxis.y + drive2*curPerp.y),
+    x: rotCur.x + t * (B.x - rotEnd.x),
+    y: rotCur.y + t * (B.y - rotEnd.y),
   };
 }
 
@@ -328,14 +323,14 @@ function drawEndpoint(ctx, x, y, color) {
 // ═══════════════════════════════════════════════════════════
 // PRECOMPUTE FULL TRAILS for all three models (one pass)
 // ═══════════════════════════════════════════════════════════
-function computeAllTrails(A, B, thetaA, deltaTheta, dA, dB, localAxis, N) {
+function computeAllTrails(A, B, deltaTheta, dA, dB, N) {
   N = N || 80;
   const mori=[], pivot=[], kinematic=[];
   const cx=mC.w/2, cy=mC.h/2;
   for (let i=0; i<=N; i++) {
     const t = i/N;
-    mori.push(poseMori(A, B, thetaA, deltaTheta, localAxis, t));
-    pivot.push(poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, localAxis, t, cx, cy));
+    mori.push(poseMori(A, B, deltaTheta, dA, dB, t, cx, cy));
+    pivot.push(poseInertiaPivot(A, B, deltaTheta, dA, dB, t, cx, cy));
     kinematic.push(poseKinematic(A, B, deltaTheta, t));
   }
   return { mori, pivot, kinematic };
@@ -358,7 +353,7 @@ function drawFrame() {
   const dB = rotVec(localAxis, thetaA + deltaTheta);
 
   // precompute all three trails
-  const allTrails = computeAllTrails(A, B, thetaA, deltaTheta, dA, dB, localAxis);
+  const allTrails = computeAllTrails(A, B, deltaTheta, dA, dB);
 
   const FLASH  = Math.min(110, st.soa*0.18);
   const cycle  = 2*st.soa;
@@ -380,8 +375,14 @@ function drawFrame() {
       drawTrailPath(ctx, allTrails.kinematic, COL_KINE,  0.25);
       drawTrailPath(ctx, allTrails.pivot,     COL_PIVOT, 0.4);
       drawTrailPath(ctx, allTrails.mori,      COL_MORI,  0.55);
-      // all three models end at B — mark the shared endpoint
-      drawEndpoint(ctx, B.x, B.y, '#ffffff');
+      // Mori arc ends at its natural P_PA endpoint (may ≠ B)
+      const moriEnd = allTrails.mori[allTrails.mori.length-1];
+      drawEndpoint(ctx, moriEnd.x, moriEnd.y, COL_MORI);
+      // B = the actual stimulus target position
+      ctx.save(); ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5; ctx.globalAlpha=0.45;
+      ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.arc(B.x, B.y, 8, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
     }
   } else {
     // draw ghost trails
@@ -394,9 +395,9 @@ function drawFrame() {
     // live shape on selected model
     let pos, angleDeg;
     if (st.animModel==='mori') {
-      pos = poseMori(A, B, thetaA, deltaTheta, localAxis, tt);
+      pos = poseMori(A, B, deltaTheta, dA, dB, tt, cx, cy);
     } else if (st.animModel==='pivot') {
-      pos = poseInertiaPivot(A, B, thetaA, deltaTheta, dA, dB, localAxis, tt, cx, cy);
+      pos = poseInertiaPivot(A, B, deltaTheta, dA, dB, tt, cx, cy);
     } else {
       pos = poseKinematic(A, B, deltaTheta, tt);
     }
