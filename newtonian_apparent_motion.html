@@ -59,10 +59,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
       <span style="color:#6d8aff">Newtonian COM (straight line + rotation about COM)</span>
     </div>
     <div class="legend-item">
-      <div class="swatch" style="background:#6d8aff;opacity:0.35"></div>
-      <span style="color:#6d8aff88">COM rotation indicators</span>
-    </div>
-    <div class="legend-item">
       <div class="swatch" style="background:#ff8a6d;opacity:0.5"></div>
       <span style="color:#ff8a6d88">Kinematic pole arc (McBeath &amp; Shepard)</span>
     </div>
@@ -93,6 +89,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
     <div class="control"><label>Separation (px)</label><span class="v" id="mDv">300</span><input type="range" id="mD" min="60" max="580" value="300"></div>
     <div class="control"><label>Vert. offset (px)</label><span class="v" id="mVv">0</span><input type="range" id="mV" min="-200" max="200" value="0"></div>
     <div class="control"><label>Orient. Δ (°)</label><span class="v" id="mPhiv">60</span><input type="range" id="mPhi" min="-170" max="170" value="60"></div>
+    <div class="control"><label>Orient. offset (°)</label><span class="v" id="mOffv">0</span><input type="range" id="mOff" min="-180" max="180" value="0"></div>
     <div class="control">
       <label>Animate</label><span class="v">&nbsp;</span>
       <div class="seg" id="mAnim">
@@ -101,19 +98,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
       </div>
     </div>
     <div class="control"><label>SOA (ms)</label><span class="v" id="mSOAv">800</span><input type="range" id="mSOA" min="200" max="1800" value="800"></div>
-    <div class="control">
-      <label>All paths</label><span class="v">&nbsp;</span>
-      <div class="seg" id="mAll">
-        <button class="on" data-v="on">on</button>
-        <button data-v="off">off</button>
-      </div>
-    </div>
   </div>
 
   <span class="cite">
-    Newtonian framework: COM travels in a straight line from A to B (Newton's 1st law of motion for the centroid)<br>
-    Shape rotates uniformly about its COM: θ(t) = θ_A + t·Δθ  ·  no net torque → constant angular velocity<br>
-    Kinematic pole arc = McBeath &amp; Shepard (1989)  ·  COM path shown as straight blue line with rotation indicators
+    Newtonian framework: COM travels in a straight line from A to B (Newton's 1st law)  ·  shape rotates uniformly about its COM: θ(t) = θ_offset + t·Δθ<br>
+    Orient. offset shifts both source and target by the same angle, leaving Δθ unchanged  ·  Kinematic pole arc = McBeath &amp; Shepard (1989)
   </span>
 </div>
 </div>
@@ -138,9 +127,8 @@ const COL_KINE  = '#ff8a6d';    // orange: kinematic pole
 
 const st = {
   shape:'rect', W:30, H:90, PR:50, PA:40, TS:70,
-  d:300, vertOff:0, phi:60, soa:800,
+  d:300, vertOff:0, phi:60, orientOff:0, soa:800,
   animModel:'newton',
-  showAll:true,
   t:0,
 };
 
@@ -162,7 +150,6 @@ bindSeg('mShape', v=>{
   document.getElementById('sg-'+v).classList.add('on');
 });
 bindSeg('mAnim', v=>{ st.animModel=v; });
-bindSeg('mAll',  v=>{ st.showAll=v==='on'; });
 bindRange('mW',  'mWv',  v=>v+' px', v=>{st.W=v;});
 bindRange('mH',  'mHv',  v=>v+' px', v=>{st.H=v;});
 bindRange('mPR', 'mPRv', v=>v+' px', v=>{st.PR=v;});
@@ -171,6 +158,7 @@ bindRange('mTS', 'mTSv', v=>v+' px', v=>{st.TS=v;});
 bindRange('mD',  'mDv',  v=>v+' px', v=>{st.d=v;});
 bindRange('mV',  'mVv',  v=>v+' px', v=>{st.vertOff=v;});
 bindRange('mPhi','mPhiv',v=>v+'°',   v=>{st.phi=v;});
+bindRange('mOff','mOffv',v=>v+'°',   v=>{st.orientOff=v;});
 bindRange('mSOA','mSOAv',v=>v+' ms', v=>{st.soa=v;});
 
 // ═══════════════════════════════════════════════════════════
@@ -259,40 +247,6 @@ function drawDashedLine(ctx, x1, y1, x2, y2, color, alpha) {
   ctx.setLineDash([]); ctx.globalAlpha=1; ctx.restore();
 }
 
-// Draw rotation indicators: small arcs at several points along the COM path
-// showing the instantaneous rotation direction around the COM at that position
-function drawRotationIndicators(ctx, A, B, thetaA, deltaTheta, color, alpha) {
-  const N = 5;
-  const baseR = 18;
-  ctx.save(); ctx.globalAlpha=alpha||0.35; ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.lineCap='round';
-  for (let i=1; i<N; i++) {
-    const t = i/N;
-    const cx = A.x + t*(B.x-A.x);
-    const cy = A.y + t*(B.y-A.y);
-    const angStart = thetaA + t*deltaTheta - Math.PI*0.45;
-    const angEnd   = thetaA + t*deltaTheta + Math.PI*0.45;
-    ctx.beginPath();
-    ctx.arc(cx, cy, baseR, angStart, angEnd, deltaTheta < 0);
-    ctx.stroke();
-    // arrowhead at end of arc
-    const endAng = deltaTheta < 0 ? angStart : angEnd;
-    const arrowDir = deltaTheta < 0 ? -1 : 1;
-    const ax = cx + baseR*Math.cos(endAng);
-    const ay = cy + baseR*Math.sin(endAng);
-    const tangX = -Math.sin(endAng)*arrowDir;
-    const tangY =  Math.cos(endAng)*arrowDir;
-    const arrowLen = 5;
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(ax - arrowLen*(tangX + 0.4*Math.cos(endAng)),
-               ay - arrowLen*(tangY + 0.4*Math.sin(endAng)));
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(ax - arrowLen*(tangX - 0.4*Math.cos(endAng)),
-               ay - arrowLen*(tangY - 0.4*Math.sin(endAng)));
-    ctx.stroke();
-  }
-  ctx.globalAlpha=1; ctx.restore();
-}
 
 function drawEndpoint(ctx, x, y, color) {
   ctx.save(); ctx.fillStyle=color; ctx.globalAlpha=0.5;
@@ -324,10 +278,14 @@ function drawFrame() {
   const cx=w/2, cy=h/2;
   const A = { x:cx-st.d/2, y:cy - st.vertOff/2 };
   const B = { x:cx+st.d/2, y:cy + st.vertOff/2 };
-  const thetaA = 0;
+  const thetaA     = st.orientOff * Math.PI / 180;
   const deltaTheta = st.phi * Math.PI / 180;
 
   const allTrails = computeAllTrails(A, B, thetaA, deltaTheta);
+
+  // always draw both paths
+  drawTrailPath(ctx, allTrails.kinematic, COL_KINE, 0.3);
+  drawDashedLine(ctx, A.x, A.y, B.x, B.y, COL_NEWTON, 0.5);
 
   const FLASH  = Math.min(110, st.soa*0.18);
   const cycle  = 2*st.soa;
@@ -342,33 +300,11 @@ function drawFrame() {
     const angA = thetaA*180/Math.PI, angB = (thetaA+deltaTheta)*180/Math.PI;
     drawShape(ctx, B.x, B.y, angB, '#e4e4e722', 1.2);
     drawShape(ctx, A.x, A.y, angA, STIM, 2.2);
-
-    if (inA && st.showAll) {
-      // Kinematic arc
-      drawTrailPath(ctx, allTrails.kinematic, COL_KINE, 0.25);
-      // Newtonian: straight dashed COM line + rotation indicators
-      drawDashedLine(ctx, A.x, A.y, B.x, B.y, COL_NEWTON, 0.45);
-      drawRotationIndicators(ctx, A, B, thetaA, deltaTheta, COL_NEWTON, 0.4);
-      drawEndpoint(ctx, B.x, B.y, '#ffffff');
-    }
+    drawEndpoint(ctx, B.x, B.y, '#ffffff');
   } else {
-    if (st.showAll) {
-      if (st.animModel!=='kinematic') {
-        drawTrailPath(ctx, allTrails.kinematic, COL_KINE, 0.2);
-      }
-      if (st.animModel!=='newton') {
-        drawDashedLine(ctx, A.x, A.y, B.x, B.y, COL_NEWTON, 0.3);
-        drawRotationIndicators(ctx, A, B, thetaA, deltaTheta, COL_NEWTON, 0.25);
-      }
-    }
-
     let pos, angleDeg;
     if (st.animModel==='newton') {
       pos = poseNewton(A, B, thetaA, deltaTheta, tt);
-      // Draw the straight COM path with rotation indicators when animating Newton
-      drawDashedLine(ctx, A.x, A.y, B.x, B.y, COL_NEWTON, 0.45);
-      drawRotationIndicators(ctx, A, B, thetaA, deltaTheta, COL_NEWTON, 0.4);
-      // Draw a dot at current COM position
       ctx.save();
       ctx.fillStyle=COL_NEWTON; ctx.globalAlpha=0.7;
       ctx.beginPath(); ctx.arc(pos.x, pos.y, 3.5, 0, Math.PI*2); ctx.fill();
