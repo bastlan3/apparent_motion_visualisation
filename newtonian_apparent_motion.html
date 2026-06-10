@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apparent Motion — Newtonian vs Kinematic</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#08080d;color:#d4d4d8;min-height:100vh}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.back{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3f3f46;text-decoration:none}
+.back:hover{color:#6d8aff}
+.title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#52525b;letter-spacing:1.5px;text-transform:uppercase}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid #1e1e26;margin-top:18px}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:11px;background:transparent;border:none;color:#52525b;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.3px}
+.tab.on{color:#6d8aff;border-bottom-color:#6d8aff}
+.panel-wrap{padding-top:40px}
+.stage{display:flex;justify-content:center;margin-bottom:16px}
+canvas{display:block;background:#08080d}
+.legend{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-bottom:20px;font-family:'IBM Plex Mono',monospace;font-size:10px}
+.legend-item{display:flex;align-items:center;gap:6px}
+.swatch{width:24px;height:3px;border-radius:2px}
+.swatch-dash{width:24px;height:3px;border-radius:2px;background:repeating-linear-gradient(90deg,currentColor 0 5px,transparent 5px 9px)}
+.controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;align-items:flex-end;padding:18px 8px;border-top:1px solid #14141c;border-bottom:1px solid #14141c}
+.control{display:flex;flex-direction:column;gap:6px;min-width:128px}
+.control label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3f3f46;letter-spacing:1.4px;text-transform:uppercase}
+.control .v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#a1a1aa;text-align:right;height:14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;background:#27272a;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#6d8aff;border:2px solid #0a0a10;cursor:pointer}
+.seg{display:flex;gap:3px;flex-wrap:wrap}
+.seg button{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 9px;background:transparent;border:1px solid #27272a;border-radius:4px;color:#52525b;cursor:pointer;transition:all .15s}
+.seg button:hover{color:#a1a1aa;border-color:#3f3f46}
+.seg button.on{color:#6d8aff;border-color:#6d8aff50;background:#6d8aff08}
+.cite{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-align:center;margin-top:22px;line-height:1.8}
+.shape-controls{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:10px 8px 0;min-height:52px}
+.shape-group{display:none}
+.shape-group.on{display:contents}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="back" href="index.html">← back to experiments</a>
+  <span class="title">participant view</span>
+</header>
+<nav class="tabs"><button class="tab on">Newtonian vs Kinematic</button></nav>
+
+<div class="panel-wrap">
+  <div class="stage"><canvas id="mCv"></canvas></div>
+
+  <!-- legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="swatch" style="background:#6d8aff"></div>
+      <span style="color:#6d8aff">Newtonian COM (straight line + rotation about COM)</span>
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:#6d8aff;opacity:0.35"></div>
+      <span style="color:#6d8aff88">COM rotation indicators</span>
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:#ff8a6d;opacity:0.5"></div>
+      <span style="color:#ff8a6d88">Kinematic pole arc (McBeath &amp; Shepard)</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control">
+      <label>Shape</label><span class="v">&nbsp;</span>
+      <div class="seg" id="mShape">
+        <button class="on" data-v="rect">rect</button>
+        <button data-v="pacman">pac-man</button>
+        <button data-v="tri">triangle</button>
+      </div>
+    </div>
+    <div class="shape-controls">
+      <div class="shape-group on" id="sg-rect">
+        <div class="control"><label>Width (px)</label><span class="v" id="mWv">30</span><input type="range" id="mW" min="10" max="180" value="30"></div>
+        <div class="control"><label>Height (px)</label><span class="v" id="mHv">90</span><input type="range" id="mH" min="10" max="180" value="90"></div>
+      </div>
+      <div class="shape-group" id="sg-pacman">
+        <div class="control"><label>Radius (px)</label><span class="v" id="mPRv">50</span><input type="range" id="mPR" min="20" max="110" value="50"></div>
+        <div class="control"><label>Mouth (°)</label><span class="v" id="mPAv">40</span><input type="range" id="mPA" min="5" max="150" value="40"></div>
+      </div>
+      <div class="shape-group" id="sg-tri">
+        <div class="control"><label>Scale (px)</label><span class="v" id="mTSv">70</span><input type="range" id="mTS" min="20" max="130" value="70"></div>
+      </div>
+    </div>
+    <div class="control"><label>Separation (px)</label><span class="v" id="mDv">300</span><input type="range" id="mD" min="60" max="580" value="300"></div>
+    <div class="control"><label>Vert. offset (px)</label><span class="v" id="mVv">0</span><input type="range" id="mV" min="-200" max="200" value="0"></div>
+    <div class="control"><label>Orient. Δ (°)</label><span class="v" id="mPhiv">60</span><input type="range" id="mPhi" min="-170" max="170" value="60"></div>
+    <div class="control">
+      <label>Animate</label><span class="v">&nbsp;</span>
+      <div class="seg" id="mAnim">
+        <button class="on" data-v="newton">Newton</button>
+        <button data-v="kinematic">Kinematic</button>
+      </div>
+    </div>
+    <div class="control"><label>SOA (ms)</label><span class="v" id="mSOAv">800</span><input type="range" id="mSOA" min="200" max="1800" value="800"></div>
+    <div class="control">
+      <label>All paths</label><span class="v">&nbsp;</span>
+      <div class="seg" id="mAll">
+        <button class="on" data-v="on">on</button>
+        <button data-v="off">off</button>
+      </div>
+    </div>
+  </div>
+
+  <span class="cite">
+    Newtonian framework: COM travels in a straight line from A to B (Newton's 1st law of motion for the centroid)<br>
+    Shape rotates uniformly about its COM: θ(t) = θ_A + t·Δθ  ·  no net torque → constant angular velocity<br>
+    Kinematic pole arc = McBeath &amp; Shepard (1989)  ·  COM path shown as straight blue line with rotation indicators
+  </span>
+</div>
+</div>
+
+<script>
+// ─── canvas ───────────────────────────────────────────────
+function initCv(id, w, h) {
+  const cv = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = w*dpr; cv.height = h*dpr;
+  cv.style.width = w+'px'; cv.style.height = h+'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { cv, ctx, w, h };
+}
+const mC = initCv('mCv', 860, 500);
+
+const BG        = '#08080d';
+const STIM      = '#e4e4e7';
+const COL_NEWTON = '#6d8aff';   // blue: Newtonian COM path
+const COL_KINE  = '#ff8a6d';    // orange: kinematic pole
+
+const st = {
+  shape:'rect', W:30, H:90, PR:50, PA:40, TS:70,
+  d:300, vertOff:0, phi:60, soa:800,
+  animModel:'newton',
+  showAll:true,
+  t:0,
+};
+
+// ─── bindings ─────────────────────────────────────────────
+function bindSeg(id, fn) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function bindRange(id, vid, fmt, fn) {
+  const el=document.getElementById(id), vEl=document.getElementById(vid);
+  const upd=()=>{const v=+el.value; vEl.textContent=fmt(v); fn(v);};
+  el.addEventListener('input',upd); upd();
+}
+bindSeg('mShape', v=>{
+  st.shape=v;
+  document.querySelectorAll('.shape-group').forEach(g=>g.classList.remove('on'));
+  document.getElementById('sg-'+v).classList.add('on');
+});
+bindSeg('mAnim', v=>{ st.animModel=v; });
+bindSeg('mAll',  v=>{ st.showAll=v==='on'; });
+bindRange('mW',  'mWv',  v=>v+' px', v=>{st.W=v;});
+bindRange('mH',  'mHv',  v=>v+' px', v=>{st.H=v;});
+bindRange('mPR', 'mPRv', v=>v+' px', v=>{st.PR=v;});
+bindRange('mPA', 'mPAv', v=>v+'°',   v=>{st.PA=v;});
+bindRange('mTS', 'mTSv', v=>v+' px', v=>{st.TS=v;});
+bindRange('mD',  'mDv',  v=>v+' px', v=>{st.d=v;});
+bindRange('mV',  'mVv',  v=>v+' px', v=>{st.vertOff=v;});
+bindRange('mPhi','mPhiv',v=>v+'°',   v=>{st.phi=v;});
+bindRange('mSOA','mSOAv',v=>v+' ms', v=>{st.soa=v;});
+
+// ═══════════════════════════════════════════════════════════
+// MATH
+// ═══════════════════════════════════════════════════════════
+function rotPt(p,c,a){const cos=Math.cos(a),sin=Math.sin(a),dx=p.x-c.x,dy=p.y-c.y;return{x:c.x+cos*dx-sin*dy,y:c.y+sin*dx+cos*dy};}
+
+// ─── inertia tensor helpers (for pacman centroid offset) ──
+function tensorPacman(R,alphaDeg){
+  const a=alphaDeg*Math.PI/180;
+  const Ixx_O=R**4/4*(Math.PI-a+.5*Math.sin(2*a));
+  const Iyy_O=R**4/4*(Math.PI-a-.5*Math.sin(2*a));
+  const area=R*R*(Math.PI-a), cx=-(2*R*Math.sin(a))/(3*(Math.PI-a));
+  return{Ixx:Ixx_O,Iyy:Iyy_O-area*cx*cx,Ixy:0,cx};
+}
+function tensorPoly(pts){
+  let A=0,Cx=0,Cy=0;const n=pts.length;
+  for(let i=0;i<n;i++){const j=(i+1)%n,cr=pts[i].x*pts[j].y-pts[j].x*pts[i].y;A+=cr;Cx+=(pts[i].x+pts[j].x)*cr;Cy+=(pts[i].y+pts[j].y)*cr;}
+  A/=2;Cx/=6*A;Cy/=6*A;const q=pts.map(p=>({x:p.x-Cx,y:p.y-Cy}));
+  let Ixx=0,Iyy=0,Ixy=0;
+  for(let i=0;i<n;i++){const j=(i+1)%n,xi=q[i].x,yi=q[i].y,xj=q[j].x,yj=q[j].y,cr=xi*yj-xj*yi;Ixx+=(yi*yi+yi*yj+yj*yj)*cr;Iyy+=(xi*xi+xi*xj+xj*xj)*cr;Ixy+=(xi*yj+2*xi*yi+2*xj*yj+xj*yi)*cr;}
+  return{Ixx:Math.abs(Ixx)/12,Iyy:Math.abs(Iyy)/12,Ixy:Ixy/24,cx:Cx,cy:Cy};
+}
+
+// ═══════════════════════════════════════════════════════════
+// TWO PATH MODELS
+// ═══════════════════════════════════════════════════════════
+
+// 1. NEWTONIAN — COM moves in straight line, shape rotates uniformly about COM
+//    No forces → constant linear velocity of COM
+//    No torque  → constant angular velocity about COM
+function poseNewton(A, B, thetaA, deltaTheta, t) {
+  return {
+    x: A.x + t*(B.x - A.x),
+    y: A.y + t*(B.y - A.y),
+  };
+}
+
+// 2. KINEMATIC POLE ARC — circular arc (McBeath & Shepard 1989)
+//    Pole at midpoint + [|AB|/(2·tan(Δθ/2))] · ê⊥
+function poseKinematic(A, B, deltaTheta, t) {
+  if (Math.abs(deltaTheta) < 1e-4) return { x: A.x+t*(B.x-A.x), y: A.y+t*(B.y-A.y) };
+  const mx=(A.x+B.x)/2, my=(A.y+B.y)/2;
+  const dx=B.x-A.x, dy=B.y-A.y, d=Math.sqrt(dx*dx+dy*dy);
+  if (d < 1e-4) return { x: A.x, y: A.y };
+  const r = d / (2*Math.tan(deltaTheta/2));
+  const px=-dy/d, py=dx/d;
+  const pole = { x: mx+r*px, y: my+r*py };
+  return rotPt(A, pole, t * deltaTheta);
+}
+
+// ─── draw helpers ─────────────────────────────────────────
+function drawShape(ctx, cx, cy, angleDeg, color, lw) {
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(angleDeg*Math.PI/180);
+  ctx.strokeStyle=color; ctx.lineWidth=lw||2.2; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  if (st.shape==='rect') {
+    ctx.rect(-st.W/2,-st.H/2,st.W,st.H);
+  } else if (st.shape==='pacman') {
+    const R=st.PR, alpha=st.PA*Math.PI/180;
+    const t=tensorPacman(R,st.PA); ctx.translate(-t.cx,0);
+    ctx.moveTo(0,0); ctx.arc(0,0,R,alpha,2*Math.PI-alpha); ctx.closePath();
+  } else {
+    const s=st.TS, pts=[{x:0,y:-s},{x:s*.7,y:s*.6},{x:-s*.55,y:s*.45}];
+    const t=tensorPoly(pts);
+    pts.forEach((p,i)=>{const x=p.x-t.cx,y=p.y-t.cy; i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.closePath();
+  }
+  ctx.stroke(); ctx.restore();
+}
+
+function drawTrailPath(ctx, trail, color, alpha) {
+  if (trail.length < 2) return;
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.globalAlpha=alpha||0.6;
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  trail.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.stroke(); ctx.globalAlpha=1; ctx.restore();
+}
+
+function drawDashedLine(ctx, x1, y1, x2, y2, color, alpha) {
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.globalAlpha=alpha||0.5;
+  ctx.setLineDash([6, 5]); ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha=1; ctx.restore();
+}
+
+// Draw rotation indicators: small arcs at several points along the COM path
+// showing the instantaneous rotation direction around the COM at that position
+function drawRotationIndicators(ctx, A, B, thetaA, deltaTheta, color, alpha) {
+  const N = 5;
+  const baseR = 18;
+  ctx.save(); ctx.globalAlpha=alpha||0.35; ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.lineCap='round';
+  for (let i=1; i<N; i++) {
+    const t = i/N;
+    const cx = A.x + t*(B.x-A.x);
+    const cy = A.y + t*(B.y-A.y);
+    const angStart = thetaA + t*deltaTheta - Math.PI*0.45;
+    const angEnd   = thetaA + t*deltaTheta + Math.PI*0.45;
+    ctx.beginPath();
+    ctx.arc(cx, cy, baseR, angStart, angEnd, deltaTheta < 0);
+    ctx.stroke();
+    // arrowhead at end of arc
+    const endAng = deltaTheta < 0 ? angStart : angEnd;
+    const arrowDir = deltaTheta < 0 ? -1 : 1;
+    const ax = cx + baseR*Math.cos(endAng);
+    const ay = cy + baseR*Math.sin(endAng);
+    const tangX = -Math.sin(endAng)*arrowDir;
+    const tangY =  Math.cos(endAng)*arrowDir;
+    const arrowLen = 5;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - arrowLen*(tangX + 0.4*Math.cos(endAng)),
+               ay - arrowLen*(tangY + 0.4*Math.sin(endAng)));
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - arrowLen*(tangX - 0.4*Math.cos(endAng)),
+               ay - arrowLen*(tangY - 0.4*Math.sin(endAng)));
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1; ctx.restore();
+}
+
+function drawEndpoint(ctx, x, y, color) {
+  ctx.save(); ctx.fillStyle=color; ctx.globalAlpha=0.5;
+  ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1; ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRECOMPUTE FULL TRAILS
+// ═══════════════════════════════════════════════════════════
+function computeAllTrails(A, B, thetaA, deltaTheta, N) {
+  N = N || 80;
+  const newton=[], kinematic=[];
+  for (let i=0; i<=N; i++) {
+    const t = i/N;
+    newton.push(poseNewton(A, B, thetaA, deltaTheta, t));
+    kinematic.push(poseKinematic(A, B, deltaTheta, t));
+  }
+  return { newton, kinematic };
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN DRAW
+// ═══════════════════════════════════════════════════════════
+function drawFrame() {
+  const { ctx, w, h } = mC;
+  ctx.fillStyle=BG; ctx.fillRect(0,0,w,h);
+
+  const cx=w/2, cy=h/2;
+  const A = { x:cx-st.d/2, y:cy - st.vertOff/2 };
+  const B = { x:cx+st.d/2, y:cy + st.vertOff/2 };
+  const thetaA = 0;
+  const deltaTheta = st.phi * Math.PI / 180;
+
+  const allTrails = computeAllTrails(A, B, thetaA, deltaTheta);
+
+  const FLASH  = Math.min(110, st.soa*0.18);
+  const cycle  = 2*st.soa;
+  const phase  = st.t % cycle;
+  const inA    = phase < st.soa;
+  const local  = inA ? phase : phase-st.soa;
+  const flashOn = local < FLASH;
+  const isiRaw  = flashOn ? 0 : (local-FLASH)/Math.max(1,st.soa-FLASH);
+  const tt      = inA ? isiRaw : (1-isiRaw);
+
+  if (flashOn) {
+    const angA = thetaA*180/Math.PI, angB = (thetaA+deltaTheta)*180/Math.PI;
+    drawShape(ctx, B.x, B.y, angB, '#e4e4e722', 1.2);
+    drawShape(ctx, A.x, A.y, angA, STIM, 2.2);
+
+    if (inA && st.showAll) {
+      // Kinematic arc
+      drawTrailPath(ctx, allTrails.kinematic, COL_KINE, 0.25);
+      // Newtonian: straight dashed COM line + rotation indicators
+      drawDashedLine(ctx, A.x, A.y, B.x, B.y, COL_NEWTON, 0.45);
+      drawRotationIndicators(ctx, A, B, thetaA, deltaTheta, COL_NEWTON, 0.4);
+      drawEndpoint(ctx, B.x, B.y, '#ffffff');
+    }
+  } else {
+    if (st.showAll) {
+      if (st.animModel!=='kinematic') {
+        drawTrailPath(ctx, allTrails.kinematic, COL_KINE, 0.2);
+      }
+      if (st.animModel!=='newton') {
+        drawDashedLine(ctx, A.x, A.y, B.x, B.y, COL_NEWTON, 0.3);
+        drawRotationIndicators(ctx, A, B, thetaA, deltaTheta, COL_NEWTON, 0.25);
+      }
+    }
+
+    let pos, angleDeg;
+    if (st.animModel==='newton') {
+      pos = poseNewton(A, B, thetaA, deltaTheta, tt);
+      // Draw the straight COM path with rotation indicators when animating Newton
+      drawDashedLine(ctx, A.x, A.y, B.x, B.y, COL_NEWTON, 0.45);
+      drawRotationIndicators(ctx, A, B, thetaA, deltaTheta, COL_NEWTON, 0.4);
+      // Draw a dot at current COM position
+      ctx.save();
+      ctx.fillStyle=COL_NEWTON; ctx.globalAlpha=0.7;
+      ctx.beginPath(); ctx.arc(pos.x, pos.y, 3.5, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1; ctx.restore();
+    } else {
+      pos = poseKinematic(A, B, deltaTheta, tt);
+    }
+    angleDeg = (thetaA + tt*deltaTheta)*180/Math.PI;
+    drawShape(ctx, pos.x, pos.y, angleDeg, STIM, 2);
+  }
+}
+
+let lastTs=0;
+function frame(ts){
+  const dt=lastTs?ts-lastTs:16; lastTs=ts; st.t+=dt;
+  drawFrame();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
