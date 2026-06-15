@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apparent Motion — McBeath &amp; Shepard (1989)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#08080d;color:#d4d4d8;min-height:100vh}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.back{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3f3f46;text-decoration:none}
+.back:hover{color:#6d8aff}
+.title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#52525b;letter-spacing:1.5px;text-transform:uppercase}
+.panel-wrap{padding-top:28px}
+.stage{display:flex;justify-content:center;margin-bottom:14px}
+canvas{display:block;background:#08080d}
+.legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-bottom:18px;font-family:'IBM Plex Mono',monospace;font-size:10px}
+.legend-item{display:flex;align-items:center;gap:6px}
+.swatch{width:22px;height:3px;border-radius:2px}
+.controls{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;align-items:flex-end;padding:16px 8px;border-top:1px solid #14141c;border-bottom:1px solid #14141c}
+.control{display:flex;flex-direction:column;gap:6px}
+.control label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3f3f46;letter-spacing:1.4px;text-transform:uppercase}
+.seg{display:flex;gap:3px;flex-wrap:wrap}
+.seg button{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 9px;background:transparent;border:1px solid #27272a;border-radius:4px;color:#52525b;cursor:pointer;transition:all .15s}
+.seg button:hover{color:#a1a1aa;border-color:#3f3f46}
+.seg button.on{color:#6d8aff;border-color:#6d8aff50;background:#6d8aff08}
+.cite{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3f3f46;text-align:center;margin-top:20px;line-height:1.9}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="back" href="index.html">← back to experiments</a>
+  <span class="title">participant view</span>
+</header>
+
+<div class="panel-wrap">
+  <div class="stage"><canvas id="cv"></canvas></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="swatch" style="background:#ff8a6d"></div><span style="color:#ff8a6d">Kinematic arc — 100% of Euler prediction</span></div>
+    <div class="legend-item"><div class="swatch" style="background:#a0e080; opacity:.7"></div><span style="color:#a0e080aa">Obtained path — avg. ~65% of kinematic</span></div>
+    <div class="legend-item"><div class="swatch" style="background:#52525b"></div><span style="color:#52525b">Partition · window gap at kinematic h</span></div>
+  </div>
+
+  <div class="controls">
+    <div class="control">
+      <label>Shape</label>
+      <div class="seg" id="cShape">
+        <button data-v="narrow">Narrow</button>
+        <button data-v="medium">Medium</button>
+        <button class="on" data-v="wide">Wide</button>
+      </div>
+    </div>
+    <div class="control">
+      <label>Separation</label>
+      <div class="seg" id="cSep">
+        <button data-v="3">3°</button>
+        <button class="on" data-v="6">6°</button>
+        <button data-v="9">9°</button>
+      </div>
+    </div>
+    <div class="control">
+      <label>Orient. Δ</label>
+      <div class="seg" id="cDth">
+        <button class="on" data-v="90">90°</button>
+        <button data-v="180">180°</button>
+      </div>
+    </div>
+    <div class="control">
+      <label>ISI (ms)</label>
+      <div class="seg" id="cISI">
+        <button data-v="0">0</button>
+        <button class="on" data-v="50">50</button>
+        <button data-v="100">100</button>
+        <button data-v="150">150</button>
+        <button data-v="200">200</button>
+      </div>
+    </div>
+    <div class="control">
+      <label>Show arc</label>
+      <div class="seg" id="cArc">
+        <button class="on" data-v="on">on</button>
+        <button data-v="off">off</button>
+      </div>
+    </div>
+    <div class="control">
+      <label>Show wall</label>
+      <div class="seg" id="cWall">
+        <button class="on" data-v="on">on</button>
+        <button data-v="off">off</button>
+      </div>
+    </div>
+  </div>
+
+  <span class="cite">
+    McBeath &amp; Shepard (1989) Percept. Psychophys. 46(4):333–337<br>
+    Shape alternates left ↔ right of partition · observers adjust window height for smoothest apparent passage<br>
+    Narrow = line-drawn shape (Farrell 1983) · Medium = silhouette polygon (Farrell &amp; Shepard 1981) · Wide = Pac-Man<br>
+    Narrow/medium axes aligned through kinematic pole · Obtained curvature ≈ 60–75% of kinematic prediction
+  </span>
+</div>
+</div>
+
+<script>
+// ── canvas ──────────────────────────────────────────────────
+function initCv(id, w, h) {
+  const cv = document.getElementById(id), dpr = window.devicePixelRatio || 1;
+  cv.width = w*dpr; cv.height = h*dpr;
+  cv.style.width = w+'px'; cv.style.height = h+'px';
+  const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  return { cv, ctx, w, h };
+}
+const mC = initCv('cv', 860, 500);
+
+const BG = '#08080d', STIM = '#e4e4e7';
+const COL_KINE = '#ff8a6d', COL_OBT = '#a0e080';
+const STIM_DUR = 550;   // ms, fixed from paper
+const PX_PER_DEG = 40;  // 40 px per 1° visual angle (display scale)
+const GAP = 52;         // px — window gap height in partition
+
+const st = {
+  shape: 'wide', sepDeg: 6, dthetaDeg: 90, isi: 50,
+  showArc: true, showWall: true,
+  t: 0,
+};
+
+// ── bindings ────────────────────────────────────────────────
+function bindSeg(id, fn) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+bindSeg('cShape', v => { st.shape = v; });
+bindSeg('cSep',   v => { st.sepDeg = +v; });
+bindSeg('cDth',   v => { st.dthetaDeg = +v; });
+bindSeg('cISI',   v => { st.isi = +v; });
+bindSeg('cArc',   v => { st.showArc = v === 'on'; });
+bindSeg('cWall',  v => { st.showWall = v === 'on'; });
+
+// ── math ────────────────────────────────────────────────────
+function rotPt(p, c, a) {
+  const cos = Math.cos(a), sin = Math.sin(a), dx = p.x-c.x, dy = p.y-c.y;
+  return { x: c.x + cos*dx - sin*dy, y: c.y + sin*dx + cos*dy };
+}
+
+// ── shapes ──────────────────────────────────────────────────
+// All shapes are drawn in their "natural" orientation with the long axis
+// pointing RIGHT (+x). Caller rotates to align axis through kinematic pole.
+
+function drawNarrow(ctx, cx, cy, angle, color) {
+  // Two-segment bent line from Figure 1a (Farrell 1983 shape). Hollow/line-drawn.
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle);
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-30,  7);
+  ctx.lineTo(  3, -14);
+  ctx.lineTo( 27,  6);
+  ctx.stroke(); ctx.restore();
+}
+
+function drawMedium(ctx, cx, cy, angle, color) {
+  // Filled irregular polygon from Figure 1a (Farrell & Shepard 1981 silhouette).
+  // Long axis roughly horizontal.
+  const pts = [
+    {x:22, y:0}, {x:15, y:-13}, {x:3, y:-19},
+    {x:-10, y:-13}, {x:-20, y:0}, {x:-13, y:13},
+    {x:3, y:17}, {x:15, y:11},
+  ];
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle);
+  ctx.fillStyle = color; ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+function drawWide(ctx, cx, cy, angle, color) {
+  // Pac-Man: circle with pie-segment removed. Mouth faces +x (right) by default.
+  const R = 22, alpha = 38 * Math.PI / 180;
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle);
+  ctx.fillStyle = color; ctx.beginPath();
+  ctx.moveTo(0, 0); ctx.arc(0, 0, R, alpha, 2*Math.PI - alpha); ctx.closePath();
+  ctx.fill(); ctx.restore();
+}
+
+function drawShape(ctx, cx, cy, angle, color) {
+  if (st.shape === 'narrow') drawNarrow(ctx, cx, cy, angle, color);
+  else if (st.shape === 'medium') drawMedium(ctx, cx, cy, angle, color);
+  else drawWide(ctx, cx, cy, angle, color);
+}
+
+// ── scene geometry ───────────────────────────────────────────
+function computeScene() {
+  const { w, h } = mC;
+  const cx = w / 2;
+  const cyS = h * 0.70;   // shapes near bottom, arc curves upward (Figure 1c)
+  const d = st.sepDeg * PX_PER_DEG;
+  const dTheta = st.dthetaDeg * Math.PI / 180;
+
+  const A = { x: cx - d/2, y: cyS };
+  const B = { x: cx + d/2, y: cyS };
+
+  // Kinematic pole below baseline → arc curves upward (paper Figure 1c)
+  let pole, R_km;
+  if (Math.abs(st.dthetaDeg - 180) < 0.5) {
+    pole = { x: cx, y: cyS };          // 180°: pole at midpoint
+    R_km = d / 2;
+  } else {
+    const r = d / (2 * Math.tan(dTheta / 2));
+    pole = { x: cx, y: cyS + r };
+    R_km = Math.sqrt((d/2)**2 + r**2);
+  }
+
+  // Arc midpoint (t=0.5) — this is where the partition window should be
+  const midPt = rotPt(A, pole, dTheta / 2);
+  const windowY = midPt.y;              // y of arc peak
+  const windowH = cyS - windowY;        // height above straight line (px)
+
+  // Shape orientations: long axis points from shape position toward kinematic pole
+  const thetaA = Math.atan2(pole.y - A.y, pole.x - A.x);
+  const thetaB = Math.atan2(pole.y - B.y, pole.x - B.x);
+
+  return { A, B, pole, R_km, windowY, windowH, thetaA, thetaB, dTheta, cx, cyS, d };
+}
+
+// ── draw ────────────────────────────────────────────────────
+function drawFrame() {
+  const { ctx, w, h } = mC;
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
+
+  const sc = computeScene();
+  const { A, B, pole, R_km, windowY, windowH, thetaA, thetaB, dTheta, cx, cyS } = sc;
+  const N = 80;
+
+  // ── arcs ────────────────────────────────────────────────
+  if (st.showArc) {
+    // Kinematic arc (100% of Euler prediction)
+    ctx.save(); ctx.strokeStyle = COL_KINE; ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.35; ctx.setLineDash([5, 5]); ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const pt = rotPt(A, pole, (i/N) * dTheta);
+      i ? ctx.lineTo(pt.x, pt.y) : ctx.moveTo(pt.x, pt.y);
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.restore();
+
+    // Obtained path: ~65% of kinematic deviation from straight line
+    ctx.save(); ctx.strokeStyle = COL_OBT; ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.30; ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      const kPt = rotPt(A, pole, t * dTheta);
+      const sPt = { x: A.x + t*(B.x-A.x), y: A.y + t*(B.y-A.y) };
+      const pt  = { x: sPt.x + 0.65*(kPt.x - sPt.x), y: sPt.y + 0.65*(kPt.y - sPt.y) };
+      i ? ctx.lineTo(pt.x, pt.y) : ctx.moveTo(pt.x, pt.y);
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.restore();
+
+    // Straight-line reference (0% curvature baseline)
+    ctx.save(); ctx.strokeStyle = '#27272a'; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
+    ctx.beginPath(); ctx.moveTo(A.x, cyS); ctx.lineTo(B.x, cyS); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.restore();
+  }
+
+  // ── partition wall ──────────────────────────────────────
+  if (st.showWall) {
+    const wallX = cx;
+    const gapTop = windowY - GAP/2;
+    const gapBot = windowY + GAP/2;
+
+    // Wall body (above and below kinematic window)
+    ctx.save(); ctx.strokeStyle = '#3f3f46'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(wallX, 0);      ctx.lineTo(wallX, gapTop); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(wallX, gapBot); ctx.lineTo(wallX, h);      ctx.stroke();
+
+    // Kinematic window bracket markers (orange)
+    ctx.strokeStyle = COL_KINE; ctx.lineWidth = 1.5;
+    [-1, 1].forEach(s => {
+      const y = s > 0 ? gapBot : gapTop;
+      ctx.beginPath(); ctx.moveTo(wallX-10, y); ctx.lineTo(wallX+10, y); ctx.stroke();
+    });
+
+    // Obtained window marker (green dashed line, at 65% height)
+    const obtY = cyS - 0.65 * windowH;
+    ctx.strokeStyle = COL_OBT; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(wallX-12, obtY); ctx.lineTo(wallX+12, obtY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Height labels (right side of partition)
+    ctx.font = '10px "IBM Plex Mono"'; ctx.textAlign = 'left';
+    const h_kine_deg = (windowH / PX_PER_DEG).toFixed(2);
+    const h_obt_deg  = (windowH * 0.65 / PX_PER_DEG).toFixed(2);
+    ctx.fillStyle = COL_KINE + 'aa';
+    ctx.fillText(`h = ${h_kine_deg}°`, wallX + 16, windowY + 4);
+    ctx.fillStyle = COL_OBT + '88';
+    ctx.fillText(`h̄ = ${h_obt_deg}°`, wallX + 16, obtY + 4);
+
+    // Height brace on right side
+    ctx.strokeStyle = '#27272a'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(wallX+14, cyS); ctx.lineTo(wallX+14, windowY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(wallX+11, cyS);     ctx.lineTo(wallX+17, cyS);     ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(wallX+11, windowY); ctx.lineTo(wallX+17, windowY); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // ── shapes ──────────────────────────────────────────────
+  const SOA = STIM_DUR + st.isi;
+  const cycle = 2 * SOA;
+  const phase = st.t % cycle;
+  const showA = phase < STIM_DUR;
+  const showB = phase >= SOA && phase < SOA + STIM_DUR;
+
+  // Ghost: faint always-visible position markers
+  drawShape(ctx, A.x, A.y, thetaA, '#e4e4e710');
+  drawShape(ctx, B.x, B.y, thetaB, '#e4e4e710');
+
+  if (showA) drawShape(ctx, A.x, A.y, thetaA, STIM);
+  if (showB) drawShape(ctx, B.x, B.y, thetaB, STIM);
+}
+
+let lastTs = 0;
+function frame(ts) {
+  const dt = lastTs ? ts - lastTs : 16; lastTs = ts; st.t += dt;
+  drawFrame(); requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
