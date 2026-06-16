@@ -40,12 +40,6 @@ canvas{display:block;background:#08080d}
 <div class="panel-wrap">
   <div class="stage"><canvas id="cv"></canvas></div>
 
-  <div class="legend">
-    <div class="legend-item"><div class="swatch" style="background:#ff8a6d"></div><span style="color:#ff8a6d">Kinematic arc — 100% of Euler prediction</span></div>
-    <div class="legend-item"><div class="swatch" style="background:#a0e080; opacity:.7"></div><span style="color:#a0e080aa">Obtained path — avg. ~65% of kinematic</span></div>
-    <div class="legend-item"><div class="swatch" style="background:#52525b"></div><span style="color:#52525b">Partition · window gap at kinematic h</span></div>
-  </div>
-
   <div class="controls">
     <div class="control">
       <label>Shape</label>
@@ -81,13 +75,6 @@ canvas{display:block;background:#08080d}
       </div>
     </div>
     <div class="control">
-      <label>Show arc</label>
-      <div class="seg" id="cArc">
-        <button class="on" data-v="on">on</button>
-        <button data-v="off">off</button>
-      </div>
-    </div>
-    <div class="control">
       <label>Show wall</label>
       <div class="seg" id="cWall">
         <button class="on" data-v="on">on</button>
@@ -117,14 +104,13 @@ function initCv(id, w, h) {
 const mC = initCv('cv', 860, 500);
 
 const BG = '#08080d', STIM = '#e4e4e7';
-const COL_KINE = '#ff8a6d', COL_OBT = '#a0e080';
 const STIM_DUR = 550;   // ms, fixed from paper
 const PX_PER_DEG = 40;  // 40 px per 1° visual angle (display scale)
 const GAP = 52;         // px — window gap height in partition
 
 const st = {
   shape: 'wide', sepDeg: 6, dthetaDeg: 90, isi: 50,
-  showArc: true, showWall: true,
+  showWall: true,
   t: 0,
 };
 
@@ -139,7 +125,6 @@ bindSeg('cShape', v => { st.shape = v; });
 bindSeg('cSep',   v => { st.sepDeg = +v; });
 bindSeg('cDth',   v => { st.dthetaDeg = +v; });
 bindSeg('cISI',   v => { st.isi = +v; });
-bindSeg('cArc',   v => { st.showArc = v === 'on'; });
 bindSeg('cWall',  v => { st.showWall = v === 'on'; });
 
 // ── math ────────────────────────────────────────────────────
@@ -232,79 +217,15 @@ function drawFrame() {
   ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h);
 
   const sc = computeScene();
-  const { A, B, pole, R_km, windowY, windowH, thetaA, thetaB, dTheta, cx, cyS } = sc;
-  const N = 80;
-
-  // ── arcs ────────────────────────────────────────────────
-  if (st.showArc) {
-    // Kinematic arc (100% of Euler prediction)
-    ctx.save(); ctx.strokeStyle = COL_KINE; ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.35; ctx.setLineDash([5, 5]); ctx.lineCap = 'round';
-    ctx.beginPath();
-    for (let i = 0; i <= N; i++) {
-      const pt = rotPt(A, pole, (i/N) * dTheta);
-      i ? ctx.lineTo(pt.x, pt.y) : ctx.moveTo(pt.x, pt.y);
-    }
-    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.restore();
-
-    // Obtained path: ~65% of kinematic deviation from straight line
-    ctx.save(); ctx.strokeStyle = COL_OBT; ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.30; ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    for (let i = 0; i <= N; i++) {
-      const t = i / N;
-      const kPt = rotPt(A, pole, t * dTheta);
-      const sPt = { x: A.x + t*(B.x-A.x), y: A.y + t*(B.y-A.y) };
-      const pt  = { x: sPt.x + 0.65*(kPt.x - sPt.x), y: sPt.y + 0.65*(kPt.y - sPt.y) };
-      i ? ctx.lineTo(pt.x, pt.y) : ctx.moveTo(pt.x, pt.y);
-    }
-    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.restore();
-
-    // Straight-line reference (0% curvature baseline)
-    ctx.save(); ctx.strokeStyle = '#27272a'; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
-    ctx.beginPath(); ctx.moveTo(A.x, cyS); ctx.lineTo(B.x, cyS); ctx.stroke();
-    ctx.globalAlpha = 1; ctx.restore();
-  }
+  const { A, B, windowY, thetaA, thetaB, cx } = sc;
 
   // ── partition wall ──────────────────────────────────────
   if (st.showWall) {
-    const wallX = cx;
     const gapTop = windowY - GAP/2;
     const gapBot = windowY + GAP/2;
-
-    // Wall body (above and below kinematic window)
-    ctx.save(); ctx.strokeStyle = '#3f3f46'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(wallX, 0);      ctx.lineTo(wallX, gapTop); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(wallX, gapBot); ctx.lineTo(wallX, h);      ctx.stroke();
-
-    // Kinematic window bracket markers (orange)
-    ctx.strokeStyle = COL_KINE; ctx.lineWidth = 1.5;
-    [-1, 1].forEach(s => {
-      const y = s > 0 ? gapBot : gapTop;
-      ctx.beginPath(); ctx.moveTo(wallX-10, y); ctx.lineTo(wallX+10, y); ctx.stroke();
-    });
-
-    // Obtained window marker (green dashed line, at 65% height)
-    const obtY = cyS - 0.65 * windowH;
-    ctx.strokeStyle = COL_OBT; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]);
-    ctx.beginPath(); ctx.moveTo(wallX-12, obtY); ctx.lineTo(wallX+12, obtY); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Height labels (right side of partition)
-    ctx.font = '10px "IBM Plex Mono"'; ctx.textAlign = 'left';
-    const h_kine_deg = (windowH / PX_PER_DEG).toFixed(2);
-    const h_obt_deg  = (windowH * 0.65 / PX_PER_DEG).toFixed(2);
-    ctx.fillStyle = COL_KINE + 'aa';
-    ctx.fillText(`h = ${h_kine_deg}°`, wallX + 16, windowY + 4);
-    ctx.fillStyle = COL_OBT + '88';
-    ctx.fillText(`h̄ = ${h_obt_deg}°`, wallX + 16, obtY + 4);
-
-    // Height brace on right side
-    ctx.strokeStyle = '#27272a'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(wallX+14, cyS); ctx.lineTo(wallX+14, windowY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(wallX+11, cyS);     ctx.lineTo(wallX+17, cyS);     ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(wallX+11, windowY); ctx.lineTo(wallX+17, windowY); ctx.stroke();
-
+    ctx.save(); ctx.strokeStyle = '#c4c4c8'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cx, 0);      ctx.lineTo(cx, gapTop); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, gapBot); ctx.lineTo(cx, h);      ctx.stroke();
     ctx.restore();
   }
 
@@ -314,10 +235,6 @@ function drawFrame() {
   const phase = st.t % cycle;
   const showA = phase < STIM_DUR;
   const showB = phase >= SOA && phase < SOA + STIM_DUR;
-
-  // Ghost: faint always-visible position markers
-  drawShape(ctx, A.x, A.y, thetaA, '#e4e4e710');
-  drawShape(ctx, B.x, B.y, thetaB, '#e4e4e710');
 
   if (showA) drawShape(ctx, A.x, A.y, thetaA, STIM);
   if (showB) drawShape(ctx, B.x, B.y, thetaB, STIM);
