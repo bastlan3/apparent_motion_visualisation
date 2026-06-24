@@ -2,74 +2,322 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>McBeath & Shepard (1989) — Path Curvature in AM</title>
+<title>McBeath &amp; Shepard (1989) — Window technique (experiment)</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#111; display:block; }
-.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
-input[type=range] { width:160px; accent-color:#888; }
-button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:18px 12px 40px; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; margin-bottom:2px; }
+  .sub { font-size:11px; color:#777; margin-bottom:14px; }
+  canvas { background:#000; display:block; border-radius:3px; outline:none; cursor:ns-resize; }
+
+  .participant { margin-top:12px; width:700px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .rate { margin-top:10px; display:flex; gap:10px; align-items:center; justify-content:center; font-size:12px; }
+  .rate button { min-width:120px; }
+
+  .panel { margin-top:22px; width:700px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:16px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:12px; }
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px 28px; }
+  .ctrl { display:flex; flex-direction:column; gap:6px; }
+  .ctrl .label { font-size:12px; color:#9a9a9a; }
+  .seg { display:flex; gap:6px; flex-wrap:wrap; }
+  .seg button { flex:0 0 auto; }
+  input[type=range] { width:100%; accent-color:#8a93b8; }
+
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:6px 12px;
+           border-radius:4px; cursor:pointer; font-size:12px; transition:.12s; }
+  button:hover { background:#26262e; border-color:#4a4a56; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+
+  .readouts { margin-top:16px; display:flex; gap:26px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .log { margin-top:16px; font-size:11px; color:#777; }
+  .log .row { display:flex; gap:18px; }
+  .meta { margin-top:22px; width:700px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
 </style>
 </head>
 <body>
-<canvas id="c" width="560" height="380"></canvas>
-<div class="controls">
-  <button id="btn">Pause</button>
-  <label>SOA: <span id="lbl">300</span> ms &nbsp;<input type="range" id="soa" min="50" max="800" value="300" step="50"></label>
-  <label>Rotation: <span id="rotLbl">90</span>° &nbsp;<input type="range" id="rot" min="30" max="180" value="90" step="30"></label>
-  <label>Separation: <span id="sepLbl">120</span> px &nbsp;<input type="range" id="sep" min="60" max="200" value="120" step="20"></label>
-</div>
-<div class="meta">McBeath &amp; Shepard (1989). Shape at two positions and orientations — perceived path curves (kinematic geometry predicts a circular arc, not a straight line).</div>
-<script>
-const c=document.getElementById('c');
-const ctx=c.getContext('2d');
-const CX=c.width/2, CY=c.height/2;
-let soaMs=300, running=true, phase='f1', phaseStart=performance.now();
+  <h1>McBeath &amp; Shepard (1989) — Window technique for path curvature</h1>
+  <div class="sub">A shape is flashed on the two sides of a partition; the observer adjusts the window so the shape seems to pass smoothly through it.</div>
 
-// Ellipse shape to make orientation obvious
-function drawShape(cx,cy,angleDeg) {
-  const angle=angleDeg*Math.PI/180;
+  <canvas id="c" width="700" height="520" tabindex="0"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Move the <b>window</b> with <b>↑ / ↓</b> (or drag vertically) until the shape seems to pass
+      <b>most smoothly</b> back and forth through it.<br>
+      Try for a placement <b>at or above</b> the straight line joining the two flashed shapes, then rate your confidence:
+    </div>
+    <div class="rate">
+      <span style="color:#777">Confidence&nbsp;&amp;&nbsp;log&nbsp;trial:</span>
+      <button data-conf="1">1 — low / unclear path</button>
+      <button data-conf="2">2 — medium</button>
+      <button data-conf="3">3 — high / clear path</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">
+        <span class="label">Stimulus shape</span>
+        <div class="seg" id="segShape">
+          <button data-shape="narrow" class="on">Narrow</button>
+          <button data-shape="medium">Medium</button>
+          <button data-shape="wide">Wide (Pac-Man)</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <span class="label">Distance of separation (between centers)</span>
+        <div class="seg" id="segSep">
+          <button data-sep="3">3°</button>
+          <button data-sep="6" class="on">6°</button>
+          <button data-sep="9">9°</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <span class="label">Difference in orientation</span>
+        <div class="seg" id="segAng">
+          <button data-ang="90" class="on">90°</button>
+          <button data-ang="180">180°</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <span class="label">Interstimulus interval (ISI): <b id="isiLbl" style="color:#cfcfcf">100</b> ms &nbsp;
+          <span style="color:#666">(duration fixed 550 ms · SOA <span id="soaLbl">650</span> ms)</span></span>
+        <input type="range" id="isi" min="0" max="200" step="1" value="100">
+      </div>
+    </div>
+
+    <div class="readouts">
+      <div>Window set: <b id="devLbl">0.00°</b> above straight line</div>
+      <div>Kinematic prediction (Euler): <b id="predLbl">0.00°</b></div>
+      <div><button id="pause">Pause</button> <button id="reset">Reset window</button></div>
+    </div>
+
+    <div class="log">
+      <div class="row"><span>Trials logged: <b id="nLog" style="color:#cfcfcf">0</b></span>
+        <button id="export" style="padding:3px 9px">Export CSV</button></div>
+      <div id="last" style="margin-top:6px;color:#666"></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of the stimulus/apparatus in McBeath &amp; Shepard (1989), <i>Perception &amp; Psychophysics</i>, 46(4), 333–337.
+    Viewing distance ≈ 80 cm; each shape subtends ≈ 1.5° (rendered here at 32 px/°). Shapes are flashed near the bottom of the field
+    to prime the upward-curved interpretation. Narrow/medium shapes are oriented so their axis of elongation passes through the
+    kinematic centre of rotation; the Pac-Man is kept asymmetric about the vertical. The curved path itself is the observer's
+    percept and is deliberately <i>not</i> drawn — only the real two-flash stimulus and the adjustable window are shown.
+  </div>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+
+// ---- fixed display geometry ----
+const PX_PER_DEG = 32;            // 1.5° shape -> 48 px; 9° sep -> 288 px
+const SHAPE_R    = 0.75 * PX_PER_DEG;   // ~24 px radius (1.5° diameter)
+const CX         = W / 2;         // partition / vertical midline
+const CHORD_Y    = 430;           // baseline of the two flashed shapes (near bottom)
+const WALL_HW    = 5;             // partition half-width
+const GAP_H      = 2 * SHAPE_R + 8;     // window just admits the shape
+
+// ---- experiment parameters (experimenter-controlled) ----
+const params = { shape:'narrow', sepDeg:6, angDeg:90, isiMs:100, durMs:550 };
+
+// ---- participant-controlled window position ----
+let windowY = CHORD_Y;            // canvas-y of window centre (starts on the straight line)
+const WIN_MIN = CHORD_Y - 185;    // highest the window may go
+const WIN_MAX = CHORD_Y + 30;     // slightly below straight line
+
+let running = true, t0 = performance.now();
+
+// ---------- kinematic geometry (Euler's theorem) ----------
+// d = separation (px), th = angular difference (rad).
+// Centre of rotation lies on the midline, offset below the chord by (d/2)/tan(th/2);
+// correct window height above chord h = (d/2)*tan(th/4).
+function geometry() {
+  const d  = params.sepDeg * PX_PER_DEG;
+  const th = params.angDeg * Math.PI / 180;
+  const offset = (params.angDeg === 180) ? 0 : (d/2) / Math.tan(th/2); // C below chord (canvas +y)
+  const Ccanvas = { x: CX, y: CHORD_Y + offset };
+  const predPx  = (d/2) * Math.tan(th/4);   // kinematically-correct apex height
+  const pL = { x: CX - d/2, y: CHORD_Y };
+  const pR = { x: CX + d/2, y: CHORD_Y };
+  let angL, angR;
+  if (params.shape === 'wide') {
+    // Pac-Man: the paper fixes only "not symmetric about a vertical axis", so we anchor the
+    // left flash to a fixed diagonal (mouth up-right) and rotate the right flash rigidly by Δθ.
+    // This keeps the mouths diagonal (one up, one down) in BOTH the 90° and 180° conditions,
+    // and never vertical (which would be the symmetric case the paper avoided).
+    angL = -Math.PI / 4;
+    angR = angL + th;
+  } else {
+    // Narrow / medium: axis of elongation points through the kinematic centre of rotation.
+    angL = Math.atan2(Ccanvas.y - pL.y, Ccanvas.x - pL.x);
+    angR = Math.atan2(Ccanvas.y - pR.y, Ccanvas.x - pR.x);
+  }
+  return { d, pL, pR, angL, angR, predPx };
+}
+
+// ---------- shape rendering (local frame, long axis = +x) ----------
+function drawShape(type, x, y, ang) {
   ctx.save();
-  ctx.translate(cx,cy);
-  ctx.rotate(angle);
-  ctx.beginPath();
-  ctx.ellipse(0,0,50,22,0,0,Math.PI*2);
-  ctx.fillStyle='rgba(180,200,255,0.15)';
-  ctx.fill();
-  ctx.strokeStyle='#a0b8ff';
-  ctx.lineWidth=2;
-  ctx.stroke();
-  // Arrow to show orientation
-  ctx.strokeStyle='#6090ff';
-  ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.moveTo(-30,0); ctx.lineTo(30,0);
-  ctx.moveTo(22,-6); ctx.lineTo(30,0); ctx.lineTo(22,6);
-  ctx.stroke();
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  ctx.fillStyle   = '#e9e9e9';
+  ctx.strokeStyle = '#e9e9e9';
+  if (type === 'wide') {                       // Pac-Man: circle minus a wedge (mouth opens +x)
+    const mouth = 0.62;                        // half-angle of the mouth (~35°)
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, SHAPE_R, mouth, 2*Math.PI - mouth);
+    ctx.closePath();
+    ctx.fill();
+  } else if (type === 'medium') {              // irregular polygon silhouette
+    const pts = [[24,2],[8,-15],[-10,-12],[-22,-2],[-13,9],[6,14]];
+    ctx.beginPath();
+    pts.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+    ctx.closePath();
+    ctx.fill();
+  } else {                                     // narrow: thin asymmetric line drawing
+    ctx.lineWidth = 3;
+    ctx.lineJoin = ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-24, 9); ctx.lineTo(-3, -12); ctx.lineTo(24, 3);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
-  const rot=+document.getElementById('rot').value;
-  const sep=+document.getElementById('sep').value;
-  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
-
-  ctx.fillStyle='#111'; ctx.fillRect(0,0,c.width,c.height);
-
-  if(phase==='f1') drawShape(CX-sep/2, CY, 0);
-  else if(phase==='f2') drawShape(CX+sep/2, CY, rot);
-  requestAnimationFrame(tick);
+// ---------- partition + window ----------
+function drawWall() {
+  const gT = windowY - GAP_H/2, gB = windowY + GAP_H/2;
+  ctx.fillStyle = '#3c3c44';
+  ctx.fillRect(CX - WALL_HW, 0, 2*WALL_HW, gT);          // upper segment
+  ctx.fillRect(CX - WALL_HW, gB, 2*WALL_HW, H - gB);      // lower segment
+  // subtle edges so the window reads as a gap
+  ctx.strokeStyle = '#6a6a78';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(CX - WALL_HW, gT); ctx.lineTo(CX + WALL_HW, gT);
+  ctx.moveTo(CX - WALL_HW, gB); ctx.lineTo(CX + WALL_HW, gB);
+  ctx.stroke();
 }
 
-document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
-document.getElementById('rot').addEventListener('input',e=>{document.getElementById('rotLbl').textContent=e.target.value;});
-document.getElementById('sep').addEventListener('input',e=>{document.getElementById('sepLbl').textContent=e.target.value;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+// ---------- which flash is showing now ----------
+function currentPhase() {
+  const dur = params.durMs, isi = params.isiMs;
+  const cycle = 2*dur + 2*isi;
+  let t = (performance.now() - t0) % cycle;
+  if (t < dur) return 'left';
+  t -= dur;
+  if (t < isi) return 'blank';
+  t -= isi;
+  if (t < dur) return 'right';
+  return 'blank';
+}
+
+// ---------- main loop ----------
+function frame() {
+  const g = geometry();
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  drawWall();
+
+  if (running) {
+    const ph = currentPhase();
+    if (ph === 'left')  drawShape(params.shape, g.pL.x, g.pL.y, g.angL);
+    if (ph === 'right') drawShape(params.shape, g.pR.x, g.pR.y, g.angR);
+  } else {
+    // when paused, show both positions faintly so orientations are visible
+    ctx.globalAlpha = 0.5; drawShape(params.shape, g.pL.x, g.pL.y, g.angL);
+    drawShape(params.shape, g.pR.x, g.pR.y, g.angR); ctx.globalAlpha = 1;
+  }
+
+  // readouts
+  document.getElementById('devLbl').textContent  = ((CHORD_Y - windowY)/PX_PER_DEG).toFixed(2) + '°';
+  document.getElementById('predLbl').textContent = (g.predPx/PX_PER_DEG).toFixed(2) + '°';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// ---------- window adjustment (the "joystick") ----------
+function clampWin() { windowY = Math.max(WIN_MIN, Math.min(WIN_MAX, windowY)); }
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp')   { windowY -= 2; clampWin(); e.preventDefault(); }
+  if (e.key === 'ArrowDown') { windowY += 2; clampWin(); e.preventDefault(); }
+});
+let dragging = false;
+c.addEventListener('mousedown', e => { dragging = true; setWinFromMouse(e); });
+window.addEventListener('mousemove', e => { if (dragging) setWinFromMouse(e); });
+window.addEventListener('mouseup', () => dragging = false);
+function setWinFromMouse(e) {
+  const r = c.getBoundingClientRect();
+  windowY = (e.clientY - r.top) * (H / r.height);
+  clampWin();
+}
+
+// ---------- parameter controls ----------
+function wireSeg(id, key, cast) {
+  document.querySelectorAll('#' + id + ' button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      params[key] = cast(b.dataset[Object.keys(b.dataset)[0]]);
+    });
+  });
+}
+wireSeg('segShape', 'shape', v => v);
+wireSeg('segSep',   'sepDeg', Number);
+wireSeg('segAng',   'angDeg', Number);
+
+const isiEl = document.getElementById('isi');
+isiEl.addEventListener('input', e => {
+  params.isiMs = Number(e.target.value);
+  document.getElementById('isiLbl').textContent = params.isiMs;
+  document.getElementById('soaLbl').textContent = params.durMs + params.isiMs;
+  t0 = performance.now();
+});
+
+document.getElementById('pause').addEventListener('click', e => {
+  running = !running; e.target.textContent = running ? 'Pause' : 'Play';
+  if (running) t0 = performance.now();
+});
+document.getElementById('reset').addEventListener('click', () => { windowY = CHORD_Y; });
+
+// ---------- confidence rating + trial logging ----------
+const log = [];
+document.querySelectorAll('.rate button').forEach(b => {
+  b.addEventListener('click', () => {
+    const dev = (CHORD_Y - windowY) / PX_PER_DEG;
+    const g = geometry();
+    log.push({ shape:params.shape, sepDeg:params.sepDeg, angDeg:params.angDeg,
+               isiMs:params.isiMs, soaMs:params.durMs+params.isiMs,
+               windowDeg:+dev.toFixed(3), predDeg:+(g.predPx/PX_PER_DEG).toFixed(3),
+               confidence:Number(b.dataset.conf) });
+    document.getElementById('nLog').textContent = log.length;
+    const r = log[log.length-1];
+    document.getElementById('last').textContent =
+      `last: ${r.shape}, sep ${r.sepDeg}°, Δ ${r.angDeg}°, ISI ${r.isiMs}ms → window ${r.windowDeg}° (conf ${r.confidence})`;
+    windowY = CHORD_Y;            // reset for next trial
+  });
+});
+document.getElementById('export').addEventListener('click', () => {
+  if (!log.length) return;
+  const cols = Object.keys(log[0]);
+  const csv = [cols.join(',')].concat(log.map(r => cols.map(k => r[k]).join(','))).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'mcbeath_shepard_window.csv';
+  a.click();
+});
+
+c.focus();
 </script>
 </body>
 </html>
