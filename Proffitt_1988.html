@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proffitt, Gilden, Kaiser & Whelan (1988) — Configural orientation & AM path</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; cursor:grab; }
+  canvas:active { cursor:grabbing; }
+
+  .participant { margin-top:12px; width:780px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .prow { margin-top:10px; display:flex; gap:20px; align-items:flex-end; justify-content:center; flex-wrap:wrap; font-size:12px; color:#9a9a9a; }
+
+  .panel { margin-top:20px; width:780px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  input[type=range] { width:150px; accent-color:#8a93b8; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .meta { margin-top:20px; width:780px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Proffitt, Gilden, Kaiser &amp; Whelan (1988) — configural orientation &amp; perceived AM trajectory</h1>
+  <div class="sub">Two rectangles blink in different locations and orientations (a single rotation apart). The observer slides
+    a blinking probe along the system axis onto the perceived motion path.</div>
+
+  <canvas id="c" width="780" height="560" tabindex="0"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Watch the apparent motion until the path is clear, then <b>turn the probe on</b> and slide it
+      (<b>drag</b> on the canvas or <b>↑/↓</b>) until it lies on the perceived path. Toggle it off to check the path is unchanged.
+    </div>
+    <div class="prow">
+      <div class="ctrl">&nbsp;<button id="probeBtn" class="on">Probe: ON</button></div>
+      <div class="ctrl">Goodness of path: <span class="v" id="goodLbl">50</span>
+        <input type="range" id="good" min="0" max="100" step="1" value="50"></div>
+      <div class="ctrl">&nbsp;<button id="record">Record placement</button></div>
+      <div class="ctrl">&nbsp;<button id="export">Export CSV</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Stimulus
+        <div class="seg" id="shape">
+          <button data-v="rect" class="on">Rectangle</button>
+          <button data-v="disk">Patterned disk</button>
+          <button data-v="plain">Unpatterned disk</button>
+        </div>
+      </div>
+      <div class="ctrl">α (axis vs arm): <span class="v" id="aLbl">0°</span>
+        <input type="range" id="alpha" min="-90" max="90" step="5" value="0"></div>
+      <div class="ctrl">θ (½ orient. change): <span class="v" id="tLbl">30°</span>
+        <input type="range" id="theta" min="5" max="90" step="5" value="30"></div>
+      <div class="ctrl">β (system axis): <span class="v" id="bLbl">270°</span>
+        <input type="range" id="beta" min="0" max="360" step="5" value="270">
+        <div class="seg" id="betaPre" style="margin-top:3px">
+          <button data-v="45">45</button><button data-v="135">135</button>
+          <button data-v="225">225</button><button data-v="315">315</button>
+        </div>
+      </div>
+      <div class="ctrl">Separation: <span class="v" id="sepLbl">12.6°</span>
+        <input type="range" id="sep" min="4" max="18" step="0.2" value="12.6"></div>
+      <div class="ctrl">Rect length: <span class="v" id="lenLbl">2.5°</span>
+        <input type="range" id="len" min="1" max="5" step="0.1" value="2.5"></div>
+      <div class="ctrl">Rect aspect: <span class="v" id="aspLbl">5.0</span>
+        <input type="range" id="asp" min="1" max="8" step="0.5" value="5"></div>
+      <div class="ctrl">Duration: <span class="v" id="durLbl">70</span> ms
+        <input type="range" id="dur" min="30" max="200" step="10" value="70"></div>
+      <div class="ctrl">ISI: <span class="v" id="isiLbl">180</span> ms
+        <input type="range" id="isi" min="40" max="400" step="10" value="180"></div>
+      <div class="ctrl">Exp 1 presets (α/θ)
+        <div class="seg" id="presets">
+          <button data-a="0" data-t="20">0/20</button>
+          <button data-a="0" data-t="22">0/22</button>
+          <button data-a="0" data-t="24">0/24</button>
+          <button data-a="90" data-t="20">90/20</button>
+        </div>
+      </div>
+      <div class="ctrl">Construction overlay
+        <div class="seg" id="constr"><button data-v="on">show</button><button data-v="off" class="on">hide</button></div>
+      </div>
+    </div>
+
+    <div class="readouts">
+      <div>Standardized placement: <b id="stdLbl">0</b> <span style="color:#555">(0 straight · 100 circular)</span></div>
+      <div>Raw deviation: <b id="rawLbl">0.00°</b></div>
+      <div>Orientation change (2θ): <b id="ocLbl">60°</b></div>
+      <div>Circular apex: <b id="apexLbl">0.00°</b></div>
+      <div>Trials logged: <b id="nLog">0</b></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of the apparatus in Proffitt, Gilden, Kaiser &amp; Whelan (1988), <i>Perception &amp; Psychophysics</i>,
+    43(5), 465–474. Two fixed test rectangles (a single rotation about origin O apart) blink with an observer-moved probe
+    interleaved: test1, probe, test2, probe (70 ms each, 180 ms ISI); ~60 cm viewing, centre separation 13.3 cm = 12.6°.
+    Geometry: <b>system axis</b> = perpendicular bisector of the two centres (angle β); <b>arm</b> = O→centre at ±θ
+    (orientation change = 2θ); <b>α</b> = major axis vs arm. The probe slides along the system axis with fixed orientation
+    (β+α); placement is scored 0 (straight chord midpoint) → 100 (circular arc apex, deviation (sep/2)·tan(θ/2)). Rectangle
+    ends are coloured red (AB) / blue (CD) to fix directedness — the only orientation cue near θ=90°. The perceived path is
+    deliberately <b>not drawn</b>; O / system axis / reference straight &amp; circular paths appear only under the construction
+    overlay. Exp 3 swaps rectangles for a patterned disk (6 internal lines, red/blue halves, magenta outline) or an
+    unpatterned disk.
+  </div>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const PX = 22;                 // px per degree
+const M = { x: W/2, y: H/2 };  // chord midpoint (P), near screen centre
+
+const st = {
+  shape:'rect', alpha:0, theta:30, beta:270, sepDeg:12.6, lenDeg:2.5, aspect:5,
+  dur:70, isi:180, probeOn:true, construction:false,
+  s:0,                          // probe offset along system axis (px), 0 = straight midpoint
+  good:50
+};
+const RED = '#ff5a5a', BLUE = '#5a8aff', MAGENTA = '#d24fd2';
+
+// ---- geometry ----
+function geom() {
+  const th = st.theta * Math.PI/180;
+  const b  = st.beta  * Math.PI/180;
+  const u  = { x: Math.cos(b),  y: Math.sin(b)  };   // system axis (O→apex)
+  const v  = { x: -Math.sin(b), y: Math.cos(b)  };   // chord direction
+  const sepPx = st.sepDeg * PX;
+  const R   = (sepPx/2) / Math.sin(th);
+  const O   = { x: M.x - R*Math.cos(th)*u.x, y: M.y - R*Math.cos(th)*u.y };
+  const apexDev = R*(1 - Math.cos(th));              // = (sep/2)·tan(θ/2)
+  const apex = { x: M.x + apexDev*u.x, y: M.y + apexDev*u.y };
+  const c1 = { x: M.x + (sepPx/2)*v.x, y: M.y + (sepPx/2)*v.y };
+  const c2 = { x: M.x - (sepPx/2)*v.x, y: M.y - (sepPx/2)*v.y };
+  const ang1 = st.beta + st.theta + st.alpha;        // major-axis angles (deg, canvas)
+  const ang2 = st.beta - st.theta + st.alpha;
+  const angP = st.beta + st.alpha;                   // probe (fixed)
+  const probe = { x: M.x + st.s*u.x, y: M.y + st.s*u.y };
+  return { th,b,u,v,R,O,apexDev,apex,c1,c2,ang1,ang2,angP,probe,sepPx };
+}
+
+// ---- shape rendering ----
+function drawRect(cx, cy, angDeg) {
+  const L = st.lenDeg*PX, Wd = (st.lenDeg/st.aspect)*PX;
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(angDeg*Math.PI/180);
+  ctx.fillStyle = 'rgba(220,220,225,0.10)';
+  ctx.fillRect(-L/2,-Wd/2,L,Wd);
+  ctx.strokeStyle = '#cfcfcf'; ctx.lineWidth = 1.5; ctx.strokeRect(-L/2,-Wd/2,L,Wd);
+  ctx.lineWidth = 4; ctx.lineCap='butt';
+  ctx.strokeStyle = RED;  ctx.beginPath(); ctx.moveTo(L/2,-Wd/2);  ctx.lineTo(L/2,Wd/2);  ctx.stroke();
+  ctx.strokeStyle = BLUE; ctx.beginPath(); ctx.moveTo(-L/2,-Wd/2); ctx.lineTo(-L/2,Wd/2); ctx.stroke();
+  ctx.restore();
+}
+function drawDisk(cx, cy, angDeg, patterned) {
+  const r = 0.95*PX;                 // 2 cm disk ≈ 1.9°
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.strokeStyle = MAGENTA; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0,0,r,0,2*Math.PI); ctx.stroke();
+  if (patterned) {
+    ctx.rotate(angDeg*Math.PI/180);
+    ctx.save(); ctx.beginPath(); ctx.arc(0,0,r,0,2*Math.PI); ctx.clip();
+    const n = 6, gap = (2*r)/(n+1);
+    ctx.lineWidth = 2;
+    for (let i=0;i<n;i++){
+      const off = -r + gap*(i+1);
+      ctx.strokeStyle = off >= 0 ? RED : BLUE;
+      ctx.beginPath(); ctx.moveTo(-r,off); ctx.lineTo(r,off); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function drawStim(cx, cy, angDeg) {
+  if (st.shape==='rect') drawRect(cx,cy,angDeg);
+  else drawDisk(cx,cy,angDeg, st.shape==='disk');
+}
+
+// ---- construction overlay (experimenter only) ----
+function drawConstruction(g) {
+  ctx.save();
+  ctx.setLineDash([4,4]); ctx.lineWidth = 1; ctx.strokeStyle = '#3a3a44';
+  // system axis
+  ctx.beginPath();
+  ctx.moveTo(M.x - g.u.x*900, M.y - g.u.y*900);
+  ctx.lineTo(M.x + g.u.x*900, M.y + g.u.y*900);
+  ctx.stroke();
+  // straight chord
+  ctx.strokeStyle = '#4a5a44';
+  ctx.beginPath(); ctx.moveTo(g.c1.x,g.c1.y); ctx.lineTo(g.c2.x,g.c2.y); ctx.stroke();
+  // circular arc through apex
+  ctx.strokeStyle = '#5a4a6a';
+  ctx.beginPath();
+  for (let k=0;k<=60;k++){
+    const t = -g.th + (2*g.th)*(k/60);
+    const px = g.O.x + g.R*(g.u.x*Math.cos(t) + g.v.x*Math.sin(t));
+    const py = g.O.y + g.R*(g.u.y*Math.cos(t) + g.v.y*Math.sin(t));
+    k ? ctx.lineTo(px,py) : ctx.moveTo(px,py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // arms + O
+  ctx.strokeStyle = '#33333c';
+  ctx.beginPath(); ctx.moveTo(g.O.x,g.O.y); ctx.lineTo(g.c1.x,g.c1.y);
+  ctx.moveTo(g.O.x,g.O.y); ctx.lineTo(g.c2.x,g.c2.y); ctx.stroke();
+  ctx.fillStyle = '#666';
+  ctx.beginPath(); ctx.arc(g.O.x,g.O.y,3,0,2*Math.PI); ctx.fill();
+  ctx.font='10px monospace';
+  ctx.fillText('O', g.O.x+5, g.O.y-5);
+  ctx.beginPath(); ctx.arc(M.x,M.y,2,0,2*Math.PI); ctx.fill();
+  ctx.restore();
+}
+
+// ---- timing / blink ----
+let clock = 0, lastTs = 0;
+function slotNow() {
+  const d = st.dur, i = st.isi;
+  const segs = [['t1',d],['_',i],['p',d],['_',i],['t2',d],['_',i],['p',d],['_',i]];
+  const cycle = segs.reduce((a,[,x])=>a+x,0);
+  let t = clock % cycle;
+  for (const [name,len] of segs){ if (t < len) return name; t -= len; }
+  return '_';
+}
+
+function draw() {
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+  const g = geom();
+  if (st.construction) drawConstruction(g);
+  const slot = slotNow();
+  if (slot==='t1') drawStim(g.c1.x, g.c1.y, g.ang1);
+  else if (slot==='t2') drawStim(g.c2.x, g.c2.y, g.ang2);
+  else if (slot==='p' && st.probeOn) drawStim(g.probe.x, g.probe.y, g.angP);
+
+  // experimenter readouts
+  const dev = st.s / PX;
+  const std = g.apexDev > 0.001 ? 100*st.s/g.apexDev : 0;
+  document.getElementById('stdLbl').textContent  = std.toFixed(0);
+  document.getElementById('rawLbl').textContent  = dev.toFixed(2)+'°';
+  document.getElementById('ocLbl').textContent   = (2*st.theta)+'°';
+  document.getElementById('apexLbl').textContent = (g.apexDev/PX).toFixed(2)+'°';
+}
+function frame(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; draw(); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+
+// ---- probe interaction (drag along axis + arrows); no visible scale ----
+const S_MIN = -2*PX, S_MAX = 8*PX;
+function clampS(){ st.s = Math.max(S_MIN, Math.min(S_MAX, st.s)); }
+function setSFromMouse(e){
+  const r = c.getBoundingClientRect();
+  const mx = (e.clientX-r.left)*(W/r.width)  - M.x;
+  const my = (e.clientY-r.top)*(H/r.height)  - M.y;
+  const b = st.beta*Math.PI/180;
+  st.s = mx*Math.cos(b) + my*Math.sin(b);   // project onto u
+  clampS(); markTimer();
+}
+let dragging=false;
+c.addEventListener('mousedown', e=>{ dragging=true; setSFromMouse(e); });
+window.addEventListener('mousemove', e=>{ if(dragging) setSFromMouse(e); });
+window.addEventListener('mouseup', ()=> dragging=false);
+window.addEventListener('keydown', e=>{
+  if(e.key==='ArrowUp'){ st.s += 2; clampS(); markTimer(); e.preventDefault(); }
+  if(e.key==='ArrowDown'){ st.s -= 2; clampS(); markTimer(); e.preventDefault(); }
+});
+
+// ---- response timing + logging ----
+let t0=null;
+function markTimer(){ if(t0===null) t0=performance.now(); }
+const log=[];
+document.getElementById('record').addEventListener('click', ()=>{
+  const g = geom();
+  const std = g.apexDev>0.001 ? 100*st.s/g.apexDev : 0;
+  log.push({ shape:st.shape, alpha:st.alpha, theta:st.theta, beta:st.beta,
+             sepDeg:st.sepDeg, rawDeg:+(st.s/PX).toFixed(3), stdScore:+std.toFixed(1),
+             goodness:st.good, timeMs: t0?Math.round(performance.now()-t0):0 });
+  document.getElementById('nLog').textContent = log.length;
+  t0=null; st.s=0;          // reset for next placement
+});
+document.getElementById('export').addEventListener('click', ()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='proffitt_1988_placements.csv'; a.click();
+});
+
+// ---- controls ----
+function seg(id, fn){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset);
+  }));
+}
+function rng(id, lblId, fmt, fn){
+  const el=document.getElementById(id), lbl=document.getElementById(lblId);
+  el.addEventListener('input',()=>{ const v=+el.value; if(lbl) lbl.textContent=fmt(v); fn(v); });
+}
+seg('shape', d=>st.shape=d.v);
+seg('constr', d=>st.construction = d.v==='on');
+seg('betaPre', d=>{ st.beta=+d.v; document.getElementById('beta').value=d.v; document.getElementById('bLbl').textContent=d.v+'°'; });
+seg('presets', d=>{
+  st.alpha=+d.a; st.theta=+d.t;
+  document.getElementById('alpha').value=d.a; document.getElementById('aLbl').textContent=d.a+'°';
+  document.getElementById('theta').value=d.t; document.getElementById('tLbl').textContent=d.t+'°';
+  st.shape='rect'; document.querySelectorAll('#shape button').forEach((x,i)=>x.classList.toggle('on',i===0));
+});
+rng('alpha','aLbl', v=>v+'°', v=>st.alpha=v);
+rng('theta','tLbl', v=>v+'°', v=>st.theta=v);
+rng('beta','bLbl', v=>v+'°', v=>st.beta=v);
+rng('sep','sepLbl', v=>v.toFixed(1)+'°', v=>st.sepDeg=v);
+rng('len','lenLbl', v=>v.toFixed(1)+'°', v=>st.lenDeg=v);
+rng('asp','aspLbl', v=>v.toFixed(1), v=>st.aspect=v);
+rng('dur','durLbl', v=>v, v=>st.dur=v);
+rng('isi','isiLbl', v=>v, v=>st.isi=v);
+rng('good','goodLbl', v=>v, v=>st.good=v);
+document.getElementById('probeBtn').addEventListener('click', e=>{
+  st.probeOn=!st.probeOn; e.target.textContent = st.probeOn?'Probe: ON':'Probe: OFF';
+  e.target.classList.toggle('on', st.probeOn);
+});
+c.focus();
+</script>
+</body>
+</html>
