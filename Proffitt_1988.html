@@ -49,7 +49,7 @@
       (<b>drag</b> on the canvas or <b>↑/↓</b>) until it lies on the perceived path. Toggle it off to check the path is unchanged.
     </div>
     <div class="prow">
-      <div class="ctrl">&nbsp;<button id="probeBtn" class="on">Probe: ON</button></div>
+      <div class="ctrl">&nbsp;<button id="probeBtn">Probe: OFF</button></div>
       <div class="ctrl">Goodness of path: <span class="v" id="goodLbl">50</span>
         <input type="range" id="good" min="0" max="100" step="1" value="50"></div>
       <div class="ctrl">&nbsp;<button id="record">Record placement</button></div>
@@ -132,7 +132,7 @@ const M = { x: W/2, y: H/2 };  // chord midpoint (P), near screen centre
 
 const st = {
   shape:'rect', alpha:0, theta:30, beta:270, sepDeg:12.6, lenDeg:2.5, aspect:5,
-  dur:70, isi:180, probeOn:true, construction:false,
+  dur:70, isi:180, probeOn:false, construction:false,
   s:0,                          // probe offset along system axis (px), 0 = straight midpoint
   good:50
 };

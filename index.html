@@ -565,6 +565,16 @@
         </div>
       </div>
 
+      <!-- Mori 1982 -->
+      <div class="card" data-search="mori 1982 2d rotation translation serial concatenation probe line apparent motion path foster staircase">
+        <div class="card-authors">Mori (1982)</div>
+        <span class="badge b-2drotation">2D rotation+translation</span>
+        <p class="card-description">A line flashed vertical then horizontal, with a dim probe line flashed between them to map the perceived path. Tests whether AM follows a serial concatenation of translation then rotation.</p>
+        <div class="card-footer">
+          <a class="btn-open" href="mori_1982.html">Open Visualisation →</a>
+        </div>
+      </div>
+
       <!-- MISSING: Farrell 1983 -->
       <div class="card missing" data-search="farrell 1983 2d rotation symmetry">
         <div class="card-authors">Farrell (1983)</div>
@@ -625,15 +635,24 @@
         </div>
       </div>
 
-      <!-- Geodesic sphere utility -->
-      <div class="card" data-search="geodesic sphere orientation space so3">
-        <div class="card-authors">Geodesic Sphere</div>
-        <span class="badge b-3drotation">SO(3) geometry</span>
-        <p class="card-description">Interactive sphere view for geodesic intuition in orientation space.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="geodesic_sphere.html">Open Visualisation →</a>
-        </div>
-      </div>
+    </div><!-- /grid-nonparametric -->
+    <p class="no-results" id="nr-nonparametric">No experiments match your search.</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       MODELS & CONCEPTUAL VISUALISATIONS
+  ══════════════════════════════════════════════ -->
+  <section id="sec-models">
+    <div class="section-header">
+      <h2>Models &amp; Conceptual Visualisations</h2>
+      <p>Interactive models, simulators and multi-paradigm demos that are not reconstructions of a single published experiment.</p>
+    </div>
+
+    <div class="search-wrap">
+      <input type="text" id="search-models" placeholder="Filter by name or model…" aria-label="Search models and visualisations" />
+    </div>
+
+    <div class="card-grid" id="grid-models">
 
       <!-- Transformational motion: multi-paradigm overview -->
       <div class="card" data-search="schiller shepard judd bundesen mcbeath foster transformational motion participant view 1933 1976 1983 1989">
@@ -642,6 +661,16 @@
         <p class="card-description">Participant-view stimuli for Schiller (1933), Shepard &amp; Judd (1976), Bundesen et al. (1983), McBeath &amp; Shepard (1989) and Foster (1975/1978) in one tabbed page.</p>
         <div class="card-footer">
           <a class="btn-open" href="transformational_motion.html">Open Visualisation →</a>
+        </div>
+      </div>
+
+      <!-- Geodesic sphere utility -->
+      <div class="card" data-search="geodesic sphere orientation space so3">
+        <div class="card-authors">Geodesic Sphere</div>
+        <span class="badge b-3drotation">SO(3) geometry</span>
+        <p class="card-description">Interactive sphere view for geodesic intuition in orientation space.</p>
+        <div class="card-footer">
+          <a class="btn-open" href="geodesic_sphere.html">Open Visualisation →</a>
         </div>
       </div>
 
@@ -665,16 +694,6 @@
         </div>
       </div>
 
-      <!-- Mori 1982 kinematic arc -->
-      <div class="card" data-search="mori 1982 apparent motion kinematic arc pole perpendicular bisector rotation translation curved path serial concatenation">
-        <div class="card-authors">Mori (1982)</div>
-        <span class="badge b-moving">Kinematic geometry</span>
-        <p class="card-description">Apparent motion path as a circular arc about the kinematic pole — the intersection of perpendicular bisectors of the displacement. Pole P = midpoint(A,B) + |AB|/(2·tan(Δθ/2)) · ê⊥. Shapes: rectangle, pac-man, triangle.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="mori_1982.html">Open Visualisation →</a>
-        </div>
-      </div>
-
       <!-- Inertia-axis rotation -->
       <div class="card" data-search="inertia tensor principal axis rotation pivot rectangle pacman triangle eigenvalue">
         <div class="card-authors">Inertia-Axis Rotation</div>
@@ -695,8 +714,8 @@
         </div>
       </div>
 
-    </div><!-- /grid-nonparametric -->
-    <p class="no-results" id="nr-nonparametric">No experiments match your search.</p>
+    </div><!-- /grid-models -->
+    <p class="no-results" id="nr-models">No visualisations match your search.</p>
   </section>
 </main>
 
@@ -754,6 +773,7 @@
 
   setupSearch('search-parametric',    'grid-parametric',    'nr-parametric');
   setupSearch('search-nonparametric', 'grid-nonparametric', 'nr-nonparametric');
+  setupSearch('search-models',        'grid-models',        'nr-models');
 </script>
 
 </body>
