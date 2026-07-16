@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foster (1975) — Preferred paths in SO(3): probe technique</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
+  .stage { display:flex; gap:20px; align-items:center; }
+  canvas { background:#000; display:block; border-radius:3px; }
+  .arrlbl { font-size:10px; color:#555; text-align:center; margin-top:4px; }
+
+  .participant { margin-top:12px; width:720px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .prow { margin-top:10px; display:flex; gap:22px; align-items:flex-end; justify-content:center; flex-wrap:wrap; font-size:12px; color:#9a9a9a; }
+  .knob { display:flex; flex-direction:column; gap:5px; align-items:center; }
+  .knob input[type=range] { width:200px; accent-color:#8a93b8; }
+
+  .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  .ctrl input[type=range] { width:150px; accent-color:#8a93b8; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Foster (1975) — preferred paths in the rotation group SO(3)</h1>
+  <div class="sub">A bar undergoes apparent motion (rotate + translate) between A and σ(A). In the upper array a probe bar B is
+    inserted; the observer places it so the upper motion A→B→σ(A) matches the lower reference motion A→σ(A).</div>
+
+  <canvas id="c" width="640" height="580"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Fixate an array centre. Adjust the <b>probe bar</b>'s vertical position and orientation until the motion in the
+      <b>upper</b> array looks identical (as a path) to the motion in the <b>lower</b> array. Then record.
+    </div>
+    <div class="prow">
+      <div class="ctrl">&nbsp;<button id="probeBtn" class="on">Probe: ON</button></div>
+      <div class="knob"><span>Probe vertical position</span>
+        <input type="range" id="p1" min="-2" max="2" step="0.02" value="0"></div>
+      <div class="knob"><span>Probe orientation</span>
+        <input type="range" id="p3" min="-90" max="105" step="1" value="30"></div>
+      <div class="ctrl">&nbsp;<button id="record">Record placement</button></div>
+      <div class="ctrl">&nbsp;<button id="export">Export CSV</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl" style="flex-basis:100%">Stimulus pair preset (Foster Fig 5)
+        <div class="seg" id="preset">
+          <button data-k="a">a</button><button data-k="b">b</button><button data-k="c">c</button>
+          <button data-k="d">d</button><button data-k="e">e</button><button data-k="f">f</button>
+          <button data-k="g">g</button><button data-k="h">h</button>
+          <span style="color:#555; align-self:center; margin-left:6px">σ(A) derived from the panel's φ₁,φ₂,φ₃</span>
+        </div>
+      </div>
+      <div class="ctrl">Reference array
+        <div class="seg" id="ref"><button data-v="on">show</button><button data-v="off" class="on">hide</button></div>
+      </div>
+      <div class="ctrl">σ(A) rotation θ₃σ: <span class="v" id="t3sLbl">60</span>°
+        <input type="range" id="t3s" min="-90" max="90" step="5" value="60"></div>
+      <div class="ctrl">σ(A) horizontal θ₂σ: <span class="v" id="t2sLbl">-1.00</span>°
+        <input type="range" id="t2s" min="-1.5" max="1.5" step="0.05" value="-1.0"></div>
+      <div class="ctrl">σ(A) vertical θ₁σ: <span class="v" id="t1sLbl">0.80</span>°
+        <input type="range" id="t1s" min="-1.5" max="1.5" step="0.05" value="0.8"></div>
+      <div class="ctrl">Probe position θ₂ρ: <span class="v" id="fracLbl">0.50</span>·θ₂σ
+        <input type="range" id="frac" min="0" max="1" step="0.05" value="0.5"></div>
+      <div class="ctrl">Bar length: <span class="v" id="barLbl">0.90</span>°
+        <input type="range" id="bar" min="0.5" max="1.5" step="0.05" value="0.9"></div>
+      <div class="ctrl">Array separation: <span class="v" id="sepLbl">2.70</span>°
+        <input type="range" id="sep" min="1.5" max="4" step="0.1" value="2.7"></div>
+      <div class="ctrl">Stimulus cycle: <span class="v" id="cycLbl">2000</span> ms
+        <input type="range" id="cyc" min="1000" max="3000" step="100" value="2000"></div>
+      <div class="ctrl">Flash duration: <span class="v" id="durLbl">300</span> ms
+        <input type="range" id="dur" min="100" max="600" step="20" value="300"></div>
+      <div class="ctrl">Fixation array
+        <div class="seg" id="fix"><button data-v="top" class="on">top</button><button data-v="bottom">bottom</button></div>
+      </div>
+    </div>
+
+    <div class="readouts">
+      <div>Probe θ₂ρ: <b id="t2rLbl">0.00°</b></div>
+      <div>Probe setting (θ₁ρ, θ₃ρ): <b id="setLbl">0.00°, 30°</b></div>
+      <div>σ(A) = (θ₁σ, θ₂σ, θ₃σ): <b id="sigLbl">—</b></div>
+      <div>Trials logged: <b id="nLog">0</b></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of the Section 3 experiment in Foster, D. H. (1975), <i>Biol. Cybernetics</i> 18, 81–89. Two vertically
+    stacked arrays (corresponding points 2.7° apart; bars 0.9° long) shown in Maxwellian view. <b>Lower</b> array = reference beta motion
+    A ⇄ σ(A); <b>upper</b> array = A → B → σ(A) with an adjustable probe bar B. The observer fixes the probe's vertical position (θ₁ρ)
+    and orientation (θ₃ρ) — the experimenter fixes its horizontal position (θ₂ρ, swept 0→θ₂σ) — so the upper path matches the lower.
+    Coordinates are SO(3) rotations: θ₂ about the vertical axis (horizontal offset), θ₁ about the horizontal axis (vertical offset),
+    θ₃ about the line of sight (in-plane orientation, the large one). A is a vertical bar; σ(A) is displaced + rotated. The smooth
+    beta-motion path is the observer's <b>percept</b> and is deliberately <b>not drawn</b> — only the discrete flashes and the probe appear.
+    Stimulus cycle 2.0 s. (Scheme 1 / Scheme 2 predicted probe placements to be added as an experimenter readout.)
+  </div>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const PX = 100;                 // px per degree
+const CXX = W/2;
+
+const st = {
+  t3s:60, t2s:-1.0, t1s:0.8, frac:0.5,
+  bar:0.9, sep:2.7, cyc:2000, dur:300, fix:'top',
+  refShown:false,     // lower reference array visible?
+  probeShown:true,    // probe bar visible in the test array?
+  p1:0,  // probe vertical (deg)
+  p3:30  // probe orientation (deg)
+};
+
+// Foster Fig 5 a–h: the tested σ(A) via scheme-2 constants φ1,φ2,φ3 (radians)
+const PHI = {
+  a:[ 0.0005, 0.0140,-0.7068], b:[ 0.0128,-0.0102,-0.7854],
+  c:[ 0.0154,-0.0156, 0.7330], d:[ 0.0154,-0.0156, 0.7330],
+  e:[-0.0146,-0.0091, 0.7068], f:[ 0.0052, 0.0164,-0.7068],
+  g:[ 0.0187,-0.0039,-0.7330], h:[ 0.0222,-0.0022,-0.7330]
+};
+// endpoint σ(A) coords (deg) from φ, using scheme-2 curves at t=1
+function sigmaFromPhi(p1, p2, p3) {
+  const s = Math.sin(p3), cm = 1 - Math.cos(p3), D = 180/Math.PI;
+  return {
+    t1: ((p1/p3)*s  - (p2/p3)*cm) * D,
+    t2: ((p1/p3)*cm + (p2/p3)*s ) * D,
+    t3: p3 * D
+  };
+}
+
+// ---- draw a bar: centre (cx,cy), in-plane angle from vertical (deg, +CCW) ----
+function drawBar(cx, cy, angDeg, dim) {
+  const L = st.bar*PX, w = Math.max(5, L*0.16);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-angDeg*Math.PI/180);
+  ctx.fillStyle = dim ? 'rgba(150,170,230,0.5)' : '#eef0ff';
+  const r = w/2;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(-w/2, -L/2, w, L, r);
+  else ctx.rect(-w/2, -L/2, w, L);
+  ctx.fill();
+  ctx.restore();
+}
+function fixMark(cx, cy, active) {
+  ctx.strokeStyle = active ? '#6a7bd0' : '#333';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx-4,cy); ctx.lineTo(cx+4,cy);
+  ctx.moveTo(cx,cy-4); ctx.lineTo(cx,cy+4); ctx.stroke();
+}
+
+// ---- position of an object given (theta1 vertical deg, theta2 horizontal deg) about an array centre ----
+function pos(centreY, t2deg, t1deg) {
+  return { x: CXX + t2deg*PX, y: centreY - t1deg*PX };
+}
+
+// ---- which slot is active: 0 = A, 1 = B (probe), 2 = σ(A) ----
+function slotNow() {
+  const T = st.cyc, slot = T/3;
+  const t = clock % T;
+  const idx = Math.floor(t/slot);           // 0,1,2
+  const on = (t - idx*slot) < st.dur;       // flash on at slot start
+  return { idx, on };
+}
+
+let clock = 0, lastTs = 0;
+function drawFrame() {
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+  // single test array (centred) unless the reference array is also shown
+  const testY = st.refShown ? 160 : H/2;
+  const refY  = testY + st.sep*PX;
+  const t2r = st.frac * st.t2s;             // probe horizontal position
+  const { idx, on } = slotNow();
+
+  // ---- TEST array: A (slot 0) → B (slot 1, if probe on) → σ(A) (slot 2) ----
+  if (on && idx===0) { const p=pos(testY,0,0);           drawBar(p.x,p.y,0,false); }
+  if (on && idx===1 && st.probeShown) { const p=pos(testY,t2r,st.p1); drawBar(p.x,p.y,st.p3,false); }
+  if (on && idx===2) { const p=pos(testY,st.t2s,st.t1s); drawBar(p.x,p.y,st.t3s,false); }
+  fixMark(CXX, testY, st.fix==='top' || !st.refShown);
+  ctx.fillStyle='#444'; ctx.font='10px monospace';
+  if (st.refShown) ctx.fillText('test (A → B → σ(A))', CXX+120, testY-90);
+
+  // ---- REFERENCE array (optional): A (slot 0) ⇄ σ(A) (slot 2), no probe ----
+  if (st.refShown) {
+    if (on && idx===0) { const p=pos(refY,0,0);           drawBar(p.x,p.y,0,false); }
+    if (on && idx===2) { const p=pos(refY,st.t2s,st.t1s); drawBar(p.x,p.y,st.t3s,false); }
+    fixMark(CXX, refY, st.fix==='bottom');
+    ctx.fillStyle='#444'; ctx.fillText('reference (A → σ(A))', CXX+120, refY-90);
+  }
+
+  // readouts
+  document.getElementById('t2rLbl').textContent = t2r.toFixed(2)+'°';
+  document.getElementById('setLbl').textContent = st.p1.toFixed(2)+'°, '+st.p3+'°';
+  document.getElementById('sigLbl').textContent = st.t1s.toFixed(2)+'°, '+st.t2s.toFixed(2)+'°, '+st.t3s+'°';
+}
+function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ---- controls ----
+function seg(id, fn){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function rng(id, lblId, fmt, fn){
+  const el=document.getElementById(id), lbl=document.getElementById(lblId);
+  el.addEventListener('input',()=>{ const v=+el.value; if(lbl) lbl.textContent=fmt(v); fn(v); });
+}
+seg('fix', v=>st.fix=v);
+seg('ref', v=>st.refShown = v==='on');
+document.getElementById('probeBtn').addEventListener('click', e=>{
+  st.probeShown = !st.probeShown;
+  e.target.textContent = st.probeShown ? 'Probe: ON' : 'Probe: OFF';
+  e.target.classList.toggle('on', st.probeShown);
+});
+
+// Fig 5 presets: set σ(A) from the panel's φ constants
+function setSlider(id, lblId, val, fmt){
+  const el=document.getElementById(id); el.value=val;
+  document.getElementById(lblId).textContent = fmt(val);
+}
+document.querySelectorAll('#preset button').forEach(b=>b.addEventListener('click', ()=>{
+  document.querySelectorAll('#preset button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const [p1,p2,p3] = PHI[b.dataset.k];
+  const s = sigmaFromPhi(p1,p2,p3);
+  st.t3s = Math.round(s.t3); st.t2s = +s.t2.toFixed(2); st.t1s = +s.t1.toFixed(2);
+  setSlider('t3s','t3sLbl', st.t3s, v=>v);
+  setSlider('t2s','t2sLbl', st.t2s, v=>(+v).toFixed(2));
+  setSlider('t1s','t1sLbl', st.t1s, v=>(+v).toFixed(2));
+}));
+
+rng('t3s','t3sLbl', v=>v, v=>st.t3s=v);
+rng('t2s','t2sLbl', v=>v.toFixed(2), v=>st.t2s=v);
+rng('t1s','t1sLbl', v=>v.toFixed(2), v=>st.t1s=v);
+rng('frac','fracLbl', v=>v.toFixed(2), v=>st.frac=v);
+rng('bar','barLbl', v=>v.toFixed(2), v=>st.bar=v);
+rng('sep','sepLbl', v=>v.toFixed(2), v=>st.sep=v);
+rng('cyc','cycLbl', v=>v, v=>st.cyc=v);
+rng('dur','durLbl', v=>v, v=>st.dur=v);
+document.getElementById('p1').addEventListener('input', e=>st.p1=+e.target.value);
+document.getElementById('p3').addEventListener('input', e=>st.p3=+e.target.value);
+
+// ---- logging ----
+const log=[];
+document.getElementById('record').addEventListener('click', ()=>{
+  log.push({ theta3_sigma:st.t3s, theta2_sigma:+st.t2s.toFixed(3), theta1_sigma:+st.t1s.toFixed(3),
+             theta2_probe:+(st.frac*st.t2s).toFixed(3), theta1_probe:+st.p1.toFixed(3), theta3_probe:st.p3 });
+  document.getElementById('nLog').textContent = log.length;
+});
+document.getElementById('export').addEventListener('click', ()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='foster_1975_probe.csv'; a.click();
+});
+</script>
+</body>
+</html>
