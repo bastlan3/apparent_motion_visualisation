@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farrell, Larsen &amp; Bundesen (1982) — Velocity constraints on apparent rotation</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
+  canvas { background:#050505; display:block; border-radius:3px; }
+
+  .participant { margin-top:12px; width:720px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .soaBig { text-align:center; margin-top:8px; font-size:20px; color:#e8e8e8; font-variant-numeric:tabular-nums; }
+  .soaBig small { font-size:12px; color:#777; }
+  .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .prow .lab { font-size:11px; color:#777; margin-right:4px; }
+
+  .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl.dim { opacity:.35; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Farrell, Larsen &amp; Bundesen (1982) — velocity constraints on apparent rotation</h1>
+  <div class="sub">A figure rotates about its base between two orientations. The critical SOA rises with angle but its slope
+    barely changes with object size — pointing to a bound on angular (not part-linear) velocity.</div>
+
+  <canvas id="c" width="440" height="380"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Speed up (shorten SOA) until rigid rotation disappears → mark <b>SOA₁</b>. Slow down until it reappears →
+      mark <b>SOA₂</b>. Minimum SOA = their mean.
+    </div>
+    <div class="soaBig">SOA <span id="soaVal">1050</span> <small>ms  (duration <span id="durVal">1000</span> + ISI 50)</small></div>
+    <div class="prow">
+      <div><span class="lab">rate</span>
+        <button id="down">◀ faster (−1/11)</button><button id="up">slower (+1/10) ▶</button></div>
+      <div>
+        <button id="mark1">disappears → SOA₁</button>
+        <button id="mark2">reappears → SOA₂</button></div>
+      <div><button id="record">Record</button><button id="export">Export CSV</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Condition
+        <div class="seg" id="cond">
+          <button data-v="rot" class="on">Rotation (main)</button>
+          <button data-v="trans">Translation (control)</button>
+        </div>
+      </div>
+      <div class="ctrl">Size factor
+        <div class="seg" id="size">
+          <button data-v="1" class="on">1</button><button data-v="2">2</button>
+          <button data-v="3">3</button><button data-v="4">4×</button>
+        </div>
+      </div>
+      <div class="ctrl" id="ctlAng">Angular difference
+        <div class="seg" id="ang">
+          <button data-v="30">30°</button><button data-v="60" class="on">60°</button>
+          <button data-v="90">90°</button><button data-v="120">120°</button>
+        </div>
+      </div>
+      <div class="ctrl dim" id="ctlDisp">Horizontal displacement
+        <div class="seg" id="disp">
+          <button data-v="2" class="on">2°</button><button data-v="3">3°</button><button data-v="4">4°</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="readouts">
+      <div>SOA₁ / SOA₂ / min: <b id="threshLbl">— / — / —</b></div>
+      <div id="velLbl">Angular-velocity bound (paper): <b>≈ 0.68°/ms · 2 cycles/s</b></div>
+      <div style="color:#7a7a55">Size changes only the intercept; slope is ~constant (angular-velocity bound).</div>
+      <div>Trials: <b id="nLog">0</b></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of Farrell, J. E., Larsen, A. &amp; Bundesen, C. (1982), <i>Perception</i> 11, 541–546. The prototype figure
+    (a vertical bar with a short top and two curved sector elements — arcs of circles centred at the bar's <b>base</b>) is scaled by
+    1/2/3/4× and shown in continuous alternation between two orientations differing by a picture-plane rotation about the base of
+    30/60/90/120°, ISI = 50 ms. The observer speeds up (SOA ×10/11) until rigid rotation disappears (SOA₁) then slows (×11/10) until it
+    reappears (SOA₂); minimum SOA = their mean. Critical SOA rises linearly with angle, and the <b>slope is virtually size-invariant</b>
+    — evidence for an upper bound on the object's <i>angular</i> velocity (≈ 0.68°/ms) rather than the linear velocity of its parts. The
+    <b>translation control</b> alternates two copies displaced horizontally (2/3/4°); its slope gives a linear-velocity bound (≈ 0.9 m/s).
+    Only the two real alternating views are drawn — the rigid rotation is the observer's percept.
+  </div>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const CX = W/2, BASEY = H/2 + 80;    // base (pivot) near lower-centre
+const MM = 4;                        // px per mm at size factor 1
+
+const st = { cond:'rot', size:1, ang:60, disp:2, soa:1050, soa1:null, soa2:null };
+
+// prototype figure in local mm coords, base at origin (0,0), bar up +y
+function drawFigure(cx, cy, rotDeg, sizeF){
+  const s = MM*sizeF, a = rotDeg*Math.PI/180, co=Math.cos(a), sn=Math.sin(a);
+  const T = (mx,my)=>{ const x=mx*s, y=my*s; return [cx + x*co + y*sn, cy + x*sn - y*co]; }; // +y up, rot about base
+  ctx.strokeStyle = '#9fe0a0'; ctx.lineWidth = 2; ctx.lineJoin='round'; ctx.lineCap='round';
+  // vertical bar 0..10 mm, top 4.4 mm
+  ctx.beginPath(); let p=T(0,0); ctx.moveTo(p[0],p[1]); p=T(0,10); ctx.lineTo(p[0],p[1]);
+  p=T(4.4,10); ctx.lineTo(p[0],p[1]); ctx.stroke();
+  // two curved sector elements: arcs centred at base, radii 3.5 & 6.5 mm, spanning 90°->48°
+  for (const r of [3.5, 6.5]) {
+    ctx.beginPath();
+    for (let k=0;k<=20;k++){ const th=(90 - 42*(k/20))*Math.PI/180; const q=T(r*Math.cos(th), r*Math.sin(th));
+      k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); }
+    ctx.stroke();
+  }
+}
+
+// timeline: A (dur), ISI 50, B (dur), ISI 50 ; SOA = dur + 50
+let clock = 0, lastTs = 0;
+function drawFrame(){
+  ctx.fillStyle = '#050505'; ctx.fillRect(0,0,W,H);
+  const dur = Math.max(10, st.soa - 50);
+  const seg = [dur, 50, dur, 50];
+  const cycle = 2*(dur+50);
+  let t = clock % cycle, idx=0, acc=0;
+  for (let i=0;i<seg.length;i++){ if (t < acc+seg[i]){ idx=i; break; } acc+=seg[i]; }
+  const showA = idx===0, showB = idx===2;
+
+  if (st.cond==='rot') {
+    if (showA) drawFigure(CX, BASEY, 0, st.size);
+    if (showB) drawFigure(CX, BASEY, st.ang, st.size);
+  } else {
+    // translation control: two upright copies displaced horizontally by disp°, alternating (~26px/deg here)
+    const dx = st.disp*26;
+    if (showA) drawFigure(CX - dx/2, BASEY, 0, st.size);
+    if (showB) drawFigure(CX + dx/2, BASEY, 0, st.size);
+    // fixation dot 1° below midpoint of bases
+    ctx.fillStyle='#5a6acc'; ctx.beginPath(); ctx.arc(CX, BASEY+26, 2, 0, 2*Math.PI); ctx.fill();
+  }
+  document.getElementById('soaVal').textContent = Math.round(st.soa);
+  document.getElementById('durVal').textContent = Math.round(dur);
+}
+function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ---- staircase ----
+function clampSOA(){ st.soa = Math.max(60, Math.min(1500, st.soa)); }
+document.getElementById('down').addEventListener('click', ()=>{ st.soa*=10/11; clampSOA(); });
+document.getElementById('up').addEventListener('click',   ()=>{ st.soa*=11/10; clampSOA(); });
+function showThresh(){
+  const f=x=>x==null?'—':Math.round(x)+' ms';
+  const crit=(st.soa1!=null&&st.soa2!=null)?Math.round((st.soa1+st.soa2)/2)+' ms':'—';
+  document.getElementById('threshLbl').textContent = f(st.soa1)+' / '+f(st.soa2)+' / '+crit;
+}
+document.getElementById('mark1').addEventListener('click', ()=>{ st.soa1=st.soa; showThresh(); });
+document.getElementById('mark2').addEventListener('click', ()=>{ st.soa2=st.soa; showThresh(); });
+
+// ---- logging ----
+const log=[];
+document.getElementById('record').addEventListener('click', ()=>{
+  const crit=(st.soa1!=null&&st.soa2!=null)?Math.round((st.soa1+st.soa2)/2):'';
+  log.push({ condition:st.cond, sizeFactor:st.size, angleDeg: st.cond==='rot'?st.ang:'', dispDeg: st.cond==='trans'?st.disp:'',
+             soa1: st.soa1!=null?Math.round(st.soa1):'', soa2: st.soa2!=null?Math.round(st.soa2):'', minSOA:crit });
+  document.getElementById('nLog').textContent = log.length;
+  st.soa1=st.soa2=null; showThresh();
+});
+document.getElementById('export').addEventListener('click', ()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='farrell_larsen_bundesen_1982.csv'; a.click();
+});
+
+// ---- experimenter controls ----
+function seg(id, fn){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function applyCondUI(){
+  document.getElementById('ctlAng').classList.toggle('dim', st.cond!=='rot');
+  document.getElementById('ctlDisp').classList.toggle('dim', st.cond!=='trans');
+  document.getElementById('velLbl').innerHTML = st.cond==='rot'
+    ? 'Angular-velocity bound (paper): <b>≈ 0.68°/ms · 2 cycles/s</b>'
+    : 'Linear-velocity bound (paper): <b>≈ 0.068°/ms · 0.9 m/s</b>';
+}
+seg('cond', v=>{ st.cond=v; applyCondUI(); });
+seg('size', v=>st.size=+v);
+seg('ang', v=>st.ang=+v);
+seg('disp', v=>st.disp=+v);
+applyCondUI(); showThresh();
+</script>
+</body>
+</html>
