@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farrell (1983) — Minimum SOA for rigid apparent movement</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; }
+
+  .participant { margin-top:12px; width:720px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .soaBig { text-align:center; margin-top:8px; font-size:20px; color:#e8e8e8; font-variant-numeric:tabular-nums; }
+  .soaBig small { font-size:12px; color:#777; }
+  .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .prow .grp { display:flex; gap:6px; align-items:center; }
+  .prow .lab { font-size:11px; color:#777; margin-right:4px; }
+
+  .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl.dim { opacity:.3; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  .ctrl input[type=range] { width:150px; accent-color:#8a93b8; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Farrell (1983) — minimum SOA for rigid apparent movement</h1>
+  <div class="sub">A shape is shown alternately in two positions differing in location and orientation. Lower the SOA until
+    rigid form-preserving movement breaks into flicker, then raise it until movement returns — the threshold.</div>
+
+  <canvas id="c" width="560" height="520"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Watch the alternating shape. Does it look like one rigid object moving, or two shapes flickering?
+    </div>
+    <div class="soaBig">SOA <span id="soaVal">1050</span> <small>ms  (duration <span id="durVal">1000</span> + ISI <span id="isiVal">50</span>)</small></div>
+    <div class="prow">
+      <div class="grp"><span class="lab">adjust</span>
+        <button id="down">◀ shorten (−1/11)</button>
+        <button id="up">lengthen (+1/10) ▶</button></div>
+      <div class="grp"><span class="lab">mark</span>
+        <button id="mark1">breakdown → SOA₁</button>
+        <button id="mark2">reappear → SOA₂</button></div>
+      <div class="grp">
+        <button id="record">Record trial</button>
+        <button id="export">Export CSV</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Experiment
+        <div class="seg" id="exp">
+          <button data-v="1" class="on">1 · displace + rotate</button>
+          <button data-v="2">2 · vary size</button>
+          <button data-v="3">3 · orthogonal</button>
+        </div>
+      </div>
+      <div class="ctrl">Angular difference V
+        <div class="seg" id="V">
+          <button data-v="0">0°</button><button data-v="30">30°</button>
+          <button data-v="60" class="on">60°</button><button data-v="90">90°</button>
+          <button data-v="120">120°</button>
+        </div>
+      </div>
+      <div class="ctrl" id="ctlR">Displacement from centre R
+        <div class="seg" id="R">
+          <button data-v="0">0</button><button data-v="1.5">1.5</button>
+          <button data-v="3" class="on">3.0</button><button data-v="4.5">4.5 cm</button>
+        </div>
+      </div>
+      <div class="ctrl" id="ctlL">Object size L
+        <div class="seg" id="L">
+          <button data-v="1.5">1.5</button><button data-v="3" class="on">3.0</button>
+          <button data-v="4.5">4.5</button><button data-v="6">6.0 cm</button>
+        </div>
+      </div>
+      <div class="ctrl" id="ctlD">Linear separation D
+        <div class="seg" id="D">
+          <button data-v="0">0</button><button data-v="1.5">1.5</button>
+          <button data-v="3" class="on">3.0</button><button data-v="4.5">4.5 cm</button>
+        </div>
+      </div>
+      <div class="ctrl">Base orientation u: <span class="v" id="uLbl">0</span>°
+        <input type="range" id="u" min="0" max="330" step="30" value="0"></div>
+      <div class="ctrl">ISI: <span class="v" id="isiLbl">50</span> ms
+        <input type="range" id="isi" min="0" max="150" step="10" value="50"></div>
+    </div>
+
+    <div class="readouts">
+      <div>D (nearest parts): <b id="dLbl">—</b></div>
+      <div id="dmaxWrap" style="display:none">D_max (R·V): <b id="dmaxLbl">—</b></div>
+      <div>Paper's predicted min SOA (a+bV+cD): <b id="predLbl">—</b></div>
+      <div>SOA₁ / SOA₂ / min: <b id="threshLbl">— / — / —</b></div>
+      <div>Trials logged: <b id="nLog">0</b></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of Farrell, J. E. (1983), <i>Perception &amp; Psychophysics</i> 33(1), 85–92. A rigid line-figure (a straight
+    line plus curved sector elements) is shown alternately in two positions differing in location and orientation; viewing 1 m, ISI
+    fixed 50 ms, SOA varied via stimulus duration (SOA = duration + ISI). The observer runs a two-sided staircase — lower the SOA
+    until form-preserving movement breaks into partial movement/flicker (SOA₁), then raise it until rigid movement returns (SOA₂);
+    minimum SOA = their mean. <b>Exp 1</b>: rigid rotation about the screen centre at radius R (D = 2R·sin(V/2)). <b>Exp 2</b>: radial
+    object of size L, near end at M = 6−L, far tip at R = 6 cm (D_min = 2M·sin(V/2), D_max = R·V). <b>Exp 3</b>: location and orientation
+    varied orthogonally (horizontal separation D, independent V). The smooth interpolated path is the observer's <b>percept</b> and is
+    deliberately <b>not drawn</b> — only the two real flashes appear. The predicted-SOA readout uses the paper's fitted a, b, c per
+    experiment (Exp 1: 86, 1.59, 32.41; Exp 2: 129, 2.18, 19.52; Exp 3: 75, 0.8, 28.76).
+  </div>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const PXCM = 32;                 // px per cm
+const CX = W/2, CY = H/2;
+const PROTO = 2.5;               // prototype object size (cm) for Exp 1 & 3
+
+const st = {
+  exp:1, V:60, R:3, L:3, D:3, u:0, isi:50,
+  soa:1050,
+  soa1:null, soa2:null
+};
+const COEF = { 1:{a:86,b:1.59,c:32.41}, 2:{a:129,b:2.18,c:19.52}, 3:{a:75,b:0.8,c:28.76} };
+
+// ---- prototype shape in unit coords (centroid ~ origin, long axis vertical) ----
+const UNIT_LINES = [
+  [[0,-0.5],[0,0.5]],            // main straight line
+  [[0,-0.5],[0.35,-0.5]],        // top bracket
+  [[0,0.06],[0.17,0.06]]         // tick
+];
+function unitArc() {             // curved sector element near the lower corner
+  const pts=[], cx=0, cy=0.30, r=0.20;
+  for (let i=0;i<=14;i++){ const a=(20+ (95)*(i/14))*Math.PI/180; pts.push([cx+r*Math.cos(a), cy+r*Math.sin(a)]); }
+  return pts;
+}
+const UNIT_ARC = unitArc();
+
+function drawShape(cx, cy, angDeg, sizePx) {
+  const a = angDeg*Math.PI/180, co=Math.cos(a), sn=Math.sin(a);
+  const T = ([px,py]) => [cx + (px*co - py*sn)*sizePx, cy + (px*sn + py*co)*sizePx];
+  ctx.strokeStyle = '#eef0ff'; ctx.lineWidth = 2.2; ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.beginPath();
+  for (const seg of UNIT_LINES){ const p0=T(seg[0]); ctx.moveTo(p0[0],p0[1]); for(let i=1;i<seg.length;i++){const p=T(seg[i]); ctx.lineTo(p[0],p[1]);} }
+  ctx.stroke();
+  ctx.beginPath();
+  const q0=T(UNIT_ARC[0]); ctx.moveTo(q0[0],q0[1]);
+  for(let i=1;i<UNIT_ARC.length;i++){const q=T(UNIT_ARC[i]); ctx.lineTo(q[0],q[1]);}
+  ctx.stroke();
+}
+
+// ---- two views (the real flashed positions) per experiment ----
+function views() {
+  const u = st.u, Vr = st.V*Math.PI/180;
+  if (st.exp === 1) {
+    const R = st.R*PXCM, size = PROTO*PXCM;
+    const mk = rotDeg => {
+      const ang = (-90 + rotDeg) * Math.PI/180;   // polar angle (up = -90°)
+      return { cx: CX + R*Math.cos(ang), cy: CY + R*Math.sin(ang), ang: rotDeg + u, size };
+    };
+    const D = 2*st.R*Math.sin(Vr/2);
+    return { a: mk(-st.V/2), b: mk(+st.V/2), D };
+  }
+  if (st.exp === 2) {
+    const R6 = 6*PXCM, L = st.L*PXCM, M = (6-st.L)*PXCM, rc = (M+R6)/2, size = L;
+    const mk = rotDeg => {
+      const ang = (-90 + rotDeg) * Math.PI/180;
+      return { cx: CX + rc*Math.cos(ang), cy: CY + rc*Math.sin(ang), ang: rotDeg + u, size };
+    };
+    const D = 2*(6-st.L)*Math.sin(Vr/2);
+    return { a: mk(-st.V/2), b: mk(+st.V/2), D, dmax: 6*Vr };
+  }
+  // Exp 3: orthogonal — horizontal separation D, independent rotation V
+  const half = (st.D*PXCM)/2, size = PROTO*PXCM;
+  return {
+    a: { cx: CX - half, cy: CY, ang: u,        size },
+    b: { cx: CX + half, cy: CY, ang: u + st.V, size },
+    D: st.D
+  };
+}
+
+// ---- animation: A on [0,dur), ISI, B on [.,.+dur), ISI ; SOA = dur + ISI ----
+let clock = 0, lastTs = 0;
+function drawFrame() {
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+  // faint screen-centre reference
+  ctx.strokeStyle = '#1e1e24'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(CX-6,CY); ctx.lineTo(CX+6,CY); ctx.moveTo(CX,CY-6); ctx.lineTo(CX,CY+6); ctx.stroke();
+
+  const vw = views();
+  const dur = Math.max(10, st.soa - st.isi);
+  const cycle = 2*(dur + st.isi);
+  const t = clock % cycle;
+  if (t < dur)                       drawShape(vw.a.cx, vw.a.cy, vw.a.ang, vw.a.size);
+  else if (t >= dur+st.isi && t < 2*dur+st.isi) drawShape(vw.b.cx, vw.b.cy, vw.b.ang, vw.b.size);
+
+  // readouts
+  document.getElementById('soaVal').textContent = Math.round(st.soa);
+  document.getElementById('durVal').textContent = Math.round(dur);
+  document.getElementById('isiVal').textContent = st.isi;
+  document.getElementById('dLbl').textContent = vw.D.toFixed(2)+' cm';
+  const dmaxWrap = document.getElementById('dmaxWrap');
+  if (st.exp===2){ dmaxWrap.style.display=''; document.getElementById('dmaxLbl').textContent = (vw.dmax).toFixed(2)+' cm'; }
+  else dmaxWrap.style.display='none';
+  const k = COEF[st.exp];
+  document.getElementById('predLbl').textContent = Math.round(k.a + k.b*st.V + k.c*vw.D)+' ms';
+}
+function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ---- SOA staircase controls ----
+function clampSOA(){ st.soa = Math.max(60, Math.min(1200, st.soa)); }
+document.getElementById('down').addEventListener('click', ()=>{ st.soa *= 10/11; clampSOA(); });
+document.getElementById('up').addEventListener('click',   ()=>{ st.soa *= 11/10; clampSOA(); });
+function showThresh(){
+  const f = x => x==null ? '—' : Math.round(x)+' ms';
+  const m = (st.soa1!=null && st.soa2!=null) ? Math.round((st.soa1+st.soa2)/2)+' ms' : '—';
+  document.getElementById('threshLbl').textContent = f(st.soa1)+' / '+f(st.soa2)+' / '+m;
+}
+document.getElementById('mark1').addEventListener('click', ()=>{ st.soa1 = st.soa; showThresh(); });
+document.getElementById('mark2').addEventListener('click', ()=>{ st.soa2 = st.soa; showThresh(); });
+
+// ---- logging ----
+const log=[];
+document.getElementById('record').addEventListener('click', ()=>{
+  const vw = views();
+  const minSOA = (st.soa1!=null && st.soa2!=null) ? (st.soa1+st.soa2)/2 : null;
+  log.push({ exp:st.exp, V:st.V, R:st.R, L:st.L, Dsep:+vw.D.toFixed(3), u:st.u, isi:st.isi,
+             soa1: st.soa1!=null?Math.round(st.soa1):'', soa2: st.soa2!=null?Math.round(st.soa2):'',
+             minSOA: minSOA!=null?Math.round(minSOA):'' });
+  document.getElementById('nLog').textContent = log.length;
+  st.soa1 = st.soa2 = null; showThresh();
+});
+document.getElementById('export').addEventListener('click', ()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='farrell_1983.csv'; a.click();
+});
+
+// ---- experimenter controls ----
+function seg(id, fn){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function applyExpUI(){
+  document.getElementById('ctlR').classList.toggle('dim', st.exp!==1);
+  document.getElementById('ctlL').classList.toggle('dim', st.exp!==2);
+  document.getElementById('ctlD').classList.toggle('dim', st.exp!==3);
+}
+seg('exp', v=>{ st.exp=+v; applyExpUI(); });
+seg('V', v=>st.V=+v);
+seg('R', v=>st.R=+v);
+seg('L', v=>st.L=+v);
+seg('D', v=>st.D=+v);
+document.getElementById('u').addEventListener('input', e=>{ st.u=+e.target.value; document.getElementById('uLbl').textContent=st.u; });
+document.getElementById('isi').addEventListener('input', e=>{ st.isi=+e.target.value; document.getElementById('isiLbl').textContent=st.isi; });
+applyExpUI();
+showThresh();
+</script>
+</body>
+</html>

@@ -2,69 +2,197 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Farrell & Shepard (1981) — Polygon Rotation AM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farrell &amp; Shepard (1981) — Shape, orientation &amp; apparent rotational motion</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#111; display:block; }
-.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
-input[type=range] { width:160px; accent-color:#888; }
-button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
+  canvas { background:#050505; display:block; border-radius:3px; }
+
+  .participant { margin-top:12px; width:720px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .soaBig { text-align:center; margin-top:8px; font-size:20px; color:#e8e8e8; font-variant-numeric:tabular-nums; }
+  .soaBig small { font-size:12px; color:#777; }
+  .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .prow .lab { font-size:11px; color:#777; margin-right:4px; }
+
+  .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
 </style>
 </head>
 <body>
-<canvas id="c" width="540" height="380"></canvas>
-<div class="controls">
-  <button id="btn">Pause</button>
-  <label>SOA: <span id="lbl">300</span> ms &nbsp;<input type="range" id="soa" min="50" max="800" value="300" step="50"></label>
-  <label>Rotation: <span id="rotLbl">60</span>° &nbsp;<input type="range" id="rot" min="30" max="180" value="60" step="30"></label>
-</div>
-<div class="meta">Farrell &amp; Shepard (1981). Asymmetric polygon in two rotations — minimum SOA for apparent rigid rotation scales ~2.4 ms/° of angular disparity.</div>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Farrell &amp; Shepard (1981) — shape, orientation &amp; apparent rotational motion</h1>
+  <div class="sub">A polygon alternates between two orientations (no gap). Find the fastest rate at which it still rotates as a
+    rigid whole. Near-symmetric shapes break down early — a shorter rotation the other way competes.</div>
+
+  <canvas id="c" width="440" height="360"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Speed up (shorten SOA) until rigid rotation breaks into nonrigid deformation → mark <b>SOA₁</b>. Then slow down until
+      rigid rotation returns → mark <b>SOA₂</b>. Critical SOA = their mean (note the hysteresis).
+    </div>
+    <div class="soaBig">SOA <span id="soaVal">1000</span> <small>ms per view (no ISI)</small></div>
+    <div class="prow">
+      <div><span class="lab">rate</span>
+        <button id="down">◀ faster (−10%)</button><button id="up">slower (+10%) ▶</button></div>
+      <div>
+        <button id="mark1">breakdown → SOA₁</button>
+        <button id="mark2">reemerge → SOA₂</button></div>
+      <div><button id="record">Record</button><button id="export">Export CSV</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Approximation to 180° symmetry
+        <div class="seg" id="sym">
+          <button data-v="0" class="on">0%</button><button data-v="25">25%</button>
+          <button data-v="50">50%</button><button data-v="75">75%</button><button data-v="100">100%</button>
+        </div>
+      </div>
+      <div class="ctrl">Angular disparity
+        <div class="seg" id="ang">
+          <button data-v="30">30°</button><button data-v="60">60°</button>
+          <button data-v="90" class="on">90°</button><button data-v="120">120°</button>
+          <button data-v="150">150°</button><button data-v="180">180°</button>
+        </div>
+      </div>
+      <div class="ctrl">Direction
+        <div class="seg" id="dir"><button data-v="1" class="on">CW</button><button data-v="-1">CCW</button></div>
+      </div>
+    </div>
+
+    <div class="readouts">
+      <div>SOA₁ / SOA₂ / critical: <b id="threshLbl">— / — / —</b></div>
+      <div>Hysteresis (SOA₂−SOA₁): <b id="hystLbl">—</b></div>
+      <div id="noteLbl" style="color:#7a7a55"></div>
+      <div>Trials: <b id="nLog">0</b></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of Farrell, J. E. &amp; Shepard, R. N. (1981), <i>J. Exp. Psychol.: HPP</i> 7(2), 477–486. A polygon (18 radii;
+    ≈ 4.8° visual angle) is generated at a chosen approximation to 180° rotational symmetry (0/25/50/75/100%) and shown in continuous
+    alternation between an upright orientation and one rotated by 30–180° in the picture plane — each view immediately replacing the
+    other (no interstimulus interval). Starting at SOA = 1 s, the observer speeds up in 10% steps until rigid rotation breaks down
+    (SOA₁), then slows until it re-emerges (SOA₂); critical SOA = their mean. For asymmetric polygons the critical SOA rises ~linearly
+    with disparity (~2 ms/°); for near-/fully-symmetric polygons it peaks near 90° and falls (an inverted-V), because beyond 90° a
+    shorter <i>supplementary</i> rotation in the opposite direction competes — rigid rotation through the larger angle becomes unstable.
+    The smooth rigid rotation is the observer's percept; only the two real alternating views are drawn.
+  </div>
+
 <script>
-const c=document.getElementById('c');
-const ctx=c.getContext('2d');
-const CX=c.width/2, CY=c.height/2;
-let soaMs=300, running=true, phase='f1', phaseStart=performance.now();
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const CX = W/2, CY = H/2;
+const SCALE = 7.2;               // px per polygon unit (max r 17 -> ~122 px)
 
-// Irregular polygon vertices (asymmetric, no rotational symmetry)
-const BASE_VERTS = [
-  [0,-80],[30,-50],[70,-35],[60,10],
-  [35,55],[-10,70],[-55,45],[-65,-5],
-  [-50,-45],[-20,-75]
-];
-
-function drawPolygon(angleDeg) {
-  const angle=angleDeg*Math.PI/180;
-  const cos_=Math.cos(angle), sin_=Math.sin(angle);
-  const verts=BASE_VERTS.map(([x,y])=>[x*cos_-y*sin_+CX, x*sin_+y*cos_+CY]);
+// 18 radii at 90° + i*20°; indices 0 (top) & 9 (bottom) are the vertical-axis points (r = 8)
+const R_ASYM = [8, 5,14,3,11,16,6,2,13,  8, 4,15,7,12,1,10,17,9];
+function rSym(i){ return R_ASYM[i % 9]; }        // enforce r[i] = r[i+9] -> 180° symmetry
+function radii(symFrac){
+  const out=[]; for(let i=0;i<18;i++){ out.push(R_ASYM[i]*(1-symFrac) + rSym(i)*symFrac); } return out;
+}
+function polyPoints(symFrac){
+  const r = radii(symFrac), pts=[];
+  for(let i=0;i<18;i++){ const a=(90 + i*20)*Math.PI/180; pts.push([r[i]*Math.cos(a), -r[i]*Math.sin(a)]); }
+  return pts;
+}
+function drawPoly(symFrac, rotDeg){
+  const pts = polyPoints(symFrac), a = rotDeg*Math.PI/180, co=Math.cos(a), sn=Math.sin(a);
   ctx.beginPath();
-  ctx.moveTo(...verts[0]);
-  for(let i=1;i<verts.length;i++) ctx.lineTo(...verts[i]);
+  pts.forEach((p,i)=>{
+    const x = CX + (p[0]*co - p[1]*sn)*SCALE, y = CY + (p[0]*sn + p[1]*co)*SCALE;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
   ctx.closePath();
-  ctx.fillStyle='rgba(180,200,255,0.15)';
-  ctx.fill();
-  ctx.strokeStyle='#a0b8ff';
-  ctx.lineWidth=2;
-  ctx.stroke();
+  ctx.fillStyle = 'rgba(150,190,150,0.10)'; ctx.fill();
+  ctx.strokeStyle = '#9fe0a0'; ctx.lineWidth = 2; ctx.lineJoin='round'; ctx.stroke();
 }
 
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
-  const disparity=+document.getElementById('rot').value;
-  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
-  ctx.fillStyle='#111'; ctx.fillRect(0,0,c.width,c.height);
-  if(phase==='f1') drawPolygon(0);
-  else if(phase==='f2') drawPolygon(disparity);
-  requestAnimationFrame(tick);
-}
+const st = { sym:0, ang:90, dir:1, soa:1000, soa1:null, soa2:null };
 
-document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
-document.getElementById('rot').addEventListener('input',e=>{document.getElementById('rotLbl').textContent=e.target.value;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+// timeline: view A (0°) [0,SOA), view B (V°) [SOA,2SOA) ; no ISI
+let clock = 0, lastTs = 0;
+function drawFrame(){
+  ctx.fillStyle = '#050505'; ctx.fillRect(0,0,W,H);
+  const cycle = 2*st.soa;
+  const showB = (clock % cycle) >= st.soa;
+  drawPoly(st.sym/100, showB ? st.dir*st.ang : 0);
+  document.getElementById('soaVal').textContent = Math.round(st.soa);
+}
+function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ---- staircase (10% steps), hysteresis ----
+function clampSOA(){ st.soa = Math.max(60, Math.min(1500, st.soa)); }
+document.getElementById('down').addEventListener('click', ()=>{ st.soa*=0.9; clampSOA(); });
+document.getElementById('up').addEventListener('click',   ()=>{ st.soa/=0.9; clampSOA(); });
+function showThresh(){
+  const f = x => x==null ? '—' : Math.round(x)+' ms';
+  const crit = (st.soa1!=null && st.soa2!=null) ? Math.round((st.soa1+st.soa2)/2)+' ms' : '—';
+  document.getElementById('threshLbl').textContent = f(st.soa1)+' / '+f(st.soa2)+' / '+crit;
+  document.getElementById('hystLbl').textContent =
+    (st.soa1!=null && st.soa2!=null) ? Math.round(st.soa2-st.soa1)+' ms' : '—';
+}
+document.getElementById('mark1').addEventListener('click', ()=>{ st.soa1=st.soa; showThresh(); });
+document.getElementById('mark2').addEventListener('click', ()=>{ st.soa2=st.soa; showThresh(); });
+
+// ---- logging ----
+const log=[];
+document.getElementById('record').addEventListener('click', ()=>{
+  const crit = (st.soa1!=null && st.soa2!=null) ? Math.round((st.soa1+st.soa2)/2) : '';
+  log.push({ symmetryPct:st.sym, angleDeg:st.ang, direction: st.dir>0?'CW':'CCW',
+             soa1: st.soa1!=null?Math.round(st.soa1):'', soa2: st.soa2!=null?Math.round(st.soa2):'', criticalSOA:crit });
+  document.getElementById('nLog').textContent = log.length;
+  st.soa1=st.soa2=null; showThresh();
+});
+document.getElementById('export').addEventListener('click', ()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='farrell_shepard_1981.csv'; a.click();
+});
+
+// ---- experimenter controls ----
+function seg(id, fn){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function note(){
+  const el = document.getElementById('noteLbl');
+  if (st.sym>=75 && st.ang>=120) el.textContent = 'Near-symmetric + large angle: expect early breakdown (competing shorter rotation).';
+  else if (st.sym===100 && st.ang===180) el.textContent = '100% symmetric at 180°: supplementary angle = 0° → no motion.';
+  else el.textContent = '';
+}
+seg('sym', v=>{ st.sym=+v; note(); });
+seg('ang', v=>{ st.ang=+v; note(); });
+seg('dir', v=>st.dir=+v);
+showThresh();
 </script>
 </body>
 </html>

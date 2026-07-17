@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foster &amp; Gravano (1982) — Overshoot of curvature in apparent motion</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; }
+
+  .participant { margin-top:12px; width:780px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .prow { margin-top:10px; display:flex; gap:20px; align-items:flex-end; justify-content:center; flex-wrap:wrap; font-size:12px; color:#9a9a9a; }
+  .knob { display:flex; flex-direction:column; gap:5px; align-items:center; }
+  .knob input[type=range] { width:280px; accent-color:#8a93b8; }
+  .knob .ends { display:flex; justify-content:space-between; width:280px; font-size:10px; color:#666; }
+  .rate { display:flex; gap:6px; }
+
+  .panel { margin-top:20px; width:780px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  input[type=range] { accent-color:#8a93b8; }
+  .ctrl input[type=range] { width:150px; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  button:disabled { opacity:.35; cursor:default; }
+  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .meta { margin-top:20px; width:780px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Foster &amp; Gravano (1982) — Overshoot of curvature in visual apparent motion</h1>
+  <div class="sub">A curved line and a straight line are flashed in sequence on the left; the observer dials the continuously-present
+    line on the right to match the <i>perceived</i> curvature of the left target line, then rates the motion.</div>
+
+  <canvas id="c" width="820" height="470"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Watch the left-side sequence. On the <b>right</b>, turn the control until that line looks <b>identical to the lower
+      left-side line</b>. Then rate the apparent motion: <b>0</b> none · <b>1</b> some · <b>2</b> smooth (beta).
+    </div>
+    <div class="prow">
+      <div class="knob">
+        <span id="knobLbl">Match curvature (rotary control)</span>
+        <input type="range" id="match" min="-6" max="6" step="0.05" value="0">
+        <div class="ends"><span id="endL">∪ curved down</span><span>straight</span><span id="endR">curved up ∩</span></div>
+      </div>
+      <div class="ctrl">Goodness
+        <div class="rate" id="rate">
+          <button data-g="0">0</button><button data-g="1">1</button><button data-g="2">2</button>
+        </div>
+      </div>
+      <div class="ctrl">&nbsp;<button id="spoil">Spoil / reset</button></div>
+      <div class="ctrl">&nbsp;<button id="export">Export CSV</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Experiment
+        <div class="seg" id="exp">
+          <button data-v="1" class="on">1 · curvature vs SOA</button>
+          <button data-v="2">2 · motion vs contrast</button>
+          <button data-v="3">3 · position overshoot</button>
+        </div>
+      </div>
+      <div class="ctrl">SOA: <span class="v" id="soaLbl">50</span> ms <span style="color:#666">(+ = curved first)</span>
+        <input type="range" id="soa" min="-200" max="250" step="10" value="50"></div>
+      <div class="ctrl">Inducing curve α: <span class="v" id="alphaLbl">45</span>°
+        <input type="range" id="alpha" min="0" max="70" step="1" value="45"></div>
+      <div class="ctrl">Vertical separation: <span class="v" id="sepLbl">0.40</span>°
+        <input type="range" id="sep" min="0.4" max="0.8" step="0.02" value="0.4"></div>
+      <div class="ctrl">Stimulus duration: <span class="v" id="durLbl">50</span> ms
+        <input type="range" id="dur" min="20" max="200" step="10" value="50"></div>
+      <div class="ctrl">Inter-sequence gap: <span class="v" id="gapLbl">1200</span> ms
+        <input type="range" id="gap" min="300" max="2000" step="100" value="1200"></div>
+      <div class="ctrl" id="topWrap">Exp 2: tangent top line
+        <div class="seg" id="top"><button data-v="on" class="on">present</button><button data-v="off">absent</button></div>
+      </div>
+      <div class="ctrl">Fixation crosses (control)
+        <div class="seg" id="fix"><button data-v="on">show</button><button data-v="off" class="on">hide</button></div>
+      </div>
+    </div>
+
+    <div class="readouts">
+      <div>Match setting: <b id="matchLbl">0.00° (straight)</b></div>
+      <div>Inducing sagitta: <b id="sagLbl">0.00°</b></div>
+      <div>Motion phase: <b id="phaseLbl">—</b></div>
+      <div>Trials logged: <b id="nLog">0</b></div>
+      <div style="color:#555">Ref: peak overshoot ≈2° at +50 ms; ≈0 at negative SOA</div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of the stimulus/apparatus in Foster, D. H. &amp; Gravano, S. (1982), <i>Perception &amp; Psychophysics</i>,
+    31(5), 411–420. X–Y oscilloscope (P31), binocular viewing at 1.7 m through a view tunnel, uniform white background; lines 2.0°
+    wide, flashed 50 ms. <b>Left</b> = sequentially flashed stimuli; <b>right</b> = a continuously-present line whose curvature (Exp 1–2)
+    or vertical position (Exp 3) the observer adjusts with a rotary control to match the perceived target. Positive SOA = curved line
+    precedes straight line. Curvature is the tangent–chord angle α (sagitta = (L/2)·tan(α/2)); inducing α = 45°. Exp 2 adds a straight
+    line tangential to the curved line, flashed in synchrony with the lower straight line, to suppress the curved→lower motion. Exp 3
+    uses two 0.125° segments (upper first, SOA 50 ms), separation 0.4–0.8°, matching apparent vertical position. The <b>overshoot itself
+    is the percept</b> and is deliberately <b>not drawn</b> on the left — only the real flashes appear; the right adjustable line is the
+    observer's report. Presentation auto-loops for viewing (the paper showed 3 reps at 2 s, subject-triggered).
+  </div>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const PX = 140;                 // px per degree
+const LX = 235, RX = 600;       // left (flashed) and right (adjustable) region centres
+const LINE = '#f0f0f0';
+
+const st = {
+  exp:1, soa:50, alpha:45, sep:0.4, dur:50, gap:1200,
+  top:true, fix:false,
+  match:0,                      // matcher value: deg (Exp1/2) or min-arc downward (Exp3)
+  good:null
+};
+
+// ---- circular-arc polyline: tangent-chord angle alphaDeg, bulge +1 = up (∩), -1 = down (∪) ----
+function arcPts(midX, midY, Lpx, alphaDeg, bulge) {
+  const half = Lpx/2;
+  const a = Math.abs(alphaDeg) * Math.PI/180;
+  if (a < 0.0025) return [[midX-half, midY],[midX+half, midY]];
+  const R = half / Math.sin(a);
+  const cOff = half / Math.tan(a);
+  const cx = midX, cy = midY + bulge*cOff;   // circle centre (canvas y down)
+  const pts = [];
+  const N = 40;
+  for (let i=0;i<=N;i++){
+    const th = -a + (2*a)*(i/N);
+    pts.push([cx + R*Math.sin(th), cy - bulge*R*Math.cos(th)]);
+  }
+  return pts;
+}
+function stroke(pts, wdt) {
+  ctx.strokeStyle = LINE; ctx.lineWidth = wdt||2; ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.beginPath();
+  pts.forEach((p,i)=> i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+  ctx.stroke();
+}
+function seg(midX, midY, Lpx) { stroke([[midX-Lpx/2,midY],[midX+Lpx/2,midY]], 2); }
+function cross(x,y){ ctx.strokeStyle='#5a5a66'; ctx.lineWidth=1; ctx.beginPath();
+  ctx.moveTo(x-5,y); ctx.lineTo(x+5,y); ctx.moveTo(x,y-5); ctx.lineTo(x,y+5); ctx.stroke(); }
+
+// ---- layout (canvas y) ----
+function layout() {
+  const Lpx = 2.0*PX;
+  const sepPx = st.sep*PX;
+  const curvedMidY = 250;                    // chord of the curved (inducing) line
+  const lowerY = curvedMidY + sepPx;         // lower straight line (the target)
+  const sag = (Lpx/2)*Math.tan((st.alpha*Math.PI/180)/2);
+  const apexY = curvedMidY - sag;            // top of the ∩ arch
+  return { Lpx, sepPx, curvedMidY, lowerY, sag, apexY };
+}
+
+// ---- presentation timeline: returns set of visible left components ----
+function schedule() {
+  // component onsets (ms) within one sequence
+  const d = st.dur, soa = st.soa;
+  if (st.exp === 3) {
+    // two segments, upper first then lower, |soa| apart
+    const s = Math.abs(soa);
+    return { comps:{ upper:[0,d], lower:[s,s+d] }, len: s+d };
+  }
+  // Exp 1 & 2: curved vs lower straight (+ synchronous upper straight in Exp2)
+  let cOn, sOn;
+  if (soa >= 0) { cOn = 0; sOn = soa; } else { sOn = 0; cOn = -soa; }
+  const comps = { curved:[cOn,cOn+d], lower:[sOn,sOn+d] };
+  if (st.exp === 2 && st.top) comps.topLine = [sOn, sOn+d];   // synchronous with lower
+  const len = Math.max(cOn+d, sOn+d);
+  return { comps, len };
+}
+
+let clock = 0, lastTs = 0;
+function drawFrame() {
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+  const L = layout();
+  const sc = schedule();
+  const cycle = sc.len + st.gap;
+  const t = clock % cycle;
+  const vis = k => sc.comps[k] && t >= sc.comps[k][0] && t < sc.comps[k][1];
+  let phase = 'gap';
+
+  // ---- LEFT: real flashed stimuli only (never the overshoot percept) ----
+  if (st.exp === 3) {
+    const segW = 0.125*PX;
+    const upperYpos = L.lowerY - st.sep*PX;
+    if (vis('upper')) { seg(LX, upperYpos, segW); phase='S1 (upper)'; }
+    if (vis('lower')) { seg(LX, L.lowerY,  segW); phase='S2 (lower)'; }
+  } else {
+    if (vis('curved'))  { stroke(arcPts(LX, L.curvedMidY, L.Lpx, st.alpha, +1)); phase='curved'; }
+    if (vis('lower'))   { seg(LX, L.lowerY, L.Lpx); phase='straight'; }
+    if (vis('topLine')) { seg(LX, L.apexY, L.Lpx); }
+  }
+
+  // ---- RIGHT: continuously-present adjustable matcher (the observer's report) ----
+  if (st.exp === 3) {
+    const segW = 0.125*PX;
+    seg(RX, L.lowerY + (st.match/60)*PX, segW);   // match in min arc, downward positive
+  } else {
+    const bulge = st.match >= 0 ? +1 : -1;         // + = curved-up ∩, - = curved-down ∪
+    stroke(arcPts(RX, L.lowerY, L.Lpx, Math.abs(st.match), bulge));
+  }
+
+  // fixation crosses (control): 20' below lower-left line and right line
+  if (st.fix) {
+    const dy = (20/60)*PX;
+    cross(LX, L.lowerY + dy);
+    cross(RX, L.lowerY + dy);
+  }
+  document.getElementById('phaseLbl').textContent = phase;
+}
+
+function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ---- readouts ----
+function refreshReadouts() {
+  const L = layout();
+  document.getElementById('sagLbl').textContent = (L.sag/PX).toFixed(2) + '°';
+  if (st.exp === 3) {
+    document.getElementById('matchLbl').textContent = st.match.toFixed(2) + "' arc (down +)";
+  } else {
+    const dir = Math.abs(st.match) < 0.05 ? ' (straight)' : (st.match>0 ? ' (curved up ∩)' : ' (curved down ∪)');
+    document.getElementById('matchLbl').textContent = Math.abs(st.match).toFixed(2) + '°' + dir;
+  }
+}
+
+// ---- participant controls ----
+const matchEl = document.getElementById('match');
+matchEl.addEventListener('input', e => { st.match = +e.target.value; refreshReadouts(); });
+document.getElementById('spoil').addEventListener('click', () => {
+  st.match = (Math.random()-0.5) * (st.exp===3 ? 6 : 3);   // spoil to a random offset
+  matchEl.value = st.match; st.good=null; setRate(null); refreshReadouts();
+});
+function setRate(g){ document.querySelectorAll('#rate button').forEach(b=>b.classList.toggle('on', +b.dataset.g===g)); }
+const log=[];
+document.querySelectorAll('#rate button').forEach(b=>b.addEventListener('click', ()=>{
+  st.good = +b.dataset.g; setRate(st.good);
+  const L = layout();
+  log.push({ exp:st.exp, soaMs:st.soa, sepDeg:st.sep, induceAlpha:st.alpha,
+             match: +st.match.toFixed(2),
+             matchUnit: st.exp===3 ? 'min_arc' : 'deg_alpha',
+             goodness: st.good });
+  document.getElementById('nLog').textContent = log.length;
+}));
+document.getElementById('export').addEventListener('click', ()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='foster_gravano_1982.csv'; a.click();
+});
+
+// ---- experimenter controls ----
+function segCtl(id, fn){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function rng(id, lblId, fmt, fn){
+  const el=document.getElementById(id), lbl=document.getElementById(lblId);
+  el.addEventListener('input',()=>{ const v=+el.value; if(lbl) lbl.textContent=fmt(v); fn(v); });
+}
+function applyExpUI(){
+  const e = st.exp;
+  document.getElementById('knobLbl').textContent = e===3 ? 'Match vertical position (rotary control)' : 'Match curvature (rotary control)';
+  document.getElementById('endL').textContent = e===3 ? '↑ higher' : '∪ curved down';
+  document.getElementById('endR').textContent = e===3 ? 'lower ↓' : 'curved up ∩';
+  if (e===3){ matchEl.min=-8; matchEl.max=8; matchEl.step=0.1; } else { matchEl.min=-6; matchEl.max=6; matchEl.step=0.05; }
+  st.match = 0; matchEl.value = 0;
+  document.getElementById('topWrap').style.opacity = e===2 ? 1 : .35;
+  // Exp 3 fixes SOA at 50 and uses upper-first; keep slider but hint
+  refreshReadouts();
+}
+segCtl('exp', v=>{ st.exp=+v; if(st.exp===3){ st.soa=50; document.getElementById('soa').value=50; document.getElementById('soaLbl').textContent=50; } applyExpUI(); });
+segCtl('top', v=>st.top = v==='on');
+segCtl('fix', v=>st.fix = v==='on');
+rng('soa','soaLbl', v=>v, v=>st.soa=v);
+rng('alpha','alphaLbl', v=>v, v=>{ st.alpha=v; refreshReadouts(); });
+rng('sep','sepLbl', v=>v.toFixed(2), v=>st.sep=v);
+rng('dur','durLbl', v=>v, v=>st.dur=v);
+rng('gap','gapLbl', v=>v, v=>st.gap=v);
+
+applyExpUI();
+refreshReadouts();
+</script>
+</body>
+</html>

@@ -4,757 +4,1562 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Apparent Motion Experiment Library</title>
+
+  <!-- Google Fonts for Editorial Elegance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── BASE & TYPOGRAPHY ── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
-      --bg:        #0d0d1a;
-      --card:      #1a1a2e;
-      --accent:    #4cc9f0;
-      --accent2:   #f72585;
-      --text:      #e0e0f0;
-      --muted:     #7070a0;
-      --border:    #2a2a4a;
-      --missing-bg:#131325;
-      --missing-border:#2a2a3a;
-
-      /* paradigm badge colors */
-      --p-ternus:         #7b2d8b;
-      --p-quartet:        #1a6b8a;
-      --p-twoflash:       #2d6b3a;
-      --p-3drotation:     #7a4d1a;
-      --p-2drotation:     #6b2d2d;
-      --p-biomotion:      #1a4d6b;
-      --p-feature:        #4d4d1a;
-      --p-fmri:           #3a1a6b;
-      --p-historical:     #3a3a3a;
-      --p-competing:      #1a5a3a;
-      --p-illusory:       #5a3a1a;
-      --p-trace:          #4a1a4a;
-      --p-tactile:        #1a4a4a;
-      --p-spatiotemporal: #2d4a1a;
-      --p-neural:         #4a2d1a;
-      --p-moving:         #2d1a4a;
-      --p-translation:    #1a3a4a;
+      --bg: #f5efe3;            /* Warm organic linen paper background */
+      --text: #2c1e15;          /* Deep espresso charcoal */
+      --text-muted: #736253;    /* Soft clay silt-brown */
+      --border: #dcd0bf;        /* Delicate sand/twig divider */
+      --accent: #ca6547;        /* Warm clay rust-terracotta */
+      --accent-light: #faf6f0;  /* Pure creamy white linen wash */
+      --terracotta: #40705a;    /* Sage forest green */
+      --card-bg: transparent;   /* Transparent background for grid items */
+      --missing-bg: #faf7f0;    /* Soft ivory shadow for inactive/missing items */
+      --missing-border: #e6decb;
     }
 
     body {
-      background: var(--bg);
+      background-color: var(--bg);
       color: var(--text);
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      line-height: 1.5;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── HEADER ── */
+    /* ── CONTAINER ── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── HEADER & HERO ── */
     header {
-      background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 50%, #0d1a2e 100%);
-      border-bottom: 2px solid var(--accent);
-      padding: 3rem 2rem 2.5rem;
-      text-align: center;
+      padding: 5rem 0 4rem;
+      border-bottom: 1px solid var(--border);
+      background: radial-gradient(circle at 50% 20%, #fcfaf7 0%, #f5efe3 100%);
       position: relative;
       overflow: hidden;
     }
+
     header::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(76,201,240,0.08) 0%, transparent 70%);
+      background: radial-gradient(circle at 80% 20%, rgba(202, 101, 71, 0.04) 0%, transparent 60%);
       pointer-events: none;
     }
-    header h1 {
-      font-size: clamp(1.6rem, 4vw, 2.8rem);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: #fff;
-      position: relative;
-    }
-    header h1 span {
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    header p.subtitle {
-      margin-top: 0.75rem;
-      color: var(--muted);
-      font-size: 1.05rem;
-      position: relative;
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 3.5rem;
+      align-items: center;
     }
 
-    /* ── MAIN LAYOUT ── */
-    main {
-      max-width: 1300px;
-      margin: 0 auto;
-      padding: 2.5rem 1.5rem 4rem;
+    @media (max-width: 950px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
     }
 
-    /* ── SECTION HEADERS ── */
-    .section-header {
-      margin-bottom: 0.5rem;
-    }
-    .section-header h2 {
-      font-size: 1.6rem;
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
       font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(202, 101, 71, 0.08);
+      padding: 0.35rem 0.8rem;
+      border-radius: 9999px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(202, 101, 71, 0.15);
+    }
+
+    .hero-title {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-title em {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-style: italic;
       color: var(--accent);
     }
-    .section-header p {
-      color: var(--muted);
-      font-size: 0.92rem;
-      margin-top: 0.25rem;
-    }
-    section + section {
-      margin-top: 4rem;
+
+    .hero-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin-bottom: 2rem;
     }
 
-    /* ── SEARCH BAR ── */
-    .search-wrap {
-      margin: 1.2rem 0 1.8rem;
-    }
-    .search-wrap input {
-      width: 100%;
-      max-width: 480px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.6rem 1rem;
-      color: var(--text);
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .search-wrap input:focus {
-      border-color: var(--accent);
-    }
-    .search-wrap input::placeholder { color: var(--muted); }
-
-    /* ── GRID ── */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.25rem;
-    }
-    @media (max-width: 1024px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 640px)  { .card-grid { grid-template-columns: 1fr; } }
-
-    /* ── CARD ── */
-    .card {
-      background: var(--card);
+    /* ── GESTALT PLAYGROUND (HERO SIMULATOR) ── */
+    .gestalt-sandbox {
+      background: #faf6f0;
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 1.4rem 1.4rem 1.2rem;
+      padding: 1.6rem;
+      box-shadow: 0 4px 20px rgba(44, 30, 21, 0.05);
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-      transition: border-color 0.2s, transform 0.15s;
+      gap: 1.2rem;
+      position: relative;
     }
-    .card:hover:not(.missing) {
+
+    .sandbox-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.8rem;
+    }
+
+    .sandbox-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+
+    .sandbox-controls {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .sandbox-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sandbox-btn:hover {
       border-color: var(--accent);
-      transform: translateY(-2px);
+      color: var(--text);
     }
+
+    .sandbox-btn.active {
+      background: rgba(202, 101, 71, 0.08);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .sandbox-viewport {
+      height: 155px;
+      background: var(--accent-light); /* Creamy linen wash background */
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    /* Interactive Dot Styles */
+    .sandbox-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      position: absolute;
+      transition: opacity 0.1s ease;
+    }
+
+    .dot-accent1 {
+      background-color: var(--accent);
+      box-shadow: 0 3px 8px rgba(202, 101, 71, 0.25);
+    }
+
+    .dot-accent2 {
+      background-color: var(--accent);
+      box-shadow: 0 3px 8px rgba(202, 101, 71, 0.25);
+    }
+
+    /* Kinematic Demonstration Shape */
+    .sandbox-bar {
+      width: 80px;
+      height: 14px;
+      border-radius: 7px;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 3px 8px rgba(202, 101, 71, 0.25);
+    }
+
+    .sandbox-axis {
+      position: absolute;
+      width: 130px;
+      height: 1px;
+      border-top: 1.5px dashed rgba(255, 255, 255, 0.3);
+      pointer-events: none;
+    }
+
+    .sandbox-pivot {
+      width: 6px;
+      height: 6px;
+      background: #ffffff;
+      border-radius: 50%;
+      z-index: 2;
+    }
+
+    .sandbox-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .sandbox-slider-title {
+      font-weight: 600;
+      min-width: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .sandbox-slider {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .sandbox-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 4px rgba(44, 30, 21, 0.15);
+      transition: transform 0.1s;
+    }
+
+    .sandbox-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* ── FILTER & BROWSE SECTION ── */
+    .portal {
+      padding: 4rem 0 6rem;
+    }
+
+    .portal-header {
+      margin-bottom: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .portal-search-row {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .portal-search-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .search-input-wrap {
+      position: relative;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      background: #faf6f0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.8rem 1.2rem 0.8rem 2.8rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(202, 101, 71, 0.08);
+    }
+
+    .search-input-wrap::before {
+      content: "🔍";
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.95rem;
+      opacity: 0.5;
+    }
+
+    /* Type Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      background: #e6decb;
+      border-radius: 9999px;
+      padding: 0.3rem;
+      width: fit-content;
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 500px) {
+      .filter-tabs {
+        width: 100%;
+      }
+    }
+
+    .filter-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.5rem 1.2rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex: 1;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .filter-tab.active {
+      background: #faf6f0;
+      color: var(--accent);
+      box-shadow: 0 2px 6px rgba(44, 30, 21, 0.05);
+    }
+
+    /* Paradigm Filter Ribbon */
+    .paradigm-bar-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+
+    .paradigm-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .paradigm-pill {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: #faf6f0;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .paradigm-pill:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(202, 101, 71, 0.04);
+    }
+
+    .paradigm-pill.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    /* ── CARD GRID ── */
+    .section-title {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.8rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      column-gap: 2.5rem;
+      row-gap: 0.5rem;
+      margin-bottom: 3.5rem;
+    }
+
+    /* ── CARD STYLE (CLEAN LINES ONLY, NO BOXES) ── */
+    .card {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      padding: 1.8rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      transition: background-color 0.2s ease;
+      position: relative;
+    }
+
+    .card:hover:not(.missing) {
+      background-color: rgba(202, 101, 71, 0.03); /* Extremely subtle warm tone highlight on hover */
+    }
+
     .card.missing {
       background: var(--missing-bg);
-      border-color: var(--missing-border);
-      opacity: 0.6;
+      border-bottom: 1px dashed var(--missing-border);
+      opacity: 0.7;
     }
-    .card.hidden { display: none; }
+
+    .card.hidden {
+      display: none !important;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
 
     .card-authors {
       font-size: 1.05rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
       line-height: 1.3;
     }
+
     .card-description {
-      font-size: 0.875rem;
-      color: #b0b0cc;
+      font-size: 0.88rem;
+      color: var(--text-muted);
       flex: 1;
-    }
-    .card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.2rem;
+      line-height: 1.5;
     }
 
-    /* ── PARADIGM BADGE ── */
+    /* Organic Translucent Badges with light-theme legibility */
     .badge {
       display: inline-block;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 600;
       letter-spacing: 0.03em;
       text-transform: uppercase;
-      padding: 0.2rem 0.55rem;
+      padding: 0.25rem 0.6rem;
       border-radius: 4px;
       white-space: nowrap;
-    }
-    .badge-missing-paper {
-      background: rgba(247,37,133,0.15);
-      color: var(--accent2);
-      border: 1px solid rgba(247,37,133,0.3);
-      font-size: 0.78rem;
-    }
-
-    /* ── paradigm badge palette ── */
-    .b-ternus         { background: rgba(123,45,139,0.35); color: #cc88e8; border: 1px solid rgba(123,45,139,0.5); }
-    .b-quartet        { background: rgba(26,107,138,0.35); color: #6ac9e8; border: 1px solid rgba(26,107,138,0.5); }
-    .b-twoflash       { background: rgba(45,107,58,0.35);  color: #7dd98a; border: 1px solid rgba(45,107,58,0.5); }
-    .b-3drotation     { background: rgba(122,77,26,0.35);  color: #e8c070; border: 1px solid rgba(122,77,26,0.5); }
-    .b-2drotation     { background: rgba(107,45,45,0.35);  color: #e88888; border: 1px solid rgba(107,45,45,0.5); }
-    .b-biomotion      { background: rgba(26,77,107,0.35);  color: #70afd8; border: 1px solid rgba(26,77,107,0.5); }
-    .b-feature        { background: rgba(77,77,26,0.35);   color: #d8d870; border: 1px solid rgba(77,77,26,0.5); }
-    .b-fmri           { background: rgba(58,26,107,0.35);  color: #aa88e8; border: 1px solid rgba(58,26,107,0.5); }
-    .b-historical     { background: rgba(58,58,58,0.35);   color: #aaaaaa; border: 1px solid rgba(58,58,58,0.5); }
-    .b-competing      { background: rgba(26,90,58,0.35);   color: #70d8a0; border: 1px solid rgba(26,90,58,0.5); }
-    .b-illusory       { background: rgba(90,58,26,0.35);   color: #d8b070; border: 1px solid rgba(90,58,26,0.5); }
-    .b-trace          { background: rgba(74,26,74,0.35);   color: #d888d8; border: 1px solid rgba(74,26,74,0.5); }
-    .b-tactile        { background: rgba(26,74,74,0.35);   color: #70d8d8; border: 1px solid rgba(26,74,74,0.5); }
-    .b-spatiotemporal { background: rgba(45,74,26,0.35);   color: #a8d870; border: 1px solid rgba(45,74,26,0.5); }
-    .b-neural         { background: rgba(74,45,26,0.35);   color: #d8a870; border: 1px solid rgba(74,45,26,0.5); }
-    .b-moving         { background: rgba(45,26,74,0.35);   color: #aa80e8; border: 1px solid rgba(45,26,74,0.5); }
-    .b-translation    { background: rgba(26,58,74,0.35);   color: #70b8d8; border: 1px solid rgba(26,58,74,0.5); }
-
-    /* ── OPEN BUTTON ── */
-    .btn-open {
-      display: inline-block;
-      padding: 0.4rem 0.9rem;
-      background: transparent;
-      border: 1.5px solid var(--accent);
-      border-radius: 6px;
+      background: rgba(202, 101, 71, 0.06);
       color: var(--accent);
+      border: 1px solid rgba(202, 101, 71, 0.15);
+    }
+
+    .b-ternus         { background: rgba(202, 101, 71, 0.08); color: #9c452c; border: 1px solid rgba(202, 101, 71, 0.2); }
+    .b-quartet        { background: rgba(64, 112, 90, 0.08); color: #27523c; border: 1px solid rgba(64, 112, 90, 0.2); }
+    .b-twoflash       { background: rgba(150, 95, 60, 0.08); color: #7a4624; border: 1px solid rgba(150, 95, 60, 0.2); }
+    .b-3drotation     { background: rgba(180, 80, 80, 0.08); color: #963535; border: 1px solid rgba(180, 80, 80, 0.2); }
+    .b-2drotation     { background: rgba(180, 80, 80, 0.08); color: #963535; border: 1px solid rgba(180, 80, 80, 0.2); }
+    .b-biomotion      { background: rgba(50, 120, 120, 0.08); color: #206666; border: 1px solid rgba(50, 120, 120, 0.2); }
+    .b-feature        { background: rgba(140, 110, 40, 0.08); color: #7d5e16; border: 1px solid rgba(140, 110, 40, 0.2); }
+    .b-fmri           { background: rgba(110, 80, 160, 0.08); color: #5b3e8a; border: 1px solid rgba(110, 80, 160, 0.2); }
+    .b-historical     { background: rgba(110, 100, 90, 0.08); color: #5c5247; border: 1px solid rgba(110, 100, 90, 0.2); }
+    .b-competing      { background: rgba(64, 112, 90, 0.08); color: #27523c; border: 1px solid rgba(64, 112, 90, 0.2); }
+    .b-illusory       { background: rgba(202, 101, 71, 0.08); color: #9c452c; border: 1px solid rgba(202, 101, 71, 0.2); }
+    .b-trace          { background: rgba(150, 70, 150, 0.08); color: #853085; border: 1px solid rgba(150, 70, 150, 0.2); }
+    .b-tactile        { background: rgba(40, 120, 150, 0.08); color: #1c6885; border: 1px solid rgba(40, 120, 150, 0.2); }
+    .b-spatiotemporal { background: rgba(100, 130, 40, 0.08); color: #53751a; border: 1px solid rgba(100, 130, 40, 0.2); }
+    .b-neural         { background: rgba(180, 80, 80, 0.08); color: #963535; border: 1px solid rgba(180, 80, 80, 0.2); }
+    .b-moving         { background: rgba(110, 80, 160, 0.08); color: #5b3e8a; border: 1px solid rgba(110, 80, 160, 0.2); }
+    .b-translation    { background: rgba(40, 110, 140, 0.08); color: #1e5a75; border: 1px solid rgba(40, 110, 140, 0.2); }
+
+    .badge-missing {
+      background: rgba(115, 98, 83, 0.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(115, 98, 83, 0.15);
+      font-size: 0.68rem;
+    }
+
+    /* Action Links */
+    .card-footer {
+      border-top: none;
+      padding-top: 0;
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .btn-open {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
       font-size: 0.85rem;
       font-weight: 600;
+      color: var(--accent);
       text-decoration: none;
-      transition: background 0.15s, color 0.15s;
-      white-space: nowrap;
+      transition: gap 0.2s, color 0.2s;
     }
+
     .btn-open:hover {
-      background: var(--accent);
-      color: #0d0d1a;
+      gap: 0.6rem;
+      color: var(--text);
     }
 
-    /* ── FOOTER ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 2.5rem 1.5rem;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.88rem;
-    }
-    footer a { color: var(--accent); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
-    .legend {
-      margin-top: 1.5rem;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.5rem 0.75rem;
-    }
-    .legend-title {
-      width: 100%;
+    .missing-label {
       font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      margin-bottom: 0.2rem;
+      font-style: italic;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
     }
-    footer p + p { margin-top: 0.4rem; }
 
-    /* no-results message */
+    /* ── NO RESULTS ── */
     .no-results {
-      color: var(--muted);
-      font-size: 0.92rem;
-      padding: 1.5rem 0;
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3.5rem 2rem;
+      background: #faf6f0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-muted);
       display: none;
     }
-    .no-results.visible { display: block; }
+
+    .no-results.visible {
+      display: block;
+    }
+
+    /* ── FOOTER & METADATA ── */
+    footer {
+      border-top: 1px solid var(--border);
+      background-color: #faf6f0;
+      padding: 4rem 0 5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 3rem;
+    }
+
+    @media (max-width: 768px) {
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+    }
+
+    .footer-brand h4 {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-brand p {
+      margin-bottom: 1rem;
+    }
+
+    .footer-brand a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-brand a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .legend-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .legend-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .legend-pills .badge {
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .legend-pills .badge:hover {
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Apparent Motion <span>Experiment Library</span></h1>
-  <p class="subtitle">Interactive visualisations of 22 classic experiments in visual apparent motion research</p>
-</header>
+  <!-- ── HERO SECTION ── -->
+  <header>
+    <div class="container hero-grid">
+      <div>
+        <span class="hero-badge">
+          <span>📚</span> Interactive Science Catalogue
+        </span>
+        <h1 class="hero-title">
+          Apparent Motion <br><em>Experiment Library</em>
+        </h1>
+        <p class="hero-desc">
+          A growing catalog of classic experimental paradigms in visual psychophysics, exploring how the brain interpolates paths, form, and transformation over space and time.
+        </p>
+      </div>
 
-<main>
+      <!-- Live Gestalt Sandbox Interaction -->
+      <div class="gestalt-sandbox" id="gestalt-sandbox">
+        <div class="sandbox-header">
+          <span class="sandbox-title" id="sandbox-title">Rotation <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-muted); font-family: sans-serif; display: block; margin-top: 0.1rem;">curved kinematic trajectory</span></span>
+          <div class="sandbox-controls">
+            <button class="sandbox-btn active" id="btn-kinematic" onclick="setSandboxMode('kinematic')">Rotation</button>
+            <button class="sandbox-btn" id="btn-quartet" onclick="setSandboxMode('quartet')">Quartet</button>
+            <button class="sandbox-btn" id="btn-ternus" onclick="setSandboxMode('ternus')">Ternus</button>
+          </div>
+        </div>
 
-  <!-- ══════════════════════════════════════════════
-       PARAMETRIC EXPERIMENTS
-  ══════════════════════════════════════════════ -->
-  <section id="sec-parametric">
-    <div class="section-header">
-      <h2>Parametric Experiments</h2>
-      <p>Studies that systematically vary a stimulus parameter (ISI, aspect ratio, SOA…) and measure a perceptual or neural response along a continuous scale.</p>
+        <div class="sandbox-viewport" id="sandbox-viewport">
+          <!-- Rendered dynamically by JS -->
+        </div>
+
+        <div class="sandbox-slider-wrap">
+          <span class="sandbox-slider-title" id="slider-title-text">Speed</span>
+          <input type="range" class="sandbox-slider" id="sandbox-speed" min="100" max="600" value="300" oninput="handleSliderChange(this.value)">
+          <span id="speed-label">300ms</span>
+        </div>
+      </div>
     </div>
+  </header>
 
-    <div class="search-wrap">
-      <input type="text" id="search-parametric" placeholder="Filter by author, year or paradigm…" aria-label="Search parametric experiments" />
+  <!-- ── MAIN CATALOGUE PORTAL ── -->
+  <main class="portal">
+    <div class="container">
+
+      <!-- Unified Filters & Search -->
+      <div class="portal-header">
+        <div class="portal-search-row">
+          <div class="search-input-wrap">
+            <input type="text" id="unified-search" placeholder="Search by author, year, paradigm, or keywords..." aria-label="Search experiments">
+          </div>
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all" onclick="setTabFilter('all', this)">All Paradigms</button>
+            <button class="filter-tab" data-filter="parametric" onclick="setTabFilter('parametric', this)">Parametric</button>
+            <button class="filter-tab" data-filter="nonparametric" onclick="setTabFilter('nonparametric', this)">Non-Parametric</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="paradigm-bar-title">Quick Paradigm Filter</div>
+          <div class="paradigm-filters" id="paradigm-filters-container">
+            <button class="paradigm-pill active" onclick="setParadigmFilter('all', this)">All</button>
+            <button class="paradigm-pill" onclick="setParadigmFilter('Ternus', this)">Ternus</button>
+            <button class="paradigm-pill" onclick="setParadigmFilter('Motion quartet', this)">Quartet</button>
+            <button class="paradigm-pill" onclick="setParadigmFilter('Biological motion', this)">Biological</button>
+            <button class="paradigm-pill" onclick="setParadigmFilter('Rotation', this)">Rotation</button>
+            <button class="paradigm-pill" onclick="setParadigmFilter('Two-flash', this)">Two-Flash</button>
+            <button class="paradigm-pill" onclick="setParadigmFilter('Kinematics', this)">Kinematics</button>
+            <button class="paradigm-pill" onclick="setParadigmFilter('Inertia', this)">Inertia</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid Sections (Managed Unifiedly) -->
+      <div id="parametric-section">
+        <h2 class="section-title">Parametric Studies</h2>
+        <div class="card-grid" id="grid-parametric">
+
+          <!-- 1 -->
+          <div class="card" data-type="parametric" data-paradigm="Competing paths AM" data-search="burt sperling 1981 competing paths am">
+            <div class="card-meta">
+              <span class="badge b-competing">Competing paths AM</span>
+            </div>
+            <div class="card-authors">Burt &amp; Sperling (1981)</div>
+            <p class="card-description">Log-linear trade-off between time and distance determines which of two competing motion paths wins.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Burt_Sperling_1981.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 2 -->
+          <div class="card" data-type="parametric" data-paradigm="Ternus" data-search="petersik pantle 1979 ternus 3-dot">
+            <div class="card-meta">
+              <span class="badge b-ternus">Ternus 3-dot</span>
+            </div>
+            <div class="card-authors">Petersik &amp; Pantle (1979)</div>
+            <p class="card-description">ISI controls whether 3 dots appear to shift as a group or the outer element jumps.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Petersik_Pantle_1979.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 3 -->
+          <div class="card" data-type="parametric" data-paradigm="Motion quartet" data-search="hock kelso schöner schoner 1993 motion quartet">
+            <div class="card-meta">
+              <span class="badge b-quartet">Motion quartet</span>
+            </div>
+            <div class="card-authors">Hock, Kelso &amp; Schöner (1993)</div>
+            <p class="card-description">Aspect ratio of 4-dot rectangle determines horizontal vs vertical bistable motion; shows hysteresis.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Hock_Kelso_Schoner_1993.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 4 -->
+          <div class="card" data-type="parametric" data-paradigm="Motion quartet" data-search="gilroy hock ploeger 2001 motion quartet">
+            <div class="card-meta">
+              <span class="badge b-quartet">Motion quartet</span>
+            </div>
+            <div class="card-authors">Gilroy, Hock &amp; Ploeger (2001)</div>
+            <p class="card-description">Luminance contrast of a motion path raises its detector activation, biasing the perceived direction.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Gilroy_Hock_Ploeger_2001.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 5 -->
+          <div class="card" data-type="parametric" data-paradigm="Ternus" data-search="kramer rudd 1999 ternus 3-dot">
+            <div class="card-meta">
+              <span class="badge b-ternus">Ternus 3-dot</span>
+            </div>
+            <div class="card-authors">Kramer &amp; Rudd (1999)</div>
+            <p class="card-description">Form disparity (unequal line heights) suppresses group motion even at long ISI.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Kramer_Rudd_1999.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 6 -->
+          <div class="card" data-type="parametric" data-paradigm="Ternus" data-search="stepper 2020 ternus 2-dot">
+            <div class="card-meta">
+              <span class="badge b-ternus">Ternus 2-dot</span>
+            </div>
+            <div class="card-authors">Stepper et al. (2020)</div>
+            <p class="card-description">Illusory (not retinal) size from depth context determines correspondence in Ternus display.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Stepper_2020.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 7 -->
+          <div class="card" data-type="parametric" data-paradigm="Ternus" data-search="hein cavanagh 2012 ternus 3-dot">
+            <div class="card-meta">
+              <span class="badge b-ternus">Ternus 3-dot</span>
+            </div>
+            <div class="card-authors">Hein &amp; Cavanagh (2012)</div>
+            <p class="card-description">Motion correspondence is resolved in spatiotopic (world-centred) coordinates.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Hein_Cavanagh_2012.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 8 -->
+          <div class="card" data-type="parametric" data-paradigm="Ternus" data-search="wang 2015 ternus 3-dot">
+            <div class="card-meta">
+              <span class="badge b-ternus">Ternus 3-dot</span>
+            </div>
+            <div class="card-authors">Wang et al. (2015)</div>
+            <p class="card-description">Auditory temporal gaps concurrent with visual ISI modulate apparent motion path selection.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Wang_2015.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 9 -->
+          <div class="card" data-type="parametric" data-paradigm="Illusory contour AM" data-search="madelain krauzlis 2003 illusory contour am">
+            <div class="card-meta">
+              <span class="badge b-illusory">Illusory contour AM</span>
+            </div>
+            <div class="card-authors">Madelain &amp; Krauzlis (2003)</div>
+            <p class="card-description">Smooth pursuit eye movements track the empty path of Kanizsa-figure apparent motion.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Madelain_Krauzlis_2003.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 10 -->
+          <div class="card" data-type="parametric" data-paradigm="AM trace masking" data-search="yantis nakama 1998 am trace masking">
+            <div class="card-meta">
+              <span class="badge b-trace">AM trace masking</span>
+            </div>
+            <div class="card-authors">Yantis &amp; Nakama (1998)</div>
+            <p class="card-description">The illusory moving token impairs detection of probes placed on its path.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Yantis_Nakama_1998.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 11 -->
+          <div class="card" data-type="parametric" data-paradigm="Ternus" data-search="hollingworth hein 2021 ternus 3-dot">
+            <div class="card-meta">
+              <span class="badge b-ternus">Ternus 3-dot</span>
+            </div>
+            <div class="card-authors">Hollingworth &amp; Hein (2021)</div>
+            <p class="card-description">Visual working memory content biases correspondence: matching the unique element increases element motion.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Hollingworth_Hein_2021.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 12 -->
+          <div class="card" data-type="parametric" data-paradigm="Tactile quartet" data-search="haladjian 2019 tactile quartet">
+            <div class="card-meta">
+              <span class="badge b-tactile">Tactile quartet</span>
+            </div>
+            <div class="card-authors">Haladjian et al. (2019)</div>
+            <p class="card-description">Tactile apparent motion follows same spatiotemporal proximity rules as visual motion.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Haladjian_2019.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 13 -->
+          <div class="card" data-type="parametric" data-paradigm="Two-flash" data-search="kolers von grünau grunau 1976 two-flash am">
+            <div class="card-meta">
+              <span class="badge b-twoflash">Two-flash AM</span>
+            </div>
+            <div class="card-authors">Kolers &amp; von Grünau (1976)</div>
+            <p class="card-description">Color changes abruptly at the midpoint of apparent motion; shape morphs gradually.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Kolers_vonGrunau_1976.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 14 -->
+          <div class="card" data-type="parametric" data-paradigm="Two-flash" data-search="muckli 2005 fmri two-flash am">
+            <div class="card-meta">
+              <span class="badge b-fmri">fMRI two-flash AM</span>
+            </div>
+            <div class="card-authors">Muckli et al. (2005)</div>
+            <p class="card-description">Primary visual cortex (V1) activates retinotopically along the empty AM path.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Muckli_2005.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 15 -->
+          <div class="card" data-type="parametric" data-paradigm="Spatiotemporal grating" data-search="adelson bergen 1985 spatiotemporal grating">
+            <div class="card-meta">
+              <span class="badge b-spatiotemporal">Spatiotemporal grating</span>
+            </div>
+            <div class="card-authors">Adelson &amp; Bergen (1985)</div>
+            <p class="card-description">Motion detected by oriented spatiotemporal energy filters; unifies real and apparent motion.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Adelson_Bergen_1985.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 16 -->
+          <div class="card" data-type="parametric" data-paradigm="Historical" data-search="wertheimer 2014 historical reconstruction gestalt">
+            <div class="card-meta">
+              <span class="badge b-historical">Historical reconstruction</span>
+            </div>
+            <div class="card-authors">Wertheimer (2014, historical)</div>
+            <p class="card-description">Reconstruction of the original 1912 tachistoscope experiment founding Gestalt psychology.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Wertheimer_2014.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Attneave & Block 1973 -->
+          <div class="card" data-type="parametric" data-paradigm="Two-flash" data-search="attneave block 1973 two-flash am korte law depth 3d tridimensional phenomenal retinal separation perspective threshold soa">
+            <div class="card-meta">
+              <span class="badge b-twoflash">Two-flash AM</span>
+            </div>
+            <div class="card-authors">Attneave &amp; Block (1973)</div>
+            <p class="card-description">Korte's law runs on phenomenal 3-D separation, not retinal distance: perspective depth raises the movement threshold.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Attneave_Block_1973.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Foster & Gravano 1982 -->
+          <div class="card" data-type="parametric" data-paradigm="Two-flash" data-search="foster gravano 1982 two-flash am curvature overshoot beta motion soa curved straight line matching adjustment">
+            <div class="card-meta">
+              <span class="badge b-twoflash">Two-flash AM</span>
+            </div>
+            <div class="card-authors">Foster &amp; Gravano (1982)</div>
+            <p class="card-description">Curved→straight beta motion overshoots into opposite curvature, peaking near +50 ms SOA; adjustable-curve matching.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Foster_Gravano_1982.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Ramachandran & Anstis 1983 -->
+          <div class="card" data-type="parametric" data-paradigm="Motion quartet" data-search="ramachandran anstis 1983 motion quartet visual momentum inertia streaming bouncing extrapolation path proximity">
+            <div class="card-meta">
+              <span class="badge b-quartet">Motion quartet</span>
+            </div>
+            <div class="card-authors">Ramachandran &amp; Anstis (1983)</div>
+            <p class="card-description">&ldquo;Visual momentum&rdquo;: established motion biases an ambiguous quartet toward streaming over bouncing, overriding proximity.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Ramachandran_Anstis_1983.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="nonparametric-section">
+        <h2 class="section-title">Kinematic &amp; Non-Parametric Studies</h2>
+        <div class="card-grid" id="grid-nonparametric">
+
+          <!-- 1 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="shepard judd 1976 3d rotation">
+            <div class="card-meta">
+              <span class="badge b-3drotation">3D rotation</span>
+            </div>
+            <div class="card-authors">Shepard &amp; Judd (1976)</div>
+            <p class="card-description">Min SOA for rigid apparent rotation grows linearly with angular disparity (~1.1 ms/deg).</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Shepard_Judd_1976.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 2 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="farrell shepard 1981 2d rotation polygon">
+            <div class="card-meta">
+              <span class="badge b-2drotation">2D rotation</span>
+            </div>
+            <div class="card-authors">Farrell &amp; Shepard (1981)</div>
+            <p class="card-description">Critical SOA for polygon rotation is linear in disparity (~2.4 ms/deg); inverted-V for symmetric shapes.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Farrell_Shepard_1981.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Farrell, Larsen & Bundesen 1982 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="farrell larsen bundesen 1982 2d rotation velocity constraint angular velocity bound size invariant critical soa translation control">
+            <div class="card-meta">
+              <span class="badge b-2drotation">2D rotation</span>
+            </div>
+            <div class="card-authors">Farrell, Larsen &amp; Bundesen (1982)</div>
+            <p class="card-description">Critical SOA for rotation is size-invariant in slope → a bound on angular velocity (~0.68°/ms), not the linear velocity of parts.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Farrell_Larsen_Bundesen_1982.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 3 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="mcbeath shepard 1989 2d rotation translation curved path">
+            <div class="card-meta">
+              <span class="badge b-2drotation">2D rotation+translation</span>
+            </div>
+            <div class="card-authors">McBeath &amp; Shepard (1989)</div>
+            <p class="card-description">AM path is curved, matching 60–75% of kinematic geometry prediction.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="McBeath_Shepard_1989.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 4 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="hecht proffitt 1991 3d rotation curved path probe">
+            <div class="card-meta">
+              <span class="badge b-3drotation">3D rotation</span>
+            </div>
+            <div class="card-authors">Hecht &amp; Proffitt (1991)</div>
+            <p class="card-description">3D object motion follows curved path through orientation space; probe placement reveals curvature.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Hecht_Proffitt_1991.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Proffitt, Gilden, Kaiser & Whelan 1988 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="proffitt gilden kaiser whelan 1988 2d rotation translation configural orientation probe curved circular path foster replication">
+            <div class="card-meta">
+              <span class="badge b-2drotation">2D rotation+translation</span>
+            </div>
+            <div class="card-authors">Proffitt, Gilden, Kaiser &amp; Whelan (1988)</div>
+            <p class="card-description">Configural orientation (α) and rotation magnitude (θ) set how curved the AM path is; axes probes score it.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Proffitt_1988.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Foster 1975 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="foster 1975 so3 rotation group preferred paths probe bar beta motion geodesic scheme kinematic apparent motion path">
+            <div class="card-meta">
+              <span class="badge b-2drotation">2D rotation+translation</span>
+            </div>
+            <div class="card-authors">Foster (1975)</div>
+            <p class="card-description">The founding probe-path study: a bar's beta-motion path is mapped by placing a probe bar; tests two SO(3) geodesic schemes.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Foster_1975.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Shepard & Zare 1983 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Two-flash" data-search="shepard zare 1983 path-guided apparent motion curved path priming korte law min soa path length closed circle two-flash">
+            <div class="card-meta">
+              <span class="badge b-twoflash">Path-guided AM</span>
+            </div>
+            <div class="card-authors">Shepard &amp; Zare (1983)</div>
+            <p class="card-description">A 5 ms gray curved band bends the motion along it; min SOA scales with path length, not distance — even a closed circle.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Shepard_Zare_1983.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Farrell 1983 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="farrell 1983 2d rotation translation minimum soa threshold additive interpolation velocity constraint">
+            <div class="card-meta">
+              <span class="badge b-2drotation">2D rotation+translation</span>
+            </div>
+            <div class="card-authors">Farrell (1983)</div>
+            <p class="card-description">Min SOA for rigid movement = a + bV + cD: rotation and translation as separate, additive velocity-limited processes.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Farrell_1983.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 5 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Biological motion" data-search="shiffrar freyd 1993 biological motion soa">
+            <div class="card-meta">
+              <span class="badge b-biomotion">Biological motion</span>
+            </div>
+            <div class="card-authors">Shiffrar &amp; Freyd (1993)</div>
+            <p class="card-description">Short SOA → shortest (impossible) path; long SOA → anatomically plausible path.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Shiffrar_Freyd_1993.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 6 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Biological motion" data-search="chatterjee freyd shiffrar 1996 biological motion scrambled">
+            <div class="card-meta">
+              <span class="badge b-biomotion">Biological motion</span>
+            </div>
+            <div class="card-authors">Chatterjee, Freyd &amp; Shiffrar (1996)</div>
+            <p class="card-description">Global body configuration required for biomechanical path preference; scrambled figures revert.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Chatterjee_Freyd_Shiffrar_1996.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- 7 -->
+          <div class="card" data-type="nonparametric" data-paradigm="Feature interpolation" data-search="hidaka 2011 feature interpolation grating orientation">
+            <div class="card-meta">
+              <span class="badge b-feature">Feature interpolation</span>
+            </div>
+            <div class="card-authors">Hidaka et al. (2011)</div>
+            <p class="card-description">Grating orientation is linearly interpolated along the apparent motion path.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="Hidaka_2011.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Geodesic sphere utility -->
+          <div class="card" data-type="nonparametric" data-paradigm="Rotation" data-search="geodesic sphere orientation space so3">
+            <div class="card-meta">
+              <span class="badge b-3drotation">SO(3) geometry</span>
+            </div>
+            <div class="card-authors">Geodesic Sphere</div>
+            <p class="card-description">Interactive sphere view for geodesic intuition in 3D rotation space.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="geodesic_sphere.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Transformational motion: multi-paradigm overview -->
+          <div class="card" data-type="nonparametric" data-paradigm="Historical" data-search="schiller shepard judd bundesen mcbeath foster transformational motion participant view 1933 1976 1983 1989">
+            <div class="card-meta">
+              <span class="badge b-historical">Multi-paradigm</span>
+            </div>
+            <div class="card-authors">Transformational AM (overview)</div>
+            <p class="card-description">Participant-view stimuli for Schiller, Shepard, Bundesen, McBeath and Foster in one portal.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="transformational_motion.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Kinematics & drag simulator utility -->
+          <div class="card" data-type="nonparametric" data-paradigm="Kinematics" data-search="kinematics drag simulator pivot radius rotation translation cost optimization model">
+            <div class="card-meta">
+              <span class="badge b-moving">Kinematic model</span>
+            </div>
+            <div class="card-authors">Kinematics &amp; Drag Simulator</div>
+            <p class="card-description">Unified-pivot model for translation and rotation; inspect cost-function landscapes live.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="apparent_motion_simulator.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Newtonian apparent motion -->
+          <div class="card" data-type="nonparametric" data-paradigm="Kinematics" data-search="newtonian newton center of mass straight line rotation COM kinematic pole arc comparison apparent motion">
+            <div class="card-meta">
+              <span class="badge b-moving">Newtonian framework</span>
+            </div>
+            <div class="card-authors">Newtonian vs Kinematic</div>
+            <p class="card-description">Compares Newtonian COM travel with McBeath-Shepard kinematic pole arc models.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="newtonian_apparent_motion.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Mori 1982 kinematic arc -->
+          <div class="card" data-type="nonparametric" data-paradigm="Kinematics" data-search="mori 1982 apparent motion kinematic arc pole perpendicular bisector rotation translation curved path serial concatenation">
+            <div class="card-meta">
+              <span class="badge b-moving">Kinematic geometry</span>
+            </div>
+            <div class="card-authors">Mori (1982)</div>
+            <p class="card-description">Apparent motion path as a serial concatenation of translation then rotation; probe-mapped.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="mori_1982.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Inertia-axis rotation -->
+          <div class="card" data-type="nonparametric" data-paradigm="Inertia" data-search="inertia tensor principal axis rotation pivot rectangle pacman triangle eigenvalue">
+            <div class="card-meta">
+              <span class="badge b-moving">Inertia model</span>
+            </div>
+            <div class="card-authors">Inertia-Axis Rotation</div>
+            <p class="card-description">Shapes rotate around the intersection of their principal inertia axes dynamically.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="inertia_rotation.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- Inertia-axis drive -->
+          <div class="card" data-type="nonparametric" data-paradigm="Inertia" data-search="inertia tensor principal axis drive car path trail rotation pivot rectangle pacman triangle eigenvalue">
+            <div class="card-meta">
+              <span class="badge b-moving">Inertia model</span>
+            </div>
+            <div class="card-authors">Inertia-Axis Drive</div>
+            <p class="card-description">Shape drives along its principal axis while pivoting about the dynamic center.</p>
+            <div class="card-footer">
+              <a class="btn-open" href="inertia_drive.html">Open Visualisation →</a>
+            </div>
+          </div>
+
+          <!-- MISSING CARDS -->
+          <div class="card missing" data-type="nonparametric" data-paradigm="Translation" data-search="rock smith 1981 2d translation cognitive form context">
+            <div class="card-meta">
+              <span class="badge badge-missing">Literature review in progress</span>
+            </div>
+            <div class="card-authors">Rock &amp; Smith (1981)</div>
+            <p class="card-description">Cognitive/form context modulates AM path: intelligent object-based matching.</p>
+            <div class="card-footer">
+              <span class="missing-label">⏳ Upcoming Release</span>
+            </div>
+          </div>
+
+          <div class="card missing" data-type="nonparametric" data-paradigm="Kinematics" data-search="hildreth 1984 moving contours smoothness">
+            <div class="card-meta">
+              <span class="badge badge-missing">Literature review in progress</span>
+            </div>
+            <div class="card-authors">Hildreth (1984)</div>
+            <p class="card-description">Smoothness constraint resolves velocity field ambiguities.</p>
+            <div class="card-footer">
+              <span class="missing-label">⏳ Upcoming Release</span>
+            </div>
+          </div>
+
+          <div class="card missing" data-type="nonparametric" data-paradigm="Neural" data-search="chong 2012 neural am v1 priming">
+            <div class="card-meta">
+              <span class="badge badge-missing">Literature review in progress</span>
+            </div>
+            <div class="card-authors">Chong et al. (2012)</div>
+            <p class="card-description">Real motion primes V1 and biases subsequent AM path selection.</p>
+            <div class="card-footer">
+              <span class="missing-label">⏳ Upcoming Release</span>
+            </div>
+          </div>
+
+          <div class="card missing" data-type="nonparametric" data-paradigm="AM trace" data-search="hogendoorn 2008 am trace high-level object">
+            <div class="card-meta">
+              <span class="badge badge-missing">Literature review in progress</span>
+            </div>
+            <div class="card-authors">Hogendoorn et al. (2008)</div>
+            <p class="card-description">High-level object features are carried by the illusory AM token.</p>
+            <div class="card-footer">
+              <span class="missing-label">⏳ Upcoming Release</span>
+            </div>
+          </div>
+
+          <div class="card missing" data-type="nonparametric" data-paradigm="Two-flash" data-search="souto johnston 2012 am color probe">
+            <div class="card-meta">
+              <span class="badge badge-missing">Literature review in progress</span>
+            </div>
+            <div class="card-authors">Souto &amp; Johnston (2012)</div>
+            <p class="card-description">Color probes at AM path positions inherit color from AM tokens.</p>
+            <div class="card-footer">
+              <span class="missing-label">⏳ Upcoming Release</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- No Results State -->
+      <div class="no-results" id="unified-no-results">
+        <p style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text);">No matching studies found</p>
+        <p style="font-size: 0.88rem;">Try refining your keywords or choosing a different tab.</p>
+      </div>
+
     </div>
+  </main>
 
-    <div class="card-grid" id="grid-parametric">
-
-      <!-- 1 -->
-      <div class="card" data-search="burt sperling 1981 competing paths am">
-        <div class="card-authors">Burt &amp; Sperling (1981)</div>
-        <span class="badge b-competing">Competing paths AM</span>
-        <p class="card-description">Log-linear trade-off between time and distance determines which of two competing motion paths wins.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Burt_Sperling_1981.html">Open Visualisation →</a>
-        </div>
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <h4>Apparent Motion Benchmark</h4>
+        <p>A cognitive science visual repository curated in collaboration with the Serre Lab.</p>
+        <p style="font-size: 0.78rem; opacity: 0.8;">
+          Sourced from <a href="parametric_am.csv">parametric_am.csv</a> and <a href="nonparametric_am.csv">nonparametric_am.csv</a>.
+        </p>
       </div>
 
-      <!-- 2 -->
-      <div class="card" data-search="petersik pantle 1979 ternus 3-dot">
-        <div class="card-authors">Petersik &amp; Pantle (1979)</div>
-        <span class="badge b-ternus">Ternus 3-dot</span>
-        <p class="card-description">ISI controls whether 3 dots appear to shift as a group or the outer element jumps.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Petersik_Pantle_1979.html">Open Visualisation →</a>
+      <div class="footer-legend">
+        <span class="legend-title">Visual Paradigm Index</span>
+        <div class="legend-pills">
+          <span class="badge b-ternus">Ternus</span>
+          <span class="badge b-quartet">Motion quartet</span>
+          <span class="badge b-twoflash">Two-flash AM</span>
+          <span class="badge b-3drotation">3D rotation</span>
+          <span class="badge b-2drotation">2D rotation</span>
+          <span class="badge b-biomotion">Biological motion</span>
+          <span class="badge b-feature">Feature interpolation</span>
+          <span class="badge b-fmri">fMRI</span>
+          <span class="badge b-historical">Historical</span>
+          <span class="badge b-competing">Competing paths</span>
+          <span class="badge b-illusory">Illusory contour</span>
+          <span class="badge b-trace">AM trace</span>
+          <span class="badge b-tactile">Tactile</span>
+          <span class="badge b-spatiotemporal">Spatiotemporal</span>
+          <span class="badge b-neural">Neural</span>
+          <span class="badge b-moving">Moving contours</span>
+          <span class="badge b-translation">2D translation</span>
         </div>
       </div>
-
-      <!-- 3 -->
-      <div class="card" data-search="hock kelso schöner schoner 1993 motion quartet">
-        <div class="card-authors">Hock, Kelso &amp; Schöner (1993)</div>
-        <span class="badge b-quartet">Motion quartet</span>
-        <p class="card-description">Aspect ratio of 4-dot rectangle determines horizontal vs vertical bistable motion; shows hysteresis.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Hock_Kelso_Schoner_1993.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 4 -->
-      <div class="card" data-search="gilroy hock ploeger 2001 motion quartet">
-        <div class="card-authors">Gilroy, Hock &amp; Ploeger (2001)</div>
-        <span class="badge b-quartet">Motion quartet</span>
-        <p class="card-description">Luminance contrast of a motion path raises its detector activation, biasing the perceived direction.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Gilroy_Hock_Ploeger_2001.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 5 -->
-      <div class="card" data-search="kramer rudd 1999 ternus 3-dot">
-        <div class="card-authors">Kramer &amp; Rudd (1999)</div>
-        <span class="badge b-ternus">Ternus 3-dot</span>
-        <p class="card-description">Form disparity (unequal line heights) suppresses group motion even at long ISI.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Kramer_Rudd_1999.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 6 -->
-      <div class="card" data-search="stepper 2020 ternus 2-dot">
-        <div class="card-authors">Stepper et al. (2020)</div>
-        <span class="badge b-ternus">Ternus 2-dot</span>
-        <p class="card-description">Illusory (not retinal) size from depth context determines correspondence in Ternus display.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Stepper_2020.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 7 -->
-      <div class="card" data-search="hein cavanagh 2012 ternus 3-dot">
-        <div class="card-authors">Hein &amp; Cavanagh (2012)</div>
-        <span class="badge b-ternus">Ternus 3-dot</span>
-        <p class="card-description">Motion correspondence is resolved in spatiotopic (world-centred) coordinates.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Hein_Cavanagh_2012.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 8 -->
-      <div class="card" data-search="wang 2015 ternus 3-dot">
-        <div class="card-authors">Wang et al. (2015)</div>
-        <span class="badge b-ternus">Ternus 3-dot</span>
-        <p class="card-description">Auditory temporal gaps concurrent with visual ISI modulate apparent motion path selection.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Wang_2015.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 9 -->
-      <div class="card" data-search="madelain krauzlis 2003 illusory contour am">
-        <div class="card-authors">Madelain &amp; Krauzlis (2003)</div>
-        <span class="badge b-illusory">Illusory contour AM</span>
-        <p class="card-description">Smooth pursuit eye movements track the empty path of Kanizsa-figure apparent motion.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Madelain_Krauzlis_2003.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 10 -->
-      <div class="card" data-search="yantis nakama 1998 am trace masking">
-        <div class="card-authors">Yantis &amp; Nakama (1998)</div>
-        <span class="badge b-trace">AM trace masking</span>
-        <p class="card-description">The illusory moving token impairs detection of probes placed on its path.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Yantis_Nakama_1998.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 11 -->
-      <div class="card" data-search="hollingworth hein 2021 ternus 3-dot">
-        <div class="card-authors">Hollingworth &amp; Hein (2021)</div>
-        <span class="badge b-ternus">Ternus 3-dot</span>
-        <p class="card-description">Visual working memory content biases correspondence: matching the unique element increases element motion.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Hollingworth_Hein_2021.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 12 -->
-      <div class="card" data-search="haladjian 2019 tactile quartet">
-        <div class="card-authors">Haladjian et al. (2019)</div>
-        <span class="badge b-tactile">Tactile quartet</span>
-        <p class="card-description">Tactile apparent motion follows same spatiotemporal proximity rules as visual motion.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Haladjian_2019.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 13 -->
-      <div class="card" data-search="kolers von grünau grunau 1976 two-flash am">
-        <div class="card-authors">Kolers &amp; von Grünau (1976)</div>
-        <span class="badge b-twoflash">Two-flash AM</span>
-        <p class="card-description">Color changes abruptly at the midpoint of apparent motion; shape morphs gradually.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Kolers_vonGrunau_1976.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 14 -->
-      <div class="card" data-search="muckli 2005 fmri two-flash am">
-        <div class="card-authors">Muckli et al. (2005)</div>
-        <span class="badge b-fmri">fMRI two-flash AM</span>
-        <p class="card-description">Primary visual cortex (V1) activates retinotopically along the empty AM path.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Muckli_2005.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 15 -->
-      <div class="card" data-search="adelson bergen 1985 spatiotemporal grating">
-        <div class="card-authors">Adelson &amp; Bergen (1985)</div>
-        <span class="badge b-spatiotemporal">Spatiotemporal grating</span>
-        <p class="card-description">Motion detected by oriented spatiotemporal energy filters; unifies real and apparent motion.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Adelson_Bergen_1985.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- 16 -->
-      <div class="card" data-search="wertheimer 2014 historical reconstruction gestalt">
-        <div class="card-authors">Wertheimer (2014, historical)</div>
-        <span class="badge b-historical">Historical reconstruction</span>
-        <p class="card-description">Reconstruction of the original 1912 tachistoscope experiment founding Gestalt psychology.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Wertheimer_2014.html">Open Visualisation →</a>
-        </div>
-      </div>
-
-      <!-- MISSING: Ramachandran & Anstis 1983 -->
-      <div class="card missing" data-search="ramachandran anstis 1983 motion quartet visual inertia">
-        <div class="card-authors">Ramachandran &amp; Anstis (1983)</div>
-        <span class="badge b-quartet">Motion quartet</span>
-        <p class="card-description">Once a motion direction is chosen, the visual system resists switching (visual inertia).</p>
-        <div class="card-footer">
-          <span class="badge badge-missing-paper">⚠ Paper not yet downloaded</span>
-        </div>
-      </div>
-
-    </div><!-- /grid-parametric -->
-    <p class="no-results" id="nr-parametric">No experiments match your search.</p>
-  </section>
-
-  <!-- ══════════════════════════════════════════════
-       NON-PARAMETRIC EXPERIMENTS
-  ══════════════════════════════════════════════ -->
-  <section id="sec-nonparametric">
-    <div class="section-header">
-      <h2>Non-Parametric Experiments</h2>
-      <p>Studies that measure a qualitative or threshold response (e.g. minimum SOA for perceived motion) rather than varying a continuous parameter; typically aimed at revealing the geometric structure of mental transformation paths.</p>
     </div>
+  </footer>
 
-    <div class="search-wrap">
-      <input type="text" id="search-nonparametric" placeholder="Filter by author, year or paradigm…" aria-label="Search non-parametric experiments" />
-    </div>
+  <!-- ── CLIENT BEHAVIORS (INTERACTIVE HERO & FILTERING) ── -->
+  <script>
+    // ──────────────── GESTALT SANDBOX SIMULATION ────────────────
+    let sandboxMode = 'kinematic'; // default to kinematics!
+    let intervalTime = 300;       // millisecond speed (kinematic, ternus)
+    let quartetWidth = 90;        // horizontal width in pixels (quartet) - defaults to 90px to match vertical separation exactly
+    let sandboxTimer = null;
+    let step = 0;
 
-    <div class="card-grid" id="grid-nonparametric">
+    const viewport = document.getElementById('sandbox-viewport');
+    const speedLabel = document.getElementById('speed-label');
+    const sandboxTitle = document.getElementById('sandbox-title');
+    const sliderTitleText = document.getElementById('slider-title-text');
+    const sandboxSlider = document.getElementById('sandbox-speed');
 
-      <!-- 1 -->
-      <div class="card" data-search="shepard judd 1976 3d rotation">
-        <div class="card-authors">Shepard &amp; Judd (1976)</div>
-        <span class="badge b-3drotation">3D rotation</span>
-        <p class="card-description">Min SOA for rigid apparent rotation grows linearly with angular disparity (~1.1 ms/deg).</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Shepard_Judd_1976.html">Open Visualisation →</a>
-        </div>
-      </div>
+    function renderSandbox() {
+      viewport.innerHTML = '';
 
-      <!-- 2 -->
-      <div class="card" data-search="farrell shepard 1981 2d rotation polygon">
-        <div class="card-authors">Farrell &amp; Shepard (1981)</div>
-        <span class="badge b-2drotation">2D rotation</span>
-        <p class="card-description">Critical SOA for polygon rotation is linear in disparity (~2.4 ms/deg); inverted-V for symmetric shapes.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Farrell_Shepard_1981.html">Open Visualisation →</a>
-        </div>
-      </div>
+      if (sandboxMode === 'kinematic') {
+        sandboxTitle.innerHTML = 'Rotation <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-muted); font-family: sans-serif; display: block; margin-top: 0.1rem;">curved kinematic trajectory</span>';
 
-      <!-- 3 -->
-      <div class="card" data-search="mcbeath shepard 1989 2d rotation translation curved path">
-        <div class="card-authors">McBeath &amp; Shepard (1989)</div>
-        <span class="badge b-2drotation">2D rotation+translation</span>
-        <p class="card-description">AM path is curved, matching 60–75% of kinematic geometry prediction.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="McBeath_Shepard_1989.html">Open Visualisation →</a>
-        </div>
-      </div>
+        viewport.innerHTML = '';
 
-      <!-- 4 -->
-      <div class="card" data-search="hecht proffitt 1991 3d rotation curved path probe">
-        <div class="card-authors">Hecht &amp; Proffitt (1991)</div>
-        <span class="badge b-3drotation">3D rotation</span>
-        <p class="card-description">3D object motion follows curved path through orientation space; probe placement reveals curvature.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Hecht_Proffitt_1991.html">Open Visualisation →</a>
-        </div>
-      </div>
+        // Render the rotating capsule
+        const bar = document.createElement('div');
+        bar.className = 'sandbox-bar';
+        bar.style.zIndex = '5';
 
-      <!-- Proffitt, Gilden, Kaiser & Whelan 1988 -->
-      <div class="card" data-search="proffitt gilden kaiser whelan 1988 2d rotation translation configural orientation probe curved circular path foster replication">
-        <div class="card-authors">Proffitt, Gilden, Kaiser &amp; Whelan (1988)</div>
-        <span class="badge b-2drotation">2D rotation+translation</span>
-        <p class="card-description">Configural orientation (α) and rotation magnitude (θ) set how curved the AM path is; a probe slid along the system axis scores it from straight to circular.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Proffitt_1988.html">Open Visualisation →</a>
-        </div>
-      </div>
+        if (step === 0) {
+          bar.style.left = '25%';
+          bar.style.top = '50%';
+          bar.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+          bar.style.backgroundColor = 'var(--accent)';
+          bar.style.boxShadow = '0 3px 8px rgba(202, 101, 71, 0.25)';
+        } else {
+          bar.style.left = '75%';
+          bar.style.top = '50%';
+          bar.style.transform = 'translate(-50%, -50%) rotate(-45deg)';
+          bar.style.backgroundColor = 'var(--accent)';
+          bar.style.boxShadow = '0 3px 8px rgba(202, 101, 71, 0.25)';
+        }
 
-      <!-- 5 -->
-      <div class="card" data-search="shiffrar freyd 1993 biological motion soa">
-        <div class="card-authors">Shiffrar &amp; Freyd (1993)</div>
-        <span class="badge b-biomotion">Biological motion</span>
-        <p class="card-description">Short SOA → shortest (impossible) path; long SOA → anatomically plausible path.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Shiffrar_Freyd_1993.html">Open Visualisation →</a>
-        </div>
-      </div>
+        viewport.appendChild(bar);
 
-      <!-- 6 -->
-      <div class="card" data-search="chatterjee freyd shiffrar 1996 biological motion scrambled">
-        <div class="card-authors">Chatterjee, Freyd &amp; Shiffrar (1996)</div>
-        <span class="badge b-biomotion">Biological motion</span>
-        <p class="card-description">Global body configuration required for biomechanical path preference; scrambled figures revert to shortest path.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Chatterjee_Freyd_Shiffrar_1996.html">Open Visualisation →</a>
-        </div>
-      </div>
+      } else if (sandboxMode === 'quartet') {
+        sandboxTitle.textContent = "Bistable Motion Quartet";
 
-      <!-- 7 -->
-      <div class="card" data-search="hidaka 2011 feature interpolation grating orientation">
-        <div class="card-authors">Hidaka et al. (2011)</div>
-        <span class="badge b-feature">Feature interpolation</span>
-        <p class="card-description">Grating orientation is linearly interpolated along the apparent motion path.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="Hidaka_2011.html">Open Visualisation →</a>
-        </div>
-      </div>
+        // Horizontal separation half is based on quartetWidth slider (pixels)
+        const halfWidth = quartetWidth / 2;
+        const halfHeight = 45; // fixed vertical separation of 90px (half is 45px) - raised for stronger vertical travel
 
-      <!-- MISSING: Farrell 1983 -->
-      <div class="card missing" data-search="farrell 1983 2d rotation symmetry">
-        <div class="card-authors">Farrell (1983)</div>
-        <span class="badge b-2drotation">2D rotation</span>
-        <p class="card-description">Rotational symmetry reduces effective angular disparity and lowers critical SOA.</p>
-        <div class="card-footer">
-          <span class="badge badge-missing-paper">⚠ Paper not yet downloaded</span>
-        </div>
-      </div>
+        // No background dotted guidelines for an extremely clean and minimal aesthetic
+        viewport.innerHTML = '';
 
-      <!-- MISSING: Rock & Smith 1981 -->
-      <div class="card missing" data-search="rock smith 1981 2d translation cognitive form context">
-        <div class="card-authors">Rock &amp; Smith (1981)</div>
-        <span class="badge b-translation">2D translation</span>
-        <p class="card-description">Cognitive/form context modulates AM path: intelligent object-based matching over low-level proximity.</p>
-        <div class="card-footer">
-          <span class="badge badge-missing-paper">⚠ Paper not yet downloaded</span>
-        </div>
-      </div>
+        // Phase 0: Top-left & Bottom-right dots
+        // Phase 1: Top-right & Bottom-left dots
+        if (step === 0) {
+          createDotPx(-halfWidth, -halfHeight, 'dot-accent1');
+          createDotPx(halfWidth, halfHeight, 'dot-accent1');
+        } else {
+          createDotPx(halfWidth, -halfHeight, 'dot-accent2');
+          createDotPx(-halfWidth, halfHeight, 'dot-accent2');
+        }
 
-      <!-- MISSING: Hildreth 1984 -->
-      <div class="card missing" data-search="hildreth 1984 moving contours smoothness">
-        <div class="card-authors">Hildreth (1984)</div>
-        <span class="badge b-moving">Moving contours</span>
-        <p class="card-description">Smoothness constraint resolves velocity field ambiguities.</p>
-        <div class="card-footer">
-          <span class="badge badge-missing-paper">⚠ Paper not yet downloaded</span>
-        </div>
-      </div>
+      } else if (sandboxMode === 'ternus') {
+        sandboxTitle.textContent = "Ternus Group/Element Motion";
 
-      <!-- MISSING: Chong et al. 2012 -->
-      <div class="card missing" data-search="chong 2012 neural am v1 priming">
-        <div class="card-authors">Chong et al. (2012)</div>
-        <span class="badge b-neural">Neural AM</span>
-        <p class="card-description">Real motion primes V1 and biases subsequent AM path selection.</p>
-        <div class="card-footer">
-          <span class="badge badge-missing-paper">⚠ Paper not yet downloaded</span>
-        </div>
-      </div>
+        // Ternus: 3 dots shift left and right.
+        // If speed (intervalTime) is small (e.g. < 220ms), visual system favors "Element Motion" (middle dots stay constant, outer jumps)
+        // If speed is slow (e.g. > 220ms), visual system favors "Group Motion" (all dots shift together)
+        const isElementMotion = intervalTime < 220;
 
-      <!-- MISSING: Hogendoorn et al. 2008 -->
-      <div class="card missing" data-search="hogendoorn 2008 am trace high-level object">
-        <div class="card-authors">Hogendoorn et al. (2008)</div>
-        <span class="badge b-trace">AM trace</span>
-        <p class="card-description">High-level object features are carried by the illusory AM token.</p>
-        <div class="card-footer">
-          <span class="badge badge-missing-paper">⚠ Paper not yet downloaded</span>
-        </div>
-      </div>
+        if (step === 0) {
+          // Frame A: Dots at position 1, 2, 3
+          if (isElementMotion) {
+            // Element motion: Highlight jumping dot (pos 1), keep pos 2 & 3 constant in terracotta
+            createDot(30, 50, 'dot-accent1'); // jumping dot
+            createDot(45, 50, 'dot-accent2');
+            createDot(60, 50, 'dot-accent2');
+          } else {
+            // Group motion: all shift together in green
+            createDot(30, 50, 'dot-accent1');
+            createDot(45, 50, 'dot-accent1');
+            createDot(60, 50, 'dot-accent1');
+          }
+        } else {
+          // Frame B: Dots at position 2, 3, 4
+          if (isElementMotion) {
+            // Element motion: constant at 2 & 3, outer jumps to 4
+            createDot(45, 50, 'dot-accent2');
+            createDot(60, 50, 'dot-accent2');
+            createDot(75, 50, 'dot-accent1'); // jumping dot
+          } else {
+            createDot(45, 50, 'dot-accent1');
+            createDot(60, 50, 'dot-accent1');
+            createDot(75, 50, 'dot-accent1');
+          }
+        }
+      }
+    }
 
-      <!-- MISSING: Souto & Johnston 2012 -->
-      <div class="card missing" data-search="souto johnston 2012 am color probe">
-        <div class="card-authors">Souto &amp; Johnston (2012)</div>
-        <span class="badge b-twoflash">AM color</span>
-        <p class="card-description">Color probes at AM path positions inherit color from AM tokens.</p>
-        <div class="card-footer">
-          <span class="badge badge-missing-paper">⚠ Paper not yet downloaded</span>
-        </div>
-      </div>
+    function createDot(leftPercent, topPercent, className) {
+      const dot = document.createElement('div');
+      dot.className = `sandbox-dot ${className}`;
+      dot.style.left = `${leftPercent}%`;
+      dot.style.top = `${topPercent}%`;
+      dot.style.transform = 'translate(-50%, -50%)';
+      dot.style.zIndex = '10';
+      viewport.appendChild(dot);
+    }
 
-      <!-- Geodesic sphere utility -->
-      <div class="card" data-search="geodesic sphere orientation space so3">
-        <div class="card-authors">Geodesic Sphere</div>
-        <span class="badge b-3drotation">SO(3) geometry</span>
-        <p class="card-description">Interactive sphere view for geodesic intuition in orientation space.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="geodesic_sphere.html">Open Visualisation →</a>
-        </div>
-      </div>
+    function createDotPx(leftOffsetPx, topOffsetPx, className) {
+      const dot = document.createElement('div');
+      dot.className = `sandbox-dot ${className}`;
+      dot.style.left = `calc(50% + ${leftOffsetPx}px)`;
+      dot.style.top = `calc(50% + ${topOffsetPx}px)`;
+      dot.style.transform = 'translate(-50%, -50%)';
+      dot.style.zIndex = '10';
+      viewport.appendChild(dot);
+    }
 
-      <!-- Transformational motion: multi-paradigm overview -->
-      <div class="card" data-search="schiller shepard judd bundesen mcbeath foster transformational motion participant view 1933 1976 1983 1989">
-        <div class="card-authors">Transformational AM (overview)</div>
-        <span class="badge b-historical">Multi-paradigm</span>
-        <p class="card-description">Participant-view stimuli for Schiller (1933), Shepard &amp; Judd (1976), Bundesen et al. (1983), McBeath &amp; Shepard (1989) and Foster (1975/1978) in one tabbed page.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="transformational_motion.html">Open Visualisation →</a>
-        </div>
-      </div>
+    function startSandboxLoop() {
+      if (sandboxTimer) clearInterval(sandboxTimer);
+      // For quartet mode, let's keep alternation speed comfortable and steady (250ms)
+      const currentInterval = (sandboxMode === 'quartet') ? 250 : intervalTime;
+      sandboxTimer = setInterval(() => {
+        step = (step === 0) ? 1 : 0;
+        renderSandbox();
+      }, currentInterval);
+    }
 
-      <!-- Kinematics & drag simulator utility -->
-      <div class="card" data-search="kinematics drag simulator pivot radius rotation translation cost optimization model">
-        <div class="card-authors">Kinematics &amp; Drag Simulator</div>
-        <span class="badge b-moving">Kinematic model</span>
-        <p class="card-description">Unified-pivot model for simultaneous translation and rotation; tune body dimensions, drag coefficients and pivot radius, watch the cost-function landscape in real time.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="apparent_motion_simulator.html">Open Visualisation →</a>
-        </div>
-      </div>
+    function updateSliderRole() {
+      if (sandboxMode === 'quartet') {
+        sliderTitleText.textContent = "Horizontal Width";
+        sandboxSlider.min = "45";
+        sandboxSlider.max = "180";
+        sandboxSlider.value = quartetWidth;
+        speedLabel.textContent = `${quartetWidth}px`;
+      } else {
+        sliderTitleText.textContent = "Speed";
+        sandboxSlider.min = "100";
+        sandboxSlider.max = "600";
+        sandboxSlider.value = intervalTime;
+        speedLabel.textContent = `${intervalTime}ms`;
+      }
+    }
 
-      <!-- Newtonian apparent motion -->
-      <div class="card" data-search="newtonian newton center of mass straight line rotation COM kinematic pole arc comparison apparent motion">
-        <div class="card-authors">Newtonian vs Kinematic</div>
-        <span class="badge b-moving">Newtonian framework</span>
-        <p class="card-description">Compares the Newtonian framework (COM travels in a straight line; shape rotates uniformly about its COM) with the kinematic pole arc (McBeath &amp; Shepard). Rotation indicators show the spin about the COM at each point. Shapes: rectangle, pac-man, triangle.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="newtonian_apparent_motion.html">Open Visualisation →</a>
-        </div>
-      </div>
+    function handleSliderChange(val) {
+      if (sandboxMode === 'quartet') {
+        quartetWidth = parseInt(val);
+        speedLabel.textContent = `${val}px`;
+        renderSandbox();
+      } else {
+        intervalTime = parseInt(val);
+        speedLabel.textContent = `${val}ms`;
+        startSandboxLoop();
+      }
+    }
 
-      <!-- Mori 1982 kinematic arc -->
-      <div class="card" data-search="mori 1982 apparent motion kinematic arc pole perpendicular bisector rotation translation curved path serial concatenation">
-        <div class="card-authors">Mori (1982)</div>
-        <span class="badge b-moving">Kinematic geometry</span>
-        <p class="card-description">Apparent motion path as a circular arc about the kinematic pole — the intersection of perpendicular bisectors of the displacement. Pole P = midpoint(A,B) + |AB|/(2·tan(Δθ/2)) · ê⊥. Shapes: rectangle, pac-man, triangle.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="mori_1982.html">Open Visualisation →</a>
-        </div>
-      </div>
+    function setSandboxMode(mode) {
+      sandboxMode = mode;
 
-      <!-- Inertia-axis rotation -->
-      <div class="card" data-search="inertia tensor principal axis rotation pivot rectangle pacman triangle eigenvalue">
-        <div class="card-authors">Inertia-Axis Rotation</div>
-        <span class="badge b-moving">Inertia model</span>
-        <p class="card-description">Shapes rotate around the intersection of their principal inertia axes (min-eigenvalue eigenvector). Pivot is auto-computed; an independent slide along the principal axis can be added. Shapes: rectangle, pac-man, triangle.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="inertia_rotation.html">Open Visualisation →</a>
-        </div>
-      </div>
+      // Toggle button states
+      document.getElementById('btn-kinematic').classList.toggle('active', mode === 'kinematic');
+      document.getElementById('btn-quartet').classList.toggle('active', mode === 'quartet');
+      document.getElementById('btn-ternus').classList.toggle('active', mode === 'ternus');
 
-      <!-- Inertia-axis drive -->
-      <div class="card" data-search="inertia tensor principal axis drive car path trail rotation pivot rectangle pacman triangle eigenvalue">
-        <div class="card-authors">Inertia-Axis Drive</div>
-        <span class="badge b-moving">Inertia model</span>
-        <p class="card-description">Shape rotates around the principal-axis intersection pivot while simultaneously driving along one of its two principal axes — like a car turning. Traces a curved arc path; short-axis residual is shown live. Shapes: rectangle, pac-man, triangle.</p>
-        <div class="card-footer">
-          <a class="btn-open" href="inertia_drive.html">Open Visualisation →</a>
-        </div>
-      </div>
+      updateSliderRole();
+      renderSandbox();
+      startSandboxLoop();
+    }
 
-    </div><!-- /grid-nonparametric -->
-    <p class="no-results" id="nr-nonparametric">No experiments match your search.</p>
-  </section>
-</main>
+    // Initialize sandbox
+    updateSliderRole();
+    renderSandbox();
+    startSandboxLoop();
 
-<footer>
-  <p>Generated from
-    <a href="../parametric_am.csv">parametric_am.csv</a> and
-    <a href="../nonparametric_am.csv">nonparametric_am.csv</a>
-  </p>
-  <p>Apparent Motion Benchmark — Serre Lab</p>
 
-  <div class="legend">
-    <span class="legend-title">Paradigm legend</span>
-    <span class="badge b-ternus">Ternus</span>
-    <span class="badge b-quartet">Motion quartet</span>
-    <span class="badge b-twoflash">Two-flash AM</span>
-    <span class="badge b-3drotation">3D rotation</span>
-    <span class="badge b-2drotation">2D rotation</span>
-    <span class="badge b-biomotion">Biological motion</span>
-    <span class="badge b-feature">Feature interpolation</span>
-    <span class="badge b-fmri">fMRI</span>
-    <span class="badge b-historical">Historical</span>
-    <span class="badge b-competing">Competing paths AM</span>
-    <span class="badge b-illusory">Illusory contour AM</span>
-    <span class="badge b-trace">AM trace</span>
-    <span class="badge b-tactile">Tactile quartet</span>
-    <span class="badge b-spatiotemporal">Spatiotemporal grating</span>
-    <span class="badge b-neural">Neural AM</span>
-    <span class="badge b-moving">Moving contours</span>
-    <span class="badge b-translation">2D translation</span>
-  </div>
-</footer>
+    // ──────────────── UNIFIED SEARCH & FILTERING ────────────────
+    const searchInput = document.getElementById('unified-search');
+    const allCards = Array.from(document.querySelectorAll('.card'));
+    const sectionParametric = document.getElementById('parametric-section');
+    const sectionNonparametric = document.getElementById('nonparametric-section');
+    const noResults = document.getElementById('unified-no-results');
 
-<script>
-  function setupSearch(inputId, gridId, noResultsId) {
-    const input = document.getElementById(inputId);
-    const grid  = document.getElementById(gridId);
-    const noRes = document.getElementById(noResultsId);
+    let currentTab = 'all';        // 'all', 'parametric', 'nonparametric'
+    let currentParadigm = 'all';   // 'all', or specific paradigm name (e.g. 'Ternus')
 
-    input.addEventListener('input', () => {
-      const q = input.value.trim().toLowerCase();
-      let visible = 0;
+    function filterCatalogue() {
+      const query = searchInput.value.trim().toLowerCase();
+      let totalVisible = 0;
+      let visibleParametric = 0;
+      let visibleNonparametric = 0;
 
-      grid.querySelectorAll('.card').forEach(card => {
-        const text = (card.dataset.search || '') + ' ' +
-                     (card.querySelector('.card-authors')?.textContent || '') + ' ' +
-                     (card.querySelector('.badge:not(.badge-missing-paper)')?.textContent || '');
-        const match = !q || text.toLowerCase().includes(q);
-        card.classList.toggle('hidden', !match);
-        if (match) visible++;
+      allCards.forEach(card => {
+        const type = card.getAttribute('data-type');
+        const paradigm = card.getAttribute('data-paradigm') || '';
+        const searchString = (card.getAttribute('data-search') || '') + ' ' +
+                             (card.querySelector('.card-authors')?.textContent || '') + ' ' +
+                             (card.querySelector('.badge')?.textContent || '');
+
+        // 1. Check Tab filter
+        const matchTab = (currentTab === 'all' || type === currentTab);
+
+        // 2. Check Paradigm filter
+        let matchParadigm = false;
+        if (currentParadigm === 'all') {
+          matchParadigm = true;
+        } else {
+          // Support broad match
+          matchParadigm = paradigm.toLowerCase().includes(currentParadigm.toLowerCase()) ||
+                          searchString.toLowerCase().includes(currentParadigm.toLowerCase());
+        }
+
+        // 3. Check Search query
+        const matchSearch = !query || searchString.toLowerCase().includes(query);
+
+        // Combined visibility
+        const isVisible = matchTab && matchParadigm && matchSearch;
+
+        card.classList.toggle('hidden', !isVisible);
+
+        if (isVisible) {
+          totalVisible++;
+          if (type === 'parametric') visibleParametric++;
+          if (type === 'nonparametric') visibleNonparametric++;
+        }
       });
 
-      noRes.classList.toggle('visible', visible === 0 && q.length > 0);
-    });
-  }
+      // Show/Hide Section Headers based on current filter state
+      const showParametricHeader = (currentTab === 'all' || currentTab === 'parametric') && visibleParametric > 0;
+      sectionParametric.style.display = showParametricHeader ? 'block' : 'none';
 
-  setupSearch('search-parametric',    'grid-parametric',    'nr-parametric');
-  setupSearch('search-nonparametric', 'grid-nonparametric', 'nr-nonparametric');
-</script>
+      const showNonparametricHeader = (currentTab === 'all' || currentTab === 'nonparametric') && visibleNonparametric > 0;
+      sectionNonparametric.style.display = showNonparametricHeader ? 'block' : 'none';
 
+      // Toggle No Results card
+      noResults.classList.toggle('visible', totalVisible === 0);
+    }
+
+    function setTabFilter(tab, buttonElement) {
+      currentTab = tab;
+
+      // Update active state of tab buttons
+      document.querySelectorAll('.filter-tab').forEach(btn => btn.classList.remove('active'));
+      buttonElement.classList.add('active');
+
+      filterCatalogue();
+    }
+
+    function setParadigmFilter(paradigm, buttonElement) {
+      currentParadigm = paradigm;
+
+      // Update active state of paradigm pills
+      document.querySelectorAll('.paradigm-pill').forEach(pill => pill.classList.remove('active'));
+      buttonElement.classList.add('active');
+
+      filterCatalogue();
+    }
+
+    // Attach search input listener
+    searchInput.addEventListener('input', filterCatalogue);
+  </script>
 </body>
 </html>

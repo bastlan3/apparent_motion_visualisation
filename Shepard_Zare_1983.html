@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shepard &amp; Zare (1983) — Path-guided apparent motion</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
+  canvas { display:block; border-radius:3px; }
+
+  .participant { margin-top:12px; width:720px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .soaBig { text-align:center; margin-top:8px; font-size:20px; color:#e8e8e8; font-variant-numeric:tabular-nums; }
+  .soaBig small { font-size:12px; color:#777; }
+  .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .prow .lab { font-size:11px; color:#777; margin-right:4px; }
+
+  .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl.dim { opacity:.3; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  .ctrl input[type=range] { width:150px; accent-color:#8a93b8; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Shepard &amp; Zare (1983) — path-guided apparent motion</h1>
+  <div class="sub">A faint gray curved band, flashed for 5 ms between two alternating dots, makes the dot appear to move along
+    that curve. The minimum SOA scales with <b>path length</b>, not direct distance.</div>
+
+  <canvas id="c" width="620" height="420"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Fixate the centre. Lengthen the dot duration (10% steps) until you first see the dot <b>move back and forth over the
+      presented path</b> (not just blink). Mark that point.
+    </div>
+    <div class="soaBig">SOA <span id="soaVal">105</span> <small>ms  (dot duration <span id="durVal">100</span> + 5 ms path field)</small></div>
+    <div class="prow">
+      <div><span class="lab">duration</span>
+        <button id="down">◀ −10%</button><button id="up">+10% ▶</button></div>
+      <div><button id="mark">Motion appears → mark threshold</button></div>
+      <div><button id="record">Record</button> <button id="export">Export CSV</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Condition
+        <div class="seg" id="cond">
+          <button data-v="varL" class="on">Variable path (D = 3°)</button>
+          <button data-v="noPath">No path (control)</button>
+          <button data-v="fixL">Fixed path L = 6°</button>
+        </div>
+      </div>
+      <div class="ctrl" id="ctlL">Path length L
+        <div class="seg" id="L">
+          <button data-v="3">3</button><button data-v="4">4</button>
+          <button data-v="6" class="on">6</button><button data-v="9">9</button><button data-v="12">12°</button>
+        </div>
+      </div>
+      <div class="ctrl" id="ctlD">Distance D between dots
+        <div class="seg" id="D">
+          <button data-v="0">0</button><button data-v="0.667">⅔</button><button data-v="2">2</button>
+          <button data-v="3" class="on">3</button><button data-v="4">4</button>
+          <button data-v="6">6</button><button data-v="9">9°</button>
+        </div>
+      </div>
+      <div class="ctrl">Path contrast: <span class="v" id="conLbl">0.35</span>
+        <input type="range" id="con" min="0.1" max="0.8" step="0.05" value="0.35"></div>
+      <div class="ctrl">Path field duration: <span class="v" id="isiLbl">5</span> ms
+        <input type="range" id="isi" min="5" max="60" step="5" value="5"></div>
+    </div>
+
+    <div class="readouts">
+      <div>Path length L: <b id="lLbl">6.0°</b></div>
+      <div>Direct distance D: <b id="dLbl">3.0°</b></div>
+      <div>Paper's predicted min SOA: <b id="predLbl">—</b></div>
+      <div>Threshold marked: <b id="threshLbl">—</b></div>
+      <div>Trials: <b id="nLog">0</b></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of Shepard, R. N. &amp; Zare, S. L. (1983), <i>Science</i> 220, 632–634. Two black dots (0.42°) alternate on a
+    white ground; during the 5 ms interstimulus field a faint gray band (0.42° wide) traces a circular-arc path between them. Observers
+    fixate the path centre and raise the dot duration in 10% steps (from 100 ms) until motion over the path first appears (SOA = duration
+    + 5 ms field). <b>Variable path</b>: D fixed at 3°, arc length L = 3/4/6/9/12° → SOA ≈ 100 + 41·L. <b>No-path</b> control: blank field,
+    dots 2⁄3–9° apart → SOA ≈ 170 + 32·D (Korte's law). <b>Fixed path</b> L = 6°, terminal distance D = 6/4/2/2⁄3/0° → SOA ≈ 166 + 540/D,
+    rising sharply as the path closes into a circle (motion of the dot into itself; the closed circle adds 200 ms blank fields). The gray
+    path is a real flashed stimulus and is drawn; the perceived moving dot is the observer's percept and is not.
+  </div>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const PXDEG = 32;                // px per degree
+const MIDX = W/2, CHORDY = 300;
+const DOTR = 0.42*PXDEG/2;
+
+const st = {
+  cond:'varL', L:6, D:3, con:0.35, isi:5,
+  dotDur:100, thresh:null
+};
+
+// half-angle u solving sin(u)/u = ratio  (ratio = D/L in (0,1))
+function solveHalf(ratio){
+  let lo=1e-4, hi=Math.PI;
+  for(let i=0;i<60;i++){ const m=(lo+hi)/2; (Math.sin(m)/m > ratio) ? lo=m : hi=m; }
+  return (lo+hi)/2;
+}
+// arc geometry from chord D and arc length L (px)
+function arc(Dpx, Lpx){
+  if (Dpx < 0.5) { const R = Lpx/(2*Math.PI); return { kind:'circle', cx:MIDX, cy:CHORDY-R, R }; }
+  const ratio = Dpx/Lpx;
+  if (ratio >= 0.999) return { kind:'line' };
+  const u = solveHalf(ratio), R = Lpx/(2*u), Cy = -R*Math.cos(u);
+  const pts=[]; const N=64;
+  for(let i=0;i<=N;i++){ const t=-u + 2*u*(i/N); pts.push([MIDX + R*Math.sin(t), CHORDY - (Cy + R*Math.cos(t))]); }
+  return { kind:'arc', pts };
+}
+function drawPath(){
+  if (st.cond === 'noPath') return;
+  const Lpx = (st.cond==='varL' ? st.L : 6) * PXDEG;
+  const Dpx = getD()*PXDEG;
+  const g = arc(Dpx, Lpx);
+  ctx.strokeStyle = `rgba(120,120,120,${st.con})`;
+  ctx.lineWidth = 0.42*PXDEG; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  if (g.kind==='line'){ ctx.moveTo(MIDX-Dpx/2,CHORDY); ctx.lineTo(MIDX+Dpx/2,CHORDY); }
+  else if (g.kind==='circle'){ ctx.arc(g.cx,g.cy,g.R,0,2*Math.PI); }
+  else { g.pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); }
+  ctx.stroke();
+}
+function getD(){ return st.cond==='varL' ? 3 : st.D; }
+function dotXs(){ const Dpx=getD()*PXDEG; return [MIDX-Dpx/2, MIDX+Dpx/2]; }
+
+// timeline: dotA (dur), path field (isi), dotB (dur), path field (isi) ; SOA = dur + isi
+// closed circle (D=0): add 200 ms blank before/after each path field
+let clock = 0, lastTs = 0;
+function drawFrame(){
+  ctx.fillStyle = '#ededed'; ctx.fillRect(0,0,W,H);   // white ground
+  const d = st.dotDur, isi = st.isi;
+  const closed = (st.cond==='fixL' && getD()<0.5);
+  const blank = closed ? 200 : 0;
+  const seg = [['A',d],['b',blank],['P',isi],['b',blank],['B',d],['b',blank],['P',isi],['b',blank]];
+  const cycle = seg.reduce((a,[,x])=>a+x,0);
+  let t = clock % cycle, cur='b';
+  for (const [name,len] of seg){ if (t < len){ cur=name; break; } t -= len; }
+
+  const xs = dotXs();
+  if (cur==='P') drawPath();
+  ctx.fillStyle = '#111';
+  if (cur==='A'){ ctx.beginPath(); ctx.arc(xs[0],CHORDY,DOTR,0,2*Math.PI); ctx.fill(); }
+  if (cur==='B'){ ctx.beginPath(); ctx.arc(xs[1],CHORDY,DOTR,0,2*Math.PI); ctx.fill(); }
+
+  // fixation tick at path centre
+  ctx.strokeStyle='#bbb'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(MIDX-4,CHORDY-40); ctx.lineTo(MIDX+4,CHORDY-40); ctx.stroke();
+
+  document.getElementById('soaVal').textContent = Math.round(st.dotDur + st.isi);
+  document.getElementById('durVal').textContent = Math.round(st.dotDur);
+}
+function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ---- readouts ----
+function pathLen(){ return st.cond==='varL' ? st.L : (st.cond==='fixL' ? 6 : getD()); }
+function predicted(){
+  if (st.cond==='varL') return Math.round(100 + 41*st.L);
+  if (st.cond==='noPath') return Math.round(170 + 32*st.D);
+  return getD()<0.5 ? 648 : Math.round(166 + 540/getD());
+}
+function refresh(){
+  document.getElementById('lLbl').textContent = pathLen().toFixed(1)+'°';
+  document.getElementById('dLbl').textContent = getD().toFixed(2).replace(/\.00$/,'.0')+'°';
+  document.getElementById('predLbl').textContent = predicted()+' ms';
+}
+
+// ---- staircase ----
+function clampDur(){ st.dotDur = Math.max(60, Math.min(1200, st.dotDur)); }
+document.getElementById('down').addEventListener('click', ()=>{ st.dotDur/=1.1; clampDur(); });
+document.getElementById('up').addEventListener('click',   ()=>{ st.dotDur*=1.1; clampDur(); });
+document.getElementById('mark').addEventListener('click', ()=>{
+  st.thresh = st.dotDur + st.isi;
+  document.getElementById('threshLbl').textContent = Math.round(st.thresh)+' ms';
+});
+
+// ---- logging ----
+const log=[];
+document.getElementById('record').addEventListener('click', ()=>{
+  log.push({ condition:st.cond, L_deg:pathLen(), D_deg:+getD().toFixed(3),
+             pathFieldMs:st.isi, thresholdSOA: st.thresh!=null?Math.round(st.thresh):'',
+             predictedSOA: predicted() });
+  document.getElementById('nLog').textContent = log.length;
+  st.thresh=null; document.getElementById('threshLbl').textContent='—';
+});
+document.getElementById('export').addEventListener('click', ()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='shepard_zare_1983.csv'; a.click();
+});
+
+// ---- experimenter controls ----
+function seg(id, fn){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+function applyCondUI(){
+  document.getElementById('ctlL').classList.toggle('dim', st.cond!=='varL');
+  document.getElementById('ctlD').classList.toggle('dim', st.cond==='varL');
+  refresh();
+}
+seg('cond', v=>{ st.cond=v; applyCondUI(); });
+seg('L', v=>{ st.L=+v; refresh(); });
+seg('D', v=>{ st.D=+v; refresh(); });
+document.getElementById('con').addEventListener('input', e=>{ st.con=+e.target.value; document.getElementById('conLbl').textContent=st.con.toFixed(2); });
+document.getElementById('isi').addEventListener('input', e=>{ st.isi=+e.target.value; document.getElementById('isiLbl').textContent=st.isi; });
+applyCondUI();
+</script>
+</body>
+</html>

@@ -2,84 +2,229 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Shepard & Judd (1976) — 3D Block Rotation AM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shepard &amp; Judd (1976) — Perceptual illusion of rotation of 3-D objects</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#111; display:block; }
-.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
-input[type=range] { width:160px; accent-color:#888; }
-button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
+  canvas { background:#f2f2f2; display:block; border-radius:3px; }
+
+  .participant { margin-top:12px; width:720px; max-width:96vw; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .fdBig { text-align:center; margin-top:8px; font-size:20px; color:#e8e8e8; font-variant-numeric:tabular-nums; }
+  .fdBig small { font-size:12px; color:#777; }
+  .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .prow .lab { font-size:11px; color:#777; margin-right:4px; }
+  .rate button { min-width:150px; }
+
+  .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  .ctrl input[type=range] { width:150px; accent-color:#8a93b8; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts b { color:#cfcfcf; font-weight:600; }
+  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
 </style>
 </head>
 <body>
-<canvas id="c" width="540" height="360"></canvas>
-<div class="controls">
-  <button id="btn">Pause</button>
-  <label>SOA: <span id="lbl">400</span> ms &nbsp;<input type="range" id="soa" min="50" max="1000" value="400" step="50"></label>
-  <label>Rotation: <span id="rotLbl">90</span>° &nbsp;<input type="range" id="rot" min="30" max="180" value="90" step="30"></label>
-</div>
-<div class="meta">Shepard &amp; Judd (1976). Wireframe cube in two orientations — apparent 3D rotation is perceived, not 2D path. Minimum SOA scales with angular disparity.</div>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Shepard &amp; Judd (1976) — perceptual illusion of rotation of 3-D objects</h1>
+  <div class="sub">Two perspective views of a ten-cube object alternate (no gap). Below a critical rate it looks like one object
+    rocking rigidly; above it, motion becomes nonrigid, then mere flicker.</div>
+
+  <canvas id="c" width="560" height="420"></canvas>
+
+  <div class="participant">
+    <div class="instr">
+      Shorten each field's duration until the <b>rigid</b> rocking breaks down. Rate what you see:
+      <b>1</b> rigid rotation · <b>2</b> nonrigid/jumbling · <b>3</b> flicker, no motion.
+    </div>
+    <div class="fdBig">Field duration <span id="fdVal">300</span> <small>ms each (no ISI · cycle = 2 fields)</small></div>
+    <div class="prow">
+      <div><span class="lab">rate</span>
+        <button id="down">◀ faster (−)</button><button id="up">slower (+) ▶</button></div>
+      <div class="rate" id="rate">
+        <button data-g="1">1 rigid</button><button data-g="2">2 nonrigid</button><button data-g="3">3 flicker</button>
+      </div>
+    </div>
+    <div class="prow">
+      <button id="mark">Mark breakdown (1→2) threshold</button>
+      <button id="record">Record</button><button id="export">Export CSV</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Rotation type
+        <div class="seg" id="type">
+          <button data-v="depth" class="on">In depth (about vertical axis)</button>
+          <button data-v="plane">In picture plane</button>
+        </div>
+      </div>
+      <div class="ctrl">Angular difference
+        <div class="seg" id="ang">
+          <button data-v="20">20°</button><button data-v="60" class="on">60°</button>
+          <button data-v="100">100°</button><button data-v="140">140°</button><button data-v="180">180°</button>
+        </div>
+      </div>
+      <div class="ctrl">Field duration: <span class="v" id="fdLbl">300</span> ms
+        <input type="range" id="fd" min="40" max="500" step="10" value="300"></div>
+      <div class="ctrl">Yellow top cube
+        <div class="seg" id="ycube"><button data-v="on" class="on">on</button><button data-v="off">off</button></div>
+      </div>
+    </div>
+
+    <div class="readouts">
+      <div>Angular difference: <b id="angLbl">60°</b></div>
+      <div>Paper's breakdown field duration: <b id="predLbl">—</b></div>
+      <div>Threshold marked: <b id="threshLbl">—</b></div>
+      <div>Trials: <b id="nLog">0</b></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    Faithful reconstruction of Shepard, R. N. &amp; Judd, S. A. (1976), <i>Science</i> 191, 952–954. Two perspective views of a
+    Shepard–Metzler ten-cube object (top cube coloured yellow to disambiguate) alternate continuously in the same location — the
+    termination of one field is the onset of the next (no interstimulus interval). The two views differ by an angular difference of
+    20/60/100/140/180°, either as a rotation <b>in depth</b> about the object's vertical axis or as a rotation <b>in the picture plane</b>.
+    Observers rate the motion 1 (rigid) / 2 (nonrigid) / 3 (flicker); the breakdown of rigid rotation is the field duration where the
+    rating crosses 1.5. That threshold rises linearly with angular difference at nearly the same slope for both conditions
+    (picture-plane 1.10 ms/° + 121 ms; depth 0.97 ms/° + 112 ms). The smooth rigid rotation through intermediate orientations is the
+    observer's <b>percept</b> — only the two real alternating views are drawn.
+  </div>
+
 <script>
-const c=document.getElementById('c');
-const ctx=c.getContext('2d');
-const CX=c.width/2, CY=c.height/2;
-let soaMs=400, running=true, phase='f1', phaseStart=performance.now();
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const CX = W/2, CY = H/2 - 6;
+const UNIT = 30, CAM = 15;       // px per cube-unit, camera distance (units)
+const RX = -22*Math.PI/180, RY = 30*Math.PI/180;   // fixed viewing tilt
 
-// Project 3D point to 2D with simple perspective
-function project([x,y,z],camZ=5) {
-  const scale=200/(camZ-z);
-  return [CX+x*scale, CY-y*scale];
-}
+// Shepard–Metzler ten-cube figure (unit-cube base corners); last = top (yellow)
+const CUBES = [
+  [0,0,0],[0,1,0],[0,2,0], [1,2,0],[2,2,0], [2,2,1],[2,2,2], [2,3,2],[2,4,2],[2,5,2]
+];
+// centroid of cube centres
+const CEN = (()=>{ let s=[0,0,0]; CUBES.forEach(b=>{ s[0]+=b[0]+0.5; s[1]+=b[1]+0.5; s[2]+=b[2]+0.5; });
+  return s.map(v=>v/CUBES.length); })();
+const CUBE_FACES = [[0,1,2,3],[4,5,6,7],[0,3,7,4],[1,2,6,5],[0,1,5,4],[3,2,6,7]];
+function cubeVerts(b){ const o=[]; for(const dz of [0,1]) for(const dy of [0,1]) for(const dx of [0,1]) o.push([b[0]+dx,b[1]+dy,b[2]+dz]);
+  // reorder to standard 0..7: 0(0,0,0)1(1,0,0)2(1,1,0)3(0,1,0)4(0,0,1)5(1,0,1)6(1,1,1)7(0,1,1)
+  return [[b[0],b[1],b[2]],[b[0]+1,b[1],b[2]],[b[0]+1,b[1]+1,b[2]],[b[0],b[1]+1,b[2]],
+          [b[0],b[1],b[2]+1],[b[0]+1,b[1],b[2]+1],[b[0]+1,b[1]+1,b[2]+1],[b[0],b[1]+1,b[2]+1]]; }
 
-// Cube vertices
-function cubeVerts(rotY) {
-  const s=Math.sin(rotY), cos_=Math.cos(rotY);
-  const pts=[];
-  for(const sx of[-1,1]) for(const sy of[-1,1]) for(const sz of[-1,1])
-    pts.push([sx*cos_-sz*s, sy, sx*s+sz*cos_].map(v=>v*0.6));
-  return pts;
-}
+function rotY(v,a){ const c=Math.cos(a),s=Math.sin(a); return [c*v[0]+s*v[2], v[1], -s*v[0]+c*v[2]]; }
+function rotX(v,a){ const c=Math.cos(a),s=Math.sin(a); return [v[0], c*v[1]-s*v[2], s*v[1]+c*v[2]]; }
+function project(v){ const p = CAM/(CAM - v[2]); return { x: CX + v[0]*UNIT*p, y: CY - v[1]*UNIT*p, z: v[2] }; }
 
-// Cube edges by vertex index pairs
-const EDGES=[];
-// 8 vertices: index = (xi*4+yi*2+zi) where xi,yi,zi in {0,1}
-// Connect vertices differing by exactly one coordinate
-for(let a=0;a<8;a++) for(let b=a+1;b<8;b++){
-  const diff=(a^b); if(diff===1||diff===2||diff===4) EDGES.push([a,b]);
-}
-
-function drawCube(rotY, alpha=1) {
-  const verts=cubeVerts(rotY);
-  const proj=verts.map(v=>project(v));
-  ctx.strokeStyle=`rgba(200,220,255,${alpha})`;
-  ctx.lineWidth=1.5;
-  for(const [a,b] of EDGES){
+// render the object at object-rotation objY (about vertical) and image-rotation imgRot (picture plane)
+function renderView(objY, imgRot) {
+  const faces = [];
+  for (let ci=0; ci<CUBES.length; ci++) {
+    const vs = cubeVerts(CUBES[ci]).map(v=>{
+      let p = [v[0]-CEN[0], v[1]-CEN[1], v[2]-CEN[2]];
+      p = rotY(p, objY); p = rotY(p, RY); p = rotX(p, RX);
+      const pr = project(p);
+      if (imgRot) { const dx=pr.x-CX, dy=pr.y-CY, ca=Math.cos(imgRot), sa=Math.sin(imgRot);
+        return { x: CX+dx*ca-dy*sa, y: CY+dx*sa+dy*ca, z: pr.z }; }
+      return pr;
+    });
+    const wz = vs.reduce((a,b)=>a+b.z,0)/vs.length;   // world z after obj rot only (approx via project z)
+    for (const f of CUBE_FACES) {
+      const quad = f.map(i=>vs[i]);
+      const zavg = f.reduce((a,i)=>a+vs[i].z,0)/4;
+      faces.push({ quad, z:zavg, top: ci===CUBES.length-1 });
+    }
+  }
+  faces.sort((a,b)=>a.z-b.z);   // far (small z) first
+  for (const fc of faces) {
     ctx.beginPath();
-    ctx.moveTo(...proj[a]);
-    ctx.lineTo(...proj[b]);
-    ctx.stroke();
+    fc.quad.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.closePath();
+    ctx.fillStyle = (fc.top && st.ycube) ? '#f2d13c' : '#d8d8dc';
+    ctx.fill();
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 1.2; ctx.stroke();
   }
 }
 
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
-  const disparity=(+document.getElementById('rot').value)*Math.PI/180;
-  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
+const st = { type:'depth', ang:60, fd:300, ycube:true, rating:null, thresh:null };
 
-  ctx.fillStyle='#111'; ctx.fillRect(0,0,c.width,c.height);
-  if(phase==='f1') drawCube(0);
-  else if(phase==='f2') drawCube(disparity);
-  requestAnimationFrame(tick);
+// timeline: view A [0,fd), view B [fd,2fd) ; no ISI
+let clock = 0, lastTs = 0;
+function drawFrame() {
+  ctx.fillStyle = '#f2f2f2'; ctx.fillRect(0,0,W,H);
+  const cycle = 2*st.fd;
+  const t = clock % cycle;
+  const V = st.ang*Math.PI/180;
+  const showB = t >= st.fd;
+  if (!showB) renderView(0, 0);
+  else if (st.type==='depth') renderView(V, 0);
+  else renderView(0, V);
+  document.getElementById('fdVal').textContent = Math.round(st.fd);
+}
+function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ---- readouts ----
+function predicted(){ return st.type==='depth' ? Math.round(112 + 0.97*st.ang) : Math.round(121 + 1.10*st.ang); }
+function refresh(){
+  document.getElementById('angLbl').textContent = st.ang+'°';
+  document.getElementById('predLbl').textContent = predicted()+' ms';
 }
 
-document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
-document.getElementById('rot').addEventListener('input',e=>{document.getElementById('rotLbl').textContent=e.target.value;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+// ---- field-duration + rating ----
+function clampFd(){ st.fd = Math.max(40, Math.min(500, st.fd)); document.getElementById('fd').value=st.fd; document.getElementById('fdLbl').textContent=st.fd; }
+document.getElementById('down').addEventListener('click', ()=>{ st.fd -= 20; clampFd(); });
+document.getElementById('up').addEventListener('click',   ()=>{ st.fd += 20; clampFd(); });
+function setRate(g){ document.querySelectorAll('#rate button').forEach(b=>b.classList.toggle('on', +b.dataset.g===g)); }
+document.querySelectorAll('#rate button').forEach(b=>b.addEventListener('click', ()=>{ st.rating=+b.dataset.g; setRate(st.rating); }));
+document.getElementById('mark').addEventListener('click', ()=>{
+  st.thresh = st.fd; document.getElementById('threshLbl').textContent = st.fd+' ms';
+});
+
+// ---- logging ----
+const log=[];
+document.getElementById('record').addEventListener('click', ()=>{
+  log.push({ type:st.type, angleDeg:st.ang, fieldDurationMs:st.fd, rating: st.rating??'',
+             breakdownMs: st.thresh!=null?st.thresh:'', predictedMs: predicted() });
+  document.getElementById('nLog').textContent = log.length;
+  st.thresh=null; st.rating=null; setRate(null); document.getElementById('threshLbl').textContent='—';
+});
+document.getElementById('export').addEventListener('click', ()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='shepard_judd_1976.csv'; a.click();
+});
+
+// ---- experimenter controls ----
+function seg(id, fn){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fn(b.dataset.v);
+  }));
+}
+seg('type', v=>{ st.type=v; refresh(); });
+seg('ang', v=>{ st.ang=+v; refresh(); });
+seg('ycube', v=>st.ycube = v==='on');
+document.getElementById('fd').addEventListener('input', e=>{ st.fd=+e.target.value; document.getElementById('fdLbl').textContent=st.fd; });
+refresh();
 </script>
 </body>
 </html>
