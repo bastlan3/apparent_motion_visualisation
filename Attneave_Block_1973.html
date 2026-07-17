@@ -96,7 +96,7 @@
   <div class="meta">
     Faithful reconstruction of <b>Experiment II</b> of Attneave, F. &amp; Block, G. (1973), <i>Perception &amp; Psychophysics</i> 13(2),
     301–307. Two 2-mm light apertures flash alternately (50 ms each) in a clear central alley; the surrounding grid is either a flat
-    frontal grid (control) or a perspective grid depicting a plane receding ~70° into depth (experimental). The lights keep the
+    frontal grid (control) or a perspective grid depicting a plane receding into depth along the horizontal axis that separates the two lights (experimental). The lights keep the
     <b>same retinal separation</b> (4 cm) in both — only the pictorial depth changes — yet the perspective display raises the minimum
     SOA for apparent movement, showing that Korte's law operates on <i>phenomenal 3-D</i> separation, not retinal distance. Threshold
     found by the ascending method of limits. Experiments I (real depth via a diagonal light array) and III (varied viewing distance)
@@ -118,33 +118,36 @@ const st = {
   soa:80, thresh:null
 };
 
-// perspective plane point: u across [0,1], t vertical (0 = top/far, 1 = bottom/near)
+// perspective plane point: u = horizontal DEPTH axis (0 near-left, 1 far-right — the axis the
+// lights are separated along), t = vertical cross axis. Depth recedes along x, not y.
 function pointAt(u, t) {
+  const fullH = GYBOT - GYTOP;
   if (st.ctx === 'control' || !st.showGrid) {
-    return { x: GX0 + u*GWB, y: GYTOP + t*(GYBOT-GYTOP) };
+    return { x: GX0 + u*GWB, y: CY + (t-0.5)*fullH };
   }
   const p = st.p;
-  const depth = (1+3*p) + (1 - (1+3*p))*t;   // far(top)=1+3p, near(bottom)=1
-  const invFar = 1/(1+3*p), invNear = 1;
-  const yFrac = (1/depth - invFar) / (invNear - invFar);
-  const y = GYTOP + yFrac*(GYBOT-GYTOP);
-  const width = GWB / depth;
-  return { x: CX + (u-0.5)*width, y };
+  const depth = 1 + 3*p*u;                     // near (left) = 1, far (right) = 1+3p
+  const invFar = 1/(1+3*p);
+  const xFrac = (1 - 1/depth) / (1 - invFar);  // 0..1, columns bunch toward the far side
+  const halfH = (fullH/2) / depth;             // plane shrinks vertically toward the far side
+  return { x: GX0 + xFrac*GWB, y: CY + (t-0.5)*2*halfH };
 }
 
 function drawGrid() {
   if (!st.showGrid) return;
   ctx.strokeStyle = '#8a2f2f'; ctx.lineWidth = 1;      // faint red (fluorescent-thread look)
   ctx.globalAlpha = 0.55;
-  const Nv = 14, Nh = 11;
-  for (let k=0;k<=Nv;k++){
-    const u=k/Nv; ctx.beginPath();
-    for (let j=0;j<=40;j++){ const pt=pointAt(u, j/40); j?ctx.lineTo(pt.x,pt.y):ctx.moveTo(pt.x,pt.y); }
-    ctx.stroke();
-  }
-  for (let j=0;j<=Nh;j++){
-    const t=j/Nh; const a=pointAt(0,t), b=pointAt(1,t);
+  const Nd = 14, Nc = 11;
+  // depth lines (vertical, at constant depth) — bunch up toward the far side
+  for (let k=0;k<=Nd;k++){
+    const u=k/Nd, a=pointAt(u,0), b=pointAt(u,1);
     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  }
+  // cross lines (running into depth along x) — converge toward the far side
+  for (let j=0;j<=Nc;j++){
+    const t=j/Nc; ctx.beginPath();
+    for (let k=0;k<=40;k++){ const pt=pointAt(k/40, t); k?ctx.lineTo(pt.x,pt.y):ctx.moveTo(pt.x,pt.y); }
+    ctx.stroke();
   }
   ctx.globalAlpha = 1;
 }
