@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Navon (1976) — Figural identity and ambiguous apparent motion</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:740px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  .participant { margin-top:12px; width:740px; max-width:96vw; text-align:center; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; }
+  .prow { margin-top:10px; display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .status { margin-top:8px; font-size:12px; color:#8a93b8; min-height:16px; }
+  .panel { margin-top:20px; width:740px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  button.key { border-color:#5a64a8; }
+  .meta { margin-top:20px; width:740px; max-width:96vw; font-size:10.5px; color:#666; line-height:1.6; }
+  .meta table { border-collapse:collapse; margin:8px 0; width:100%; }
+  .meta td, .meta th { border-top:1px solid #222; padding:3px 6px; text-align:left; vertical-align:top; }
+  .meta th { color:#888; font-weight:600; }
+  .a { color:#c9a15a; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Navon (1976) — Ambiguous apparent-motion episodes made of letters, Hebrew letters or line segments</h1>
+  <div class="sub">Each episode is a cycle of 2 or 6 brief arrays of elements, repeated. The observer fixates the centre dot,
+    watches as long as the first interpretation holds, and presses a key when it switches to another.</div>
+
+  <canvas id="c" width="560" height="560"></canvas>
+
+  <div class="participant">
+    <div class="instr" id="instr">Press <b>Start trial</b> (the experimenter's key). A 1-s warning beep sounds with the fixation dot on; then the episode runs.
+      Attend to your immediate impression and keep fixating the dot. Watch for as long as you can maintain your first steady interpretation, and
+      press <b>Space</b> (or the button) as soon as it switches to a second one. Pressing ends the display at once; otherwise it ends after 10.7 s.</div>
+    <div class="prow">
+      <button id="start">Start trial</button>
+      <button id="resp" class="key">Interpretation switched (Space)</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Stage
+        <div class="seg" id="stage">
+          <button data-v="test" class="on">Test episode</button>
+          <button data-v="demo">Preliminary demonstrations / pretest</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid" id="testCtl" style="margin-top:12px">
+      <div class="ctrl">Episode
+        <div class="seg" id="ep"></div>
+      </div>
+      <div class="ctrl">Vocabulary
+        <div class="seg" id="vocab">
+          <button data-v="english" class="on">English letters</button>
+          <button data-v="hebrew">Hebrew letters</button>
+          <button data-v="lines">Line segments</button>
+        </div>
+      </div>
+      <div class="ctrl">Arrangement (episodes 4–9)
+        <div class="seg" id="arr">
+          <button data-v="ferris" class="on">Ferris wheel (upright)</button>
+          <button data-v="roulette">Roulette (radially erect)</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid" id="demoCtl" style="margin-top:12px; display:none">
+      <div class="ctrl">Demonstration
+        <div class="seg" id="demo">
+          <button data-v="pretest" class="on">Letter-recognition pretest (150 ms flash)</button>
+          <button data-v="beta">Horizontal beta: E between Z and H locations</button>
+          <button data-v="circ">Counterclockwise circular motion of T</button>
+        </div>
+      </div>
+      <div class="ctrl" id="cueWrap">Pretest position
+        <div class="seg" id="cue">
+          <button data-v="0" class="on">Unannounced (trials 1–3)</button>
+          <button data-v="1">Announced beforehand (trials 4–6)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <b>Reconstruction of Navon, D. (1976), <i>J. Exp. Psychol.: Human Perception &amp; Performance</i> 2(1), 130–138.</b>
+    Only the displays and the observer's response key are reproduced; no motion path, interpretation or result is drawn. Observers saw each
+    episode once (naive, 26 undergraduates; 8 unable to see ordinary beta motion in the pretest were excluded from analysis).
+    <table>
+      <tr><th>Parameter</th><th>Paper value</th><th>Page</th></tr>
+      <tr><td>Array duration</td><td>150 ms (about; plotting took 1–3 ms)</td><td>p.131, 134</td></tr>
+      <tr><td>Interarray and intercycle blank</td><td>30 ms (about); screen blank, fixation dot stays</td><td>p.131, 134</td></tr>
+      <tr><td>Cycle</td><td>2 arrays (episodes 1–6) or 6 arrays (episodes 7–9), repeated</td><td>p.131–132</td></tr>
+      <tr><td>Episode length</td><td>until key press (immediate termination) or 10.7 s</td><td>p.134</td></tr>
+      <tr><td>Warning</td><td>1-s beep before each trial; small dot visible from beep onset until display end; trial starts at beep offset</td><td>p.133</td></tr>
+      <tr><td>Element size</td><td>about 4 mm = 0°30′ (longer side)</td><td>p.133</td></tr>
+      <tr><td>Circle through the 6 elements (ep. 4–9)</td><td>about 60 mm; whole field about 7°40′</td><td>p.133</td></tr>
+      <tr><td>Viewing distance</td><td>about 45 cm; dim booth lit enough to read/write</td><td>p.133</td></tr>
+      <tr><td>Display</td><td>Tektronix oscilloscope, phosphor decay 0.9 ms; brightness enough for perfect recognition</td><td>p.133</td></tr>
+      <tr><td>Diamond (ep. 5, 8, 9)</td><td>about 3 times the average letter size</td><td>p.131–132</td></tr>
+      <tr><td>Cha-cha-cha (ep. 4–6)</td><td>array 2 locations lie halfway (30°) between neighbouring array 1 locations on the circle</td><td>p.131</td></tr>
+      <tr><td>Around the clock (ep. 7–9)</td><td>same 6 locations in every array; elements shifted one location per array (Fig. 3)</td><td>p.131–132</td></tr>
+      <tr><td>Ferris wheel / roulette</td><td>elements upright / each erect with respect to the radius to the centre</td><td>p.132–133, Fig. 4</td></tr>
+      <tr><td>Response</td><td>key press at the switch from first to second interpretation; afterwards verbal report (Erector-set Ferris wheel to demonstrate)</td><td>p.133–134</td></tr>
+      <tr><td>Pretest</td><td>6 letter-recognition trials (150 ms, one upright English letter at one array-1 location of ep. 4; position unannounced in first 3, announced in last 3); then 150-ms array 1 of ep. 4 to be drawn; then beta demonstration (E between Z and H locations) and counterclockwise circular demonstration (T through the 6 locations)</td><td>p.134</td></tr>
+      <tr><td>Design</td><td>9 episodes in 3 blocks (1–3, 4–6, 7–9); vocabulary x group by 3x3 Graeco-Latin square; one arrangement per subject. Not enforced here: pick any episode freely.</td><td>p.133</td></tr>
+    </table>
+    <span class="a">Not specified in the paper (assumptions here):</span>
+    <span class="a">element positions for episodes 1–3 (corners of a square, set at ±3.0° from centre); diamond exact shape (square rotated 45°, 1.5° tall); the exact line-segment and Hebrew glyph shapes
+    (drawn from Fig. 2 as closely as possible; Hebrew uses nearest Unicode letters); letter font and stroke weight; display colour (white on black) and luminance;
+    fixation dot size (about 0.1°) and its position (centre); beep pitch (880 Hz); timing and repeat of the preliminary demonstrations (150 ms / 30 ms assumed, run until key or 10.7 s);
+    pretest letters and locations (random each time). The paper notes array 1 of the one-diamond around-the-clock episode had a slight plotting defect (bottom edge trimmed, drawn at the top); it is not reproduced.
+    Rendering is at the browser refresh rate (at 60 Hz, 150 ms is about 9 frames and 30 ms about 2).</span>
+  </div>
+
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+const W = c.width, H = c.height, CX = W/2, CY = H/2;
+const PX = 560 / 9;                    // px per degree (field about 7.67 deg fits with margin)
+const R = 3.83 * PX;                   // 60 mm circle at 45 cm = 7.67 deg diameter
+const EL = 0.5 * PX;                   // element long side 0.5 deg
+const ARRAY_MS = 150, ISI_MS = 30, MAX_MS = 10700, BEEP_MS = 1000;
+
+const E = ['E','Z','M','T','L','H','D'];
+const GLYPH = {
+  english: {E:'E',Z:'Z',M:'M',T:'T',L:'L',H:'H'},
+  hebrew:  {E:'ש',Z:'ד',M:'ם',T:'ר',L:'ה',H:'ט'},
+};
+// line segments, as [angle of stroke in degrees from horizontal, length factor] (Fig. 2)
+const LINES = { E:[0,1], Z:[90,1], M:[-55,1], T:[55,1], L:[25,1], H:[-35,1] };
+
+const EPN = ['Crossing slides','Vertical seesaw','Horizontal seesaw','Cha-cha-cha: different elements','Cha-cha-cha: one diamond',
+ 'Cha-cha-cha: identical element','Around the clock: different elements','Around the clock: five diamonds','Around the clock: one diamond'];
+
+// ---- arrays: each element {id, x, y (deg, +y up), ang (position angle for roulette, or null)} ----
+const D = 3.0;
+function pos(a, r) { const t = a*Math.PI/180; return [r*Math.cos(t), r*Math.sin(t)]; }
+function hexEl(id, ang) { const p = pos(ang, 3.83); return {id, x:p[0], y:p[1], ang}; }
+function sq(id, sx, sy) { return {id, x:sx*D, y:sy*D, ang:null}; }
+
+function episodeArrays(n) {
+  if (n===1) return [[sq('Z',-1,1), sq('E',1,1)], [sq('E',-1,-1), sq('Z',1,-1)]];
+  if (n===2) return [[sq('Z',-1,1), sq('E',1,-1)], [sq('Z',1,1), sq('E',-1,-1)]];
+  if (n===3) return [[sq('Z',-1,1), sq('E',1,-1)], [sq('E',1,1), sq('Z',-1,-1)]];
+  if (n>=4 && n<=6) {
+    const base = {T:90, M:30, Z:-30, E:-90, H:-150, L:150};
+    const ids = Object.keys(base);
+    const mk = off => ids.map(k => hexEl(n===5 && k==='T' ? 'D' : (n===6 ? 'T' : k), base[k]+off));
+    return [mk(0), mk(30)];
+  }
+  // around the clock: slot order (counterclockwise from upper left)
+  const slots = [150,210,270,330,30,90];
+  const arrs = [];
+  for (let k=0; k<6; k++) {
+    const a = [];
+    for (let j=0; j<6; j++) {
+      let id;
+      if (n===7 || n===9) {
+        const first = ['T','L','H','E','Z','M'];
+        id = first[(j-k+12)%6];
+        if (n===9 && id==='H') id = 'D';
+      } else {
+        id = ((j-k+12)%6 === 2) ? 'E' : 'D';
+      }
+      a.push(hexEl(id, slots[j]));
+    }
+    arrs.push(a);
+  }
+  return arrs;
+}
+
+// ---- drawing ----
+const FG = '#f2f2f2';
+function drawElement(el, vocab, roulette) {
+  const x = CX + el.x*PX, y = CY - el.y*PX;
+  const rot = (roulette && el.ang!==null) ? (el.ang-90)*Math.PI/180 : 0;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-rot);
+  ctx.strokeStyle = FG; ctx.fillStyle = FG; ctx.lineWidth = 2; ctx.lineCap = 'butt';
+  if (el.id === 'D') {
+    const h = 3*EL/2;                      // 3x the letter size (assumption)
+    ctx.beginPath(); ctx.moveTo(0,-h); ctx.lineTo(h*0.62,0); ctx.lineTo(0,h); ctx.lineTo(-h*0.62,0); ctx.closePath(); ctx.stroke();
+  } else if (vocab === 'lines') {
+    const [a,f] = LINES[el.id], t = a*Math.PI/180, l = EL*f/2;
+    ctx.beginPath(); ctx.moveTo(-l*Math.cos(t), l*Math.sin(t)); ctx.lineTo(l*Math.cos(t), -l*Math.sin(t)); ctx.stroke();
+  } else {
+    ctx.font = 'bold ' + Math.round(EL*1.28) + 'px Helvetica, Arial, "Noto Sans Hebrew", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(GLYPH[vocab][el.id], 0, 1);
+  }
+  ctx.restore();
+}
+function drawDot() { ctx.fillStyle = '#d8d8d8'; ctx.beginPath(); ctx.arc(CX, CY, 3, 0, 7); ctx.fill(); }
+function clear() { ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H); }
+
+// ---- state ----
+const st = { stage:'test', ep:4, vocab:'english', arr:'ferris', demo:'pretest', cue:0 };
+let run = null, raf = 0, audio = null;
+
+function beep() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = 880; g.gain.value = 0.05; o.connect(g); g.connect(audio.destination);
+    o.start(); o.stop(audio.currentTime + BEEP_MS/1000);
+  } catch(e) {}
+}
+
+function framesFor() {
+  const roulette = st.arr === 'roulette';
+  if (st.stage === 'test') {
+    const arrs = episodeArrays(st.ep);
+    return { arrays: arrs, vocab: st.vocab, roulette: roulette && st.ep>=4, label:'Episode ' + st.ep + ': ' + EPN[st.ep-1] };
+  }
+  const slots4 = episodeArrays(4)[0];
+  if (st.demo === 'beta') {
+    const Zp = slots4.find(e=>e.id==='Z'), Hp = slots4.find(e=>e.id==='H');
+    return { arrays: [[{id:'E',x:Zp.x,y:Zp.y,ang:null}], [{id:'E',x:Hp.x,y:Hp.y,ang:null}]], vocab:'english', roulette:false, label:'Beta demonstration' };
+  }
+  if (st.demo === 'circ') {
+    const ccw = [150,210,270,330,30,90];
+    return { arrays: ccw.map(a => [hexEl('T', a)]), vocab:'english', roulette: roulette, label:'Circular demonstration' };
+  }
+  return null;
+}
+
+function start() {
+  cancelAnimationFrame(raf);
+  document.getElementById('status').textContent = '';
+  if (st.stage === 'demo' && st.demo === 'pretest') {
+    const letters = ['E','Z','M','T','L','H'];
+    const ar = slotsFor4();
+    const slot = ar[Math.floor(Math.random()*6)];
+    const cue = st.cue === 1;
+    run = { kind:'pretest', t0: performance.now(), el: {id: letters[Math.floor(Math.random()*6)], x:slot.x, y:slot.y, ang:null}, slotName: slot.name, cue };
+    if (cue) document.getElementById('status').textContent = 'Position announced: ' + slot.name;
+  } else {
+    run = Object.assign({ kind:'ep', t0: performance.now() }, framesFor());
+  }
+  beep();
+  raf = requestAnimationFrame(tick);
+}
+function slotsFor4() {
+  const names = {90:'top',30:'upper right',[-30]:'lower right',[-90]:'bottom',[-150]:'lower left',150:'upper left'};
+  return [90,30,-30,-90,-150,150].map(a => Object.assign(hexEl('E',a), {name:names[a]}));
+}
+
+function tick(now) {
+  if (!run) return;
+  const t = now - run.t0;
+  clear();
+  if (t < BEEP_MS) { drawDot(); raf = requestAnimationFrame(tick); return; }
+  const te = t - BEEP_MS;
+  if (run.kind === 'pretest') {
+    if (te < ARRAY_MS) { drawElement(run.el, 'english', false); drawDot(); raf = requestAnimationFrame(tick); return; }
+    endTrial('Pretest flash over. (Observer then reported the letter.)');
+    return;
+  }
+  if (te >= MAX_MS) { endTrial('Display terminated after 10.7 s with no key press.'); return; }
+  const period = ARRAY_MS + ISI_MS;
+  const idx = Math.floor(te / period) % run.arrays.length;
+  if ((te % period) < ARRAY_MS) run.arrays[idx].forEach(el => drawElement(el, run.vocab, run.roulette));
+  drawDot();
+  raf = requestAnimationFrame(tick);
+}
+
+function endTrial(msg) {
+  cancelAnimationFrame(raf); run = null; clear();
+  document.getElementById('status').textContent = msg + ' Describe what you saw (first interpretation, and second if any).';
+}
+function respond() {
+  if (run && run.kind === 'ep' && performance.now() - run.t0 > BEEP_MS)
+    endTrial('Key pressed: display terminated immediately.');
+}
+
+document.getElementById('start').onclick = start;
+document.getElementById('resp').onclick = respond;
+window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); respond(); } });
+
+// ---- controls ----
+function seg(id, key, num) {
+  document.querySelectorAll('#'+id+' button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#'+id+' button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); st[key] = num ? +b.dataset.v : b.dataset.v;
+    if (id==='stage') {
+      document.getElementById('testCtl').style.display = st.stage==='test' ? 'flex' : 'none';
+      document.getElementById('demoCtl').style.display = st.stage==='demo' ? 'flex' : 'none';
+    }
+    if (id==='demo') document.getElementById('cueWrap').style.display = st.demo==='pretest' ? 'flex' : 'none';
+    cancelAnimationFrame(raf); run = null; clear(); document.getElementById('status').textContent = '';
+  });
+}
+const epBox = document.getElementById('ep');
+for (let i=1; i<=9; i++) {
+  const b = document.createElement('button'); b.dataset.v = i; b.textContent = i; b.title = EPN[i-1];
+  if (i===4) b.classList.add('on'); epBox.appendChild(b);
+}
+['stage','ep','vocab','arr','demo','cue'].forEach(id => seg(id, id==='ep'?'ep':id==='stage'?'stage':id==='vocab'?'vocab':id==='arr'?'arr':id==='demo'?'demo':'cue', id==='ep'||id==='cue'));
+clear(); drawDot();
+</script>
+</body>
+</html>

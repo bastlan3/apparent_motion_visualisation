@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shiffrar & Freyd (1990) — Apparent motion of the human body</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:740px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  .participant, .panel, .meta { width:740px; max-width:96vw; }
+  .participant { margin-top:12px; text-align:center; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; }
+  .prow { margin-top:10px; display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .panel { margin-top:20px; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  select { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:4px 6px; border-radius:4px; font-size:12px; max-width:340px; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px; border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .meta { margin-top:20px; font-size:10.5px; color:#6a6a6a; line-height:1.6; }
+  .meta b { color:#8a8a8a; }
+  .meta table { border-collapse:collapse; margin:6px 0 10px; width:100%; }
+  .meta td, .meta th { border-top:1px solid #222; padding:3px 6px; text-align:left; vertical-align:top; font-weight:normal; }
+  .meta th { color:#8a8a8a; }
+  .tag { color:#c9a050; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Shiffrar &amp; Freyd (1990) — Apparent motion of the human body</h1>
+  <div class="sub">Two photographs (or drawings) alternate in a tachistoscope. Only the stimulus duration (SD), the blank interstimulus interval (ISI) and the stimulus pair were varied.
+    The observer watched for as long as desired and then marked which path(s) of motion, if any, had been experienced.</div>
+
+  <canvas id="c" width="740" height="440"></canvas>
+
+  <div class="participant">
+    <div class="instr">Watch the alternation for as long as you like, then indicate the path of motion you experienced
+      (answer sheet options: <b>A</b>, <b>B</b>, <b>A&amp;B</b> or <b>other</b>). Sometimes the path may be very clear,
+      sometimes you may see several paths, or no motion at all. <span style="color:#666">(Nothing is recorded or scored here.)</span></div>
+    <div class="prow" id="answers">
+      <button data-a="A">A</button><button data-a="B">B</button><button data-a="A&B">A&amp;B</button><button data-a="other">other</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Experiment / stimulus type
+        <select id="exp">
+          <option value="joint">Exp. 1 — body, joint-constraint pairs (5)</option>
+          <option value="solid">Exp. 1 — body, solidity-constraint pairs (10)</option>
+          <option value="clock">Exp. 2 — clock photographs (6 pairs)</option>
+          <option value="rect">Exp. 2 — line-drawn rectangles (4 pairs)</option>
+        </select></div>
+      <div class="ctrl">Stimulus pair
+        <select id="pair"></select></div>
+      <div class="ctrl">SOA level: <span class="v" id="lvlLbl"></span>
+        <input type="range" id="lvl" min="1" max="7" step="1" value="1" style="width:160px;accent-color:#8a93b8"></div>
+      <div class="ctrl">&nbsp;<div class="seg"><button id="pause">Pause</button><button id="restart">Restart</button></div></div>
+    </div>
+    <div class="ctrl" style="margin-top:12px">Current timing: <span class="v" id="timing"></span></div>
+  </div>
+
+  <div class="meta">
+    <b>Methods (Shiffrar &amp; Freyd, 1990, Psychological Science 1(4), 257–264).</b>
+    <b class="tag">Photographs cannot be reproduced here: the body pairs are simple drawn silhouettes in poses approximating those described (Fig. 1 shows only two example pairs); the actual stimuli were full-colour photographs of a model whose pose was stationary except for one or two limbs.</b>
+    The answer-sheet line drawings of the candidate paths are not reproduced (they would depict paths); only the response options are shown.
+    <table>
+      <tr><th>Parameter</th><th>Paper's value</th><th>Page</th></tr>
+      <tr><td>Apparatus</td><td>Gerbrands four-field tachistoscope controlled by IBM PC/XT; photos mounted on cards; observer's forehead on a visor</td><td>258</td></tr>
+      <tr><td>Exp. 1 observers</td><td>9 Cornell undergraduates, naive</td><td>258</td></tr>
+      <tr><td>Exp. 1 stimuli</td><td>15 pairs of full-colour photos of a model: 5 joint-constraint (arm about elbow; fingers about hand; whole hand about wrist; head about neck; whole arm about shoulder), 10 solidity-constraint (one or two limbs on two sides of a body part; e.g. foot about foot, fist about head/torso, hand about other hand, finger about finger, open hand about head/torso, arm about other arm, leg about other leg)</td><td>258</td></tr>
+      <tr><td>Exp. 1 SOA levels</td><td>7 levels. Shortest = 150 ms (SD 100 + ISI 50); each higher level adds 50 ms to SD and to ISI (SOA +100 ms); longest 750 ms for 13 of 15 pairs. Two pairs had different starts: head-about-neck joint pair SD 100 / ISI 20; one solidity pair (foot about the other) SD 150 / ISI 100; steps of 100 ms SOA (SD step 50 ms)</td><td>258</td></tr>
+      <tr><td>Exp. 1 order</td><td>Each pair seen at each of 7 SOAs in one session (~1 h); pair order randomized between subjects; 5 observers saw SOAs in increasing order, 4 in decreasing order</td><td>258, 260</td></tr>
+      <tr><td>Display cycle</td><td>Photos alternate; observer watches "as many cycles as desired". Blank during ISI (luminance, field and fixation <span class="tag">not specified</span>; assumed uniform grey)</td><td>258, 260</td></tr>
+      <tr><td>Response</td><td>Answer sheet with line drawing of the stimulus and two possible paths, "A" and "B", plus options "A", "B", "A&amp;B", "other"; 7 sheets per pair (one per SOA)</td><td>258, 260</td></tr>
+      <tr><td>Exp. 2 observers</td><td>10 University of Oregon students, naive</td><td>261</td></tr>
+      <tr><td>Exp. 2 stimuli</td><td>6 pairs of clock photographs (hands differing by 2, 3, 4 or 5 hours) and 4 pairs of line-drawn rectangles (large rectangle plus small rectangle at a different location in each card)</td><td>261</td></tr>
+      <tr><td>Exp. 2 SOA levels</td><td>4 levels: shortest 150 ms (SD 100 + ISI 50); +100 ms to both SD and ISI per level (SOA 150, 350, 550, 750 ms)</td><td>261</td></tr>
+      <tr><td>Exp. 2 order</td><td>Line drawings before clocks; 5 observers ascending SOA, 5 descending; ~45 min session; same answer sheet format</td><td>261</td></tr>
+      <tr class="tag"><td>Unspecified / assumed</td><td>Display size, viewing distance, luminance, background, fixation, which hands/rectangle sizes and positions for pairs not shown in Fig. 1/3; clock pairs besides separation (the 2-5 hour list gives only 4 of 6 pairs); rectangle drawings follow Fig. 3 schematic (small oblique rectangle upper-left in card 1, lower-right in card 2) with assumed proportions; the 4 rectangle pairs are not individually described, so all four menu entries reuse this layout with the small rectangle's position varied by assumption.</td><td>—</td></tr>
+    </table>
+  </div>
+
+<script>
+const c=document.getElementById('c'), ctx=c.getContext('2d');
+const W=c.width,H=c.height, BG='#9a9a9a';
+
+// ---------- body silhouette poses (approximate drawn stand-ins) ----------
+// coordinates relative to figure origin (neck base), y down. Arms: elbow e, hand h. Viewer-left arm = model's right arm.
+const REST_L={e:[-48,-8],h:[-52,50]};   // viewer-left arm resting
+const REST_R={e:[48,-8],h:[52,50]};
+function P(o){return Object.assign({head:[0,-55,0],torso:true,aL:REST_L,aR:REST_R,fL:[-18,170],fR:[18,170],legTop:'',fing:null,palm:null},o);}
+const BODY={
+ joint:[
+  {n:'Right arm about the elbow', A:P({aL:{e:[-80,0],h:[-140,0]}}), B:P({aL:{e:[-80,0],h:[-82,58]}})},
+  {n:'Fingers of right hand about the wrist', A:P({aL:{e:[-70,10],h:[-95,-38],f:[-110,-70]}}), B:P({aL:{e:[-70,10],h:[-95,-38],f:[-60,-72]}})},
+  {n:'Entire right hand about the wrist', A:P({aL:{e:[-60,20],h:[-120,10],f:[-150,28]}}), B:P({aL:{e:[-60,20],h:[-120,10],f:[-135,-22]}})},
+  {n:'Head about the neck', A:P({head:[-14,-52,-0.5]}), B:P({head:[14,-52,0.5]})},
+  {n:'Entire right arm about the shoulder', A:P({aL:{e:[-48,60],h:[-52,118]}}), B:P({aL:{e:[-100,-20],h:[-160,-60]}})}
+ ],
+ solid:[
+  {n:'Right foot about left foot', A:P({fL:[-18,170],fR:[-30,170],cross:true}), B:P({fL:[-18,170],fR:[28,170]})},
+  {n:'Closed fist about the head', A:P({aL:{e:[-70,-5],h:[-45,-60],fist:true}}), B:P({aL:{e:[-60,-30],h:[40,-70],fist:true}})},
+  {n:'Closed fist about the torso', A:P({aL:{e:[-60,20],h:[-25,60],fist:true}}), B:P({aL:{e:[-30,50],h:[30,60],fist:true,front:true}})},
+  {n:'Right hand about the left hand', A:P({aL:{e:[-45,25],h:[-5,50]}, aR:{e:[45,25],h:[8,50]}}), B:P({aL:{e:[-45,25],h:[22,50],front:true}, aR:{e:[45,25],h:[8,50]}})},
+  {n:'First finger about the middle finger', A:P({aL:{e:[-60,20],h:[-50,-20],fing:1}}), B:P({aL:{e:[-60,20],h:[-50,-20],fing:-1}})},
+  {n:'Open hand about the head', A:P({aL:{e:[-80,-8],h:[-45,-70],open:true}}), B:P({aL:{e:[-30,-20],h:[28,-72],open:true,front:true}})},
+  {n:'Open hand, lateral about the torso', A:P({aL:{e:[-62,22],h:[-30,48],open:true}}), B:P({aL:{e:[-30,50],h:[36,48],open:true,front:true}})},
+  {n:'Open hand, dorsal-ventral about the head', A:P({aL:{e:[-70,-5],h:[-18,-62],open:true,palm:true}}), B:P({aL:{e:[-70,-5],h:[-18,-62],open:true,palm:false,behind:true}})},
+  {n:'One arm about the other arm', A:P({aL:{e:[-40,10],h:[0,-6]}, aR:{e:[48,30],h:[8,10]}}), B:P({aL:{e:[-40,40],h:[10,40],front:true}, aR:{e:[40,5],h:[0,-6]}})},
+  {n:'One leg dorsal-ventral about the other leg', A:P({fL:[-18,170],fR:[30,128],legFront:true}), B:P({fL:[-18,170],fR:[30,128],legFront:false,legBack:true})}
+ ]
+};
+
+function limb(a,b,w,col){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+function drawArm(sh,arm,col,hcol){
+  const e=arm.e,h=arm.h;
+  ctx.strokeStyle=col;ctx.lineWidth=18;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(sh[0],sh[1]);ctx.lineTo(e[0],e[1]);ctx.lineTo(h[0],h[1]);ctx.stroke();
+  const d=Math.hypot(h[0]-e[0],h[1]-e[1])||1,ux=(h[0]-e[0])/d,uy=(h[1]-e[1])/d;
+  if(arm.f){limb(h,arm.f,12,hcol);}
+  else if(arm.open){ctx.fillStyle=arm.palm?'#e8c9a8':hcol;ctx.beginPath();ctx.ellipse(h[0]+ux*10,h[1]+uy*10,10,15,Math.atan2(uy,ux)+Math.PI/2,0,7);ctx.fill();}
+  else if(arm.fist){ctx.fillStyle=hcol;ctx.beginPath();ctx.arc(h[0],h[1],12,0,7);ctx.fill();}
+  else {ctx.fillStyle=hcol;ctx.beginPath();ctx.arc(h[0],h[1],9,0,7);ctx.fill();}
+  if(arm.fing){limb([h[0],h[1]],[h[0]+ux*10+arm.fing*14,h[1]+uy*10-16],4,hcol);limb([h[0],h[1]],[h[0]+ux*14,h[1]+uy*14-6],4,hcol);}
+}
+function drawBody(p){
+  const skin='#d9b08c',shirt='#c9c1b0',pants='#46546e',shoe='#222';
+  ctx.save();ctx.translate(W/2,70);
+  const sh1=[-34,0],sh2=[34,0];
+  // back-layer arms
+  [[sh1,p.aL],[sh2,p.aR]].forEach(([s,a])=>{if(a.behind)drawArm(s,a,shirt,skin);});
+  // legs
+  const hip1=[-14,100],hip2=[14,100];
+  const legs=()=>{
+    limb(hip1,p.fL,24,pants);limb(hip2,p.fR,24,pants);
+    ctx.fillStyle=shoe;[p.fL,p.fR].forEach(f=>{ctx.beginPath();ctx.ellipse(f[0],f[1]+8,16,8,0,0,7);ctx.fill();});
+  };
+  if(p.legBack){limb(hip2,[p.fR[0],p.fR[1]],24,'#33405a');}
+  legs();
+  // torso
+  ctx.fillStyle=shirt;ctx.beginPath();ctx.moveTo(-38,-4);ctx.lineTo(38,-4);ctx.lineTo(30,108);ctx.lineTo(-30,108);ctx.closePath();ctx.fill();
+  if(p.legFront){limb(hip2,p.fR,26,'#5a6a88');ctx.fillStyle=shoe;ctx.beginPath();ctx.ellipse(p.fR[0],p.fR[1]+8,16,8,0,0,7);ctx.fill();}
+  // neck/head
+  limb([0,-4],[0,-22],14,skin);
+  ctx.save();ctx.translate(p.head[0],p.head[1]);ctx.rotate(p.head[2]);
+  ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(0,0,22,28,0,0,7);ctx.fill();
+  ctx.fillStyle='#6b4a2f';ctx.beginPath();ctx.ellipse(0,-12,22,18,0,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#a07858';ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(6,10);ctx.lineTo(-2,10);ctx.fill();
+  ctx.restore();
+  // front arms
+  [[sh1,p.aL],[sh2,p.aR]].forEach(([s,a])=>{if(!a.behind&&!a.front)drawArm(s,a,shirt,skin);});
+  [[sh1,p.aL],[sh2,p.aR]].forEach(([s,a])=>{if(a.front)drawArm(s,a,shirt,skin);});
+  ctx.restore();
+}
+
+// ---------- clock ----------
+function drawClock(n,second){
+  const cx=W/2,cy=H/2,r=170;
+  ctx.fillStyle='#e8e4d8';ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();
+  ctx.lineWidth=8;ctx.strokeStyle='#222';ctx.stroke();
+  ctx.fillStyle='#222';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=1;i<=12;i++){const a=i*Math.PI/6;ctx.fillText(i,cx+Math.sin(a)*(r-28),cy-Math.cos(a)*(r-28));}
+  const hand=(h,len,w)=>{const a=h*Math.PI/6;ctx.strokeStyle='#111';ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.sin(a)*len,cy-Math.cos(a)*len);ctx.stroke();};
+  hand(0,r-48,7);                // hand at 12 in both photographs
+  hand(second?n:0,r-80,9);       // second hand moves by n hours in the second photograph
+  ctx.fillStyle='#111';ctx.beginPath();ctx.arc(cx,cy,9,0,7);ctx.fill();
+}
+// ---------- rectangles ----------
+function drawRect(variant,second){
+  ctx.strokeStyle='#111';ctx.lineWidth=5;ctx.lineJoin='round';
+  ctx.fillStyle='#e8e8e8';
+  ctx.fillRect(0,0,W,H);
+  ctx.strokeRect(W/2-120,H/2-90,330,200);          // large rectangle (assumed proportions)
+  const pos=[[[W/2-215,H/2-75],[W/2+205,H/2+65]],[[W/2-215,H/2-20],[W/2+200,H/2-10]],[[W/2-210,H/2+70],[W/2+200,H/2-70]],[[W/2-200,H/2-80],[W/2+200,H/2+75]]][variant];
+  const [x,y]=pos[second?1:0];
+  ctx.save();ctx.translate(x,y);ctx.rotate(second?-0.45:0.45);ctx.strokeRect(-22,-60,44,120);ctx.restore();
+}
+
+// ---------- state ----------
+const expSel=document.getElementById('exp'),pairSel=document.getElementById('pair'),lvl=document.getElementById('lvl');
+const CLOCK_N=[2,3,4,5,2,3]; // first four from paper; last two assumed
+function nPairs(){return expSel.value==='joint'?5:expSel.value==='solid'?10:expSel.value==='clock'?6:4;}
+function fillPairs(){
+  pairSel.innerHTML='';const e=expSel.value;
+  for(let i=0;i<nPairs();i++){
+    const o=document.createElement('option');o.value=i;
+    o.textContent=e==='joint'||e==='solid'?BODY[e][i].n:e==='clock'?'Clock pair '+(i+1)+(i<4?' — hands '+CLOCK_N[i]+' h apart':' (separation not specified)'):'Rectangle pair '+(i+1);
+    pairSel.appendChild(o);}
+  lvl.max=(e==='clock'||e==='rect')?4:7;lvl.value=1;
+}
+function timing(){
+  const e=expSel.value,L=+lvl.value-1,i=+pairSel.value;
+  let sd,isi;
+  if(e==='clock'||e==='rect'){sd=100+100*L;isi=50+100*L;}
+  else if(e==='joint'&&i===3){sd=100+50*L;isi=20+50*L;}
+  else if(e==='solid'&&i===0){sd=150+50*L;isi=100+50*L;}
+  else {sd=100+50*L;isi=50+50*L;}
+  return {sd,isi};
+}
+let phase=0,tStart=performance.now(),paused=false,pausedAt=0;
+function drawFrame(which){ // which: 0 A,1 B,-1 blank
+  ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
+  if(which<0)return;
+  const e=expSel.value,i=+pairSel.value;
+  if(e==='joint'||e==='solid'){drawBody(which?BODY[e][i].B:BODY[e][i].A);}
+  else if(e==='clock'){drawClock(CLOCK_N[i],which);}
+  else drawRect(i,which);
+}
+function refresh(){
+  const t=timing();document.getElementById('lvlLbl').textContent=lvl.value+' / '+lvl.max;
+  document.getElementById('timing').textContent='SD '+t.sd+' ms, ISI '+t.isi+' ms, SOA '+(t.sd+t.isi)+' ms';
+  phase=-1;tStart=performance.now();
+}
+function tick(now){
+  if(!paused){
+    const t=timing();
+    const cyc=2*(t.sd+t.isi);
+    const m=(now-tStart)%cyc;
+    let w;
+    if(m<t.sd)w=0;else if(m<t.sd+t.isi)w=-1;else if(m<2*t.sd+t.isi)w=1;else w=-1;
+    if(w!==phase){phase=w;drawFrame(w);}
+  }
+  requestAnimationFrame(tick);
+}
+expSel.onchange=()=>{fillPairs();refresh();};
+pairSel.onchange=refresh;lvl.oninput=refresh;
+document.getElementById('restart').onclick=()=>{paused=false;document.getElementById('pause').textContent='Pause';refresh();};
+document.getElementById('pause').onclick=function(){
+  paused=!paused;this.textContent=paused?'Resume':'Pause';
+  if(paused)pausedAt=performance.now();else tStart+=performance.now()-pausedAt;
+};
+document.getElementById('answers').onclick=ev=>{
+  const b=ev.target.closest('button');if(!b)return;
+  [...document.querySelectorAll('#answers button')].forEach(x=>x.classList.toggle('on',x===b));
+};
+fillPairs();refresh();requestAnimationFrame(tick);
+</script>
+</body>
+</html>

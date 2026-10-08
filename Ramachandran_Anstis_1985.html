@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ramachandran &amp; Anstis (1985) — Multistable apparent motion</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:800px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  .participant { margin-top:12px; width:800px; max-width:96vw; text-align:center; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; }
+  .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .panel { margin-top:20px; width:800px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  input[type=range] { width:160px; accent-color:#8a93b8; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  .note { font-size:11px; color:#777; min-height:15px; margin-top:6px; }
+  .meta { margin-top:20px; width:800px; max-width:96vw; font-size:10.5px; color:#666; line-height:1.6; }
+  .meta table { border-collapse:collapse; width:100%; margin:8px 0; }
+  .meta td, .meta th { border-top:1px solid #222228; padding:3px 6px; text-align:left; vertical-align:top; }
+  .meta th { color:#888; font-weight:600; }
+  .asm { color:#b08a4a; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Ramachandran &amp; Anstis (1985) — Perceptual organization in multistable apparent motion</h1>
+  <div class="sub">Two diagonally opposite corners of a 1° "conceptual square" flash, then are replaced by the other two,
+    in a continuous cycle. Select an experiment and view the display as the participants did.</div>
+
+  <div class="seg" id="expsel" style="margin-bottom:10px; justify-content:center; max-width:800px"></div>
+  <canvas id="c" width="800" height="440"></canvas>
+
+  <div class="participant">
+    <div class="instr" id="instr"></div>
+    <div class="prow" id="resp"></div>
+    <div class="note" id="msg"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid" id="ctl"></div>
+  </div>
+
+  <div class="meta">
+    <b>Reconstruction of Ramachandran, V. S. &amp; Anstis, S. M. (1985), <i>Perception</i> 14, 135–143.</b>
+    Only the physical dot flashes are drawn; no percept, axis, path or result is shown or scored.
+    Original: P-4 phosphor CRT, Apple II, viewed at 1 m; here 1° = 64 px (so 1° square = 64 px, 3′ dot ≈ 3.2 px), which equals the paper's geometry only if the page is viewed at the matching distance. Light dots on dark.
+    <table>
+      <tr><th>Parameter</th><th>Paper value (page)</th></tr>
+      <tr><td>Square side / dot diameter / distance</td><td>1° / 3′ of arc / 1 m (p.136, Method)</td></tr>
+      <tr><td>Cycle</td><td>Two diagonal dots on, then switched off and replaced by the other two; repeated continuously (p.136). Only two dots visible at any instant.</td></tr>
+      <tr><td>SOA</td><td>Hand-held potentiometer, continuous 25–500 ms; SOA rather than ISI varied (p.136). Used 100–200 ms in earlier experiments (p.141); Exp 1 "3–4 frames/s" (p.137); Exp 5b: 200 ms within pairs, 300 ms between row A and row B (p.140); Exp 6: &gt;350 ms to will rotation, &lt;300 ms reverted (p.141).</td></tr>
+      <tr><td>Exp 1 (p.136–138)</td><td>Several squares simultaneously, side 1°, distance between squares 1.5°, 3–4 frames/s; regular arrays (Fig 3a) and random positions (Fig 3b); 12 naive students. 3.1.1: two clusters ~2° apart, one rotated exactly 45°, one per hemifield, 3 subjects. 3.1.2: dichoptic (crossed polaroids; upper two rows to one eye, third row to the other, binocular fixation cross between rows 2 and 3).</td></tr>
+      <tr><td>Exp 2 (p.138)</td><td>Familiarised with drawings "percept 1/percept 2"; shown square; reports axis (vertical/horizontal); display on 30 s, switched off automatically, reappears after various random intervals; fixation cross on screen; told axis might or might not have changed; 6 naive subjects.</td></tr>
+      <tr><td>Exp 3 (p.138–139)</td><td>Square "random walk": after every 3–4 cycles switched off and reappears at a random screen location after about 500 ms; fixation on a central cross; 6 naive subjects. (The head-tilt variant, eyes closed and head rotated 90° between presentations, cannot be done on a page.)</td></tr>
+      <tr><td>Exp 4 (p.139)</td><td>Single ambiguous square in the centre, surrounded by array of dots in unambiguous motion (single pairs of dots, Fig 5).</td></tr>
+      <tr><td>Exp 5a (p.139)</td><td>3 cycles, then square replaced by slightly rotated one, 3 more cycles, repeated in 20°–30° steps up to 90°; fixation cross in the middle of the square.</td></tr>
+      <tr><td>Exp 5b (p.140)</td><td>Square embedded in a rectangular matrix of squares; column A (a few cycles) switched off and replaced by row B; SOA 200 ms within pairs, 300 ms between A and B.</td></tr>
+      <tr><td>Exp 6 (p.140–141)</td><td>Same four-dot display; 3 subjects asked to will clockwise/anticlockwise rotation at long SOA while SOA was gradually lowered.</td></tr>
+    </table>
+    <span class="asm"><b>Assumptions / unspecified in the paper:</b></span>
+    default SOA in Exp 2, 3, 4, 5a, basic (200 ms); ISI taken as 0 (each frame lasts one SOA; paper does not give the ISI);
+    square spacing read as centre-to-centre 1.5° (could be edge-to-edge); number of squares in the random layout (15) and the array size (3 × 5; clusters 3 × 3) and minimum spacing; position of the fixation cross in Exp 1 (clusters: between them; otherwise none); Exp 2 off-interval distribution (uniform 1–60 s here), when the display stays on after reappearing (until a report is made), and the number of trials; Exp 3 screen region for random positions; Exp 4 layout, pair separation (1°), pair timing and phase of the surround pairs (all in phase, same SOA, horizontal or vertical excursions as in the text); Exp 5a SOA, direction of rotation (clockwise here), no gap between steps, restart at 0° after 90°; Exp 5b cycles per row (3), row length and matrix size, no fixation mark; Exp 6 rate of SOA lowering (the paper says "gradually"; 60 s from 500 to 100 ms here). The dichoptic condition (3.1.2) is not reproducible without polarising filters and is not drawn. Fig 8 (static dot array) is not an experiment and is omitted.
+  </div>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = c.width, H = c.height;
+const PX = 64;                   // px per degree (1 m viewing: paper geometry)
+const CX = W/2, CY = H/2;
+const DOT_R = 0.025*PX;          // 3 arcmin diameter = 0.05 deg
+const rad = d => d*Math.PI/180;
+
+function dot(x, y) {              // x,y in degrees, y up, origin screen centre
+  ctx.fillStyle = '#f2f2f2';
+  ctx.beginPath(); ctx.arc(CX + x*PX, CY - y*PX, Math.max(DOT_R, 1.4), 0, 6.2832); ctx.fill();
+}
+function cross(x, y, s) {
+  s = (s || 0.3)*PX;
+  ctx.strokeStyle = '#8a8a8a'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(CX+x*PX-s, CY-y*PX); ctx.lineTo(CX+x*PX+s, CY-y*PX);
+  ctx.moveTo(CX+x*PX, CY-y*PX-s); ctx.lineTo(CX+x*PX, CY-y*PX+s); ctx.stroke();
+}
+// the two diagonal dot pairs of a conceptual square. phase 0: TL+BR ; phase 1: TR+BL
+function squareDots(x, y, ang, phase, side) {
+  side = side || 1;
+  const h = side/2;
+  const pts = phase === 0 ? [[-h,h],[h,-h]] : [[h,h],[-h,-h]];
+  const a = rad(ang), ca = Math.cos(a), sa = Math.sin(a);
+  for (const p of pts) dot(x + p[0]*ca - p[1]*sa, y + p[0]*sa + p[1]*ca);
+}
+const phaseAt = (t, soa) => Math.floor(t/soa) % 2;
+
+// ---------------- state ----------------
+const S = { exp:'basic', soa:200 };
+let clock = 0, lastTs = 0, t0 = 0;
+const rnd = (a,b) => a + Math.random()*(b-a);
+
+// ---------------- experiments ----------------
+const EXPS = {};
+
+EXPS.basic = {
+  label:'Basic display (Fig 2b)',
+  instr:'Fixate the square. Two dots on diagonally opposite corners flash, then the other two, continuously. SOA is set by the slider (the original used a hand-held potentiometer, 25–500 ms).',
+  ctl:[ {id:'soa', type:'range', label:'SOA (ms)', min:25, max:500, step:5, key:'soa', value:200} ],
+  init(){}, draw(t){ squareDots(0,0,0,phaseAt(t,S.soa)); }
+};
+
+EXPS.e1 = {
+  label:'Exp 1: multiple squares',
+  instr:'Several identical squares (side 1°, 1.5° apart) run the same two-frame cycle at the same time.',
+  ctl:[ {id:'soa', type:'range', label:'SOA (ms)', min:25, max:500, step:5, key:'soa', value:300},
+        {id:'layout', type:'seg', label:'Layout', key:'layout', value:'regular',
+          opts:[['regular','Regular array (Fig 3a)'],['random','Random positions (Fig 3b)'],['clusters','Two clusters, one rotated 45° (3.1.1)']]},
+        {id:'rows', type:'range', label:'Rows (regular)', min:1, max:5, step:1, key:'rows', value:3},
+        {id:'cols', type:'range', label:'Columns (regular)', min:1, max:7, step:1, key:'cols', value:5},
+        {id:'btn', type:'button', label:'New random layout', fn:()=>{ E1.rand = genRandom(); }} ],
+  init(){ S.soa = 300; E1.rand = genRandom(); },
+  draw(t){
+    const ph = phaseAt(t, S.soa), P = 1.5;
+    if (E1.layout === 'regular') {
+      for (let i=0;i<E1.cols;i++) for (let j=0;j<E1.rows;j++)
+        squareDots((i-(E1.cols-1)/2)*P, (j-(E1.rows-1)/2)*P, 0, ph);
+    } else if (E1.layout === 'random') {
+      for (const p of E1.rand) squareDots(p[0], p[1], 0, ph);
+    } else {
+      const n = 3;
+      for (const side of [-1,1]) {
+        const ang = side === 1 ? 45 : 0, a = rad(ang);
+        for (let i=0;i<n;i++) for (let j=0;j<n;j++) {
+          const lx = (i-(n-1)/2)*P, ly = (j-(n-1)/2)*P;
+          squareDots(side*3 + lx*Math.cos(a) - ly*Math.sin(a), lx*Math.sin(a) + ly*Math.cos(a), ang, ph);
+        }
+      }
+      cross(0, 0, 0.25);
+    }
+  }
+};
+const E1 = { layout:'regular', rows:3, cols:5, rand:[] };
+function genRandom() {
+  const pts = []; let guard = 0;
+  while (pts.length < 15 && guard++ < 5000) {
+    const p = [rnd(-5.3,5.3), rnd(-2.6,2.6)];
+    if (pts.every(q => Math.hypot(q[0]-p[0], q[1]-p[1]) >= 1.5)) pts.push(p);
+  }
+  return pts;
+}
+
+// Exp 2
+const E2 = { stage:'ready', ts:0, off:0, minOff:1, maxOff:60 };
+EXPS.e2 = {
+  label:'Exp 2: persistence (30 s on / off / on)',
+  instr:'Fixate the cross. Report whether the dots oscillate vertically or horizontally. After 30 s the display goes off for a random interval and then reappears; report the axis again.',
+  ctl:[ {id:'soa', type:'range', label:'SOA (ms)', min:25, max:500, step:5, key:'soa', value:200},
+        {id:'minOff', type:'range', label:'Off interval min (s)', min:1, max:120, step:1, key:'minOff', obj:E2, value:1},
+        {id:'maxOff', type:'range', label:'Off interval max (s)', min:1, max:120, step:1, key:'maxOff', obj:E2, value:60},
+        {id:'btn', type:'button', label:'Show familiarisation drawings', fn:()=>{ E2.stage='learn'; msg(''); }},
+        {id:'btn2', type:'button', label:'Start / restart trial', fn:()=>{ E2.stage='view'; E2.ts=clock; msg(''); }} ],
+  resp:[['v','Vertical (V)'],['h','Horizontal (H)']],
+  init(){ E2.stage='ready'; },
+  onResp(k){
+    if (E2.stage==='view') msg('Report noted.');
+    else if (E2.stage==='ask') { msg('Report noted. New trial started.'); E2.stage='view'; E2.ts=clock; }
+    else msg('Press Start first.');
+  },
+  draw(){
+    const e = clock - E2.ts;
+    if (E2.stage==='learn') { drawLearn(); return; }
+    if (E2.stage==='ready') { cross(0,0,0.25); return; }
+    if (E2.stage==='view') {
+      if (e >= 30000) { E2.stage='off'; E2.ts=clock; E2.off = rnd(Math.min(E2.minOff,E2.maxOff), Math.max(E2.minOff,E2.maxOff))*1000; cross(0,0,0.25); return; }
+      cross(0,0,0.25); squareDots(0,0,0,phaseAt(e,S.soa)); return;
+    }
+    if (E2.stage==='off') {
+      if (e >= E2.off) { E2.stage='ask'; E2.ts=clock; }
+      cross(0,0,0.25); return;
+    }
+    cross(0,0,0.25); squareDots(0,0,0,phaseAt(e,S.soa));
+  }
+};
+function drawLearn() {         // static drawings labelled percept 1 / percept 2 (cf. Fig 2b), shown during familiarisation
+  ctx.fillStyle='#9a9a9a'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+  for (const [x,txt,vert] of [[-2.5,'percept 1',true],[2.5,'percept 2',false]]) {
+    ctx.fillText(txt, CX+x*PX, CY-1.6*PX);
+    for (const p of [[-.5,.5],[.5,.5],[.5,-.5],[-.5,-.5]]) dot(x+p[0], p[1]);
+    ctx.strokeStyle='#8a8a8a'; ctx.lineWidth=1.5; ctx.beginPath();
+    for (const s of [-.5,.5]) {
+      if (vert) { ctx.moveTo(CX+(x+s)*PX, CY-.3*PX); ctx.lineTo(CX+(x+s)*PX, CY+.3*PX); }
+      else { ctx.moveTo(CX+(x-.3)*PX, CY-s*PX); ctx.lineTo(CX+(x+.3)*PX, CY-s*PX); }
+    }
+    ctx.stroke();
+  }
+  ctx.textAlign='left';
+}
+
+// Exp 3
+const E3 = { x:0, y:0, cyc:3, ts:0, on:true };
+function e3new(){ E3.x=rnd(-5.3,5.3); E3.y=rnd(-2.6,2.6); E3.cyc = Math.random()<0.5?3:4; }
+EXPS.e3 = {
+  label:'Exp 3: random walk',
+  instr:'Fixate the central cross. The square runs 3–4 cycles, disappears, and reappears about 500 ms later at a random location.',
+  ctl:[ {id:'soa', type:'range', label:'SOA (ms)', min:25, max:500, step:5, key:'soa', value:200},
+        {id:'gap', type:'range', label:'Off time (ms)', min:100, max:1500, step:50, key:'gap', obj:E3, value:500} ],
+  init(){ E3.on=true; E3.ts=clock; e3new(); E3.gap=500; },
+  draw(){
+    const e = clock - E3.ts;
+    cross(0,0,0.25);
+    if (E3.on) {
+      if (e >= E3.cyc*2*S.soa) { E3.on=false; E3.ts=clock; return; }
+      squareDots(E3.x, E3.y, 0, phaseAt(e,S.soa));
+    } else if (e >= E3.gap) { E3.on=true; E3.ts=clock; e3new(); }
+  }
+};
+
+// Exp 4
+const E4 = { dir:'h' };
+EXPS.e4 = {
+  label:'Exp 4: unambiguous surround',
+  instr:'A single ambiguous square is in the centre; the surrounding dots are pairs, each flashing at one end then the other.',
+  ctl:[ {id:'soa', type:'range', label:'SOA (ms)', min:25, max:500, step:5, key:'soa', value:200},
+        {id:'dir', type:'seg', label:'Surround pair axis', key:'dir', obj:E4, value:'h', opts:[['h','Horizontal'],['v','Vertical']]} ],
+  init(){},
+  draw(t){
+    const ph = phaseAt(t,S.soa), P=1.5;
+    squareDots(0,0,0,ph);
+    for (let i=-3;i<=3;i++) for (let j=-1;j<=1;j++) {
+      const x=i*P, y=j*P*1.0 + (j===0?0:0);
+      if (Math.abs(i)<=1 && j===0) continue;     // keep central region free
+      if (Math.abs(i)<=1 && Math.abs(j)<=1) continue;
+      const s = (ph===0?-0.5:0.5);
+      if (E4.dir==='h') dot(x+s, y); else dot(x, y+s);
+    }
+  }
+};
+
+// Exp 5a
+const E5 = { step:25, cyc:3 };
+EXPS.e5a = {
+  label:'Exp 5a: cogwheel rotation',
+  instr:'Fixate the cross in the middle of the square. After 3 cycles the square is replaced by a slightly rotated copy; this repeats in steps until 90° is reached.',
+  ctl:[ {id:'soa', type:'range', label:'SOA (ms)', min:25, max:500, step:5, key:'soa', value:200},
+        {id:'step', type:'range', label:'Rotation step (°)', min:20, max:30, step:1, key:'step', obj:E5, value:25},
+        {id:'cyc', type:'range', label:'Cycles per step', min:1, max:6, step:1, key:'cyc', obj:E5, value:3} ],
+  init(){},
+  draw(t){
+    const seg = E5.cyc*2*S.soa, k = Math.floor(t/seg), e = t - k*seg;
+    const nSteps = Math.ceil(90/E5.step) + 1;
+    const ang = Math.min(90, (k % nSteps)*E5.step);
+    cross(0,0,0.2);
+    squareDots(0,0,-ang,phaseAt(e,S.soa));   // clockwise
+  }
+};
+
+// Exp 5b
+const E5b = { cyc:3, soaAB:300 };
+EXPS.e5b = {
+  label:'Exp 5b: column A → row B',
+  instr:'A square is embedded in a matrix of squares. A vertical column of oscillating pairs (A) is switched off and replaced by a horizontal row (B); then back.',
+  ctl:[ {id:'soa', type:'range', label:'SOA within pairs (ms)', min:25, max:500, step:5, key:'soa', value:200},
+        {id:'ab', type:'range', label:'SOA between A and B (ms)', min:100, max:600, step:10, key:'soaAB', obj:E5b, value:300},
+        {id:'cyc', type:'range', label:'Cycles per row', min:1, max:6, step:1, key:'cyc', obj:E5b, value:3} ],
+  init(){ S.soa = 200; },
+  draw(t){
+    const dur = E5b.cyc*2*S.soa - 2*S.soa + 0;          // last frame onset of a row is cyc*2-1 frames after start
+    const lastOnset = (E5b.cyc*2-1)*S.soa;
+    const period = 2*(lastOnset + E5b.soaAB);
+    const tt = t % period;
+    const isA = tt < lastOnset + E5b.soaAB;
+    const e = isA ? tt : tt - (lastOnset + E5b.soaAB);
+    const nFrames = E5b.cyc*2;
+    const f = Math.floor(e/S.soa);
+    if (f >= nFrames) return;                           // last frame of previous row has lasted a full SOA, then blank until next onset
+    const ph = f % 2;
+    // lattice pitch 1 deg; column A: x in {0,1}, y -4..5 ; row B: x -4..5, y in {0,1}; centre of matrix at (0.5,0.5)
+    const pts = [];
+    if (isA) { for (let x=0;x<=1;x++) for (let y=-4;y<=5;y++) pts.push([x,y]); }
+    else     { for (let x=-4;x<=5;x++) for (let y=0;y<=1;y++) pts.push([x,y]); }
+    for (const p of pts) if ((((p[0]+p[1])%2)+2)%2 === ph) dot(p[0]-0.5, p[1]-0.5);
+  }
+};
+
+// Exp 6
+const E6 = { ramp:false, ts:0, dur:60000, from:500, to:100 };
+EXPS.e6 = {
+  label:'Exp 6: SOA lowered gradually',
+  instr:'Same four-dot display. Starting at a long SOA, try to see continuous clockwise or anticlockwise motion while the SOA is gradually lowered.',
+  ctl:[ {id:'soa', type:'range', label:'SOA (ms)', min:25, max:500, step:5, key:'soa', value:500},
+        {id:'dur', type:'range', label:'Ramp duration (s) [assumed]', min:10, max:180, step:5, key:'dur', obj:E6, scale:1000, value:60},
+        {id:'btn', type:'button', label:'Start lowering SOA (500 → 100 ms)', fn:()=>{ E6.ramp=true; E6.ts=clock; S.soa=500; syncSoa(); }},
+        {id:'btn2', type:'button', label:'Stop ramp', fn:()=>{ E6.ramp=false; }} ],
+  init(){ S.soa=500; E6.ramp=false; },
+  draw(t){
+    if (E6.ramp) {
+      const f = Math.min(1, (clock-E6.ts)/E6.dur);
+      S.soa = Math.round(E6.from + (E6.to-E6.from)*f); syncSoa();
+      if (f>=1) E6.ramp=false;
+    }
+    squareDots(0,0,0,phaseAt(t,S.soa));
+  }
+};
+
+// ---------------- UI ----------------
+const msgEl = document.getElementById('msg');
+function msg(s){ msgEl.textContent = s; }
+function syncSoa(){
+  const el = document.getElementById('soa'); if (!el) return;
+  el.value = S.soa; const l = document.getElementById('soaL'); if (l) l.textContent = S.soa;
+}
+function build() {
+  const sel = document.getElementById('expsel'); sel.innerHTML='';
+  for (const k in EXPS) {
+    const b = document.createElement('button'); b.textContent = EXPS[k].label;
+    if (k===S.exp) b.classList.add('on');
+    b.onclick = () => { S.exp=k; build(); }; sel.appendChild(b);
+  }
+  const E = EXPS[S.exp];
+  document.getElementById('instr').textContent = E.instr;
+  S.soa = 200; E.init && E.init();
+  t0 = clock; msg('');
+  const ctl = document.getElementById('ctl'); ctl.innerHTML='';
+  for (const d of E.ctl) {
+    const w = document.createElement('div'); w.className='ctrl';
+    if (d.type==='range') {
+      const o = d.obj || (d.key==='rows'||d.key==='cols'||d.key==='layout' ? E1 : null);
+      const sc = d.scale || 1;
+      let init = d.value; if (d.key==='soa') S.soa = init; else if (o) o[d.key] = init*sc;
+      w.innerHTML = `${d.label}: <span class="v" id="${d.id}L">${init}</span><input type="range" id="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${init}">`;
+      ctl.appendChild(w);
+      w.querySelector('input').oninput = ev => {
+        const v = +ev.target.value; document.getElementById(d.id+'L').textContent = v;
+        if (d.key==='soa') S.soa = v; else (o||E1)[d.key] = v*sc;
+      };
+    } else if (d.type==='seg') {
+      const o = d.obj || E1; o[d.key] = d.value;
+      w.innerHTML = `${d.label}<div class="seg"></div>`; ctl.appendChild(w);
+      const seg = w.querySelector('.seg');
+      for (const [v,l] of d.opts) {
+        const b = document.createElement('button'); b.textContent = l; if (v===d.value) b.classList.add('on');
+        b.onclick = () => { o[d.key]=v; seg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+        seg.appendChild(b);
+      }
+    } else {
+      w.innerHTML = `&nbsp;<button>${d.label}</button>`; ctl.appendChild(w);
+      w.querySelector('button').onclick = d.fn;
+    }
+  }
+  const r = document.getElementById('resp'); r.innerHTML='';
+  if (E.resp) for (const [k,l] of E.resp) {
+    const b = document.createElement('button'); b.textContent = l; b.onclick = () => E.onResp(k); r.appendChild(b);
+  }
+}
+document.addEventListener('keydown', ev => {
+  const E = EXPS[S.exp]; if (!E.resp) return;
+  const k = ev.key.toLowerCase(); if (k==='v' || k==='h') E.onResp(k);
+});
+
+function frame(ts) {
+  const dt = lastTs ? Math.min(ts-lastTs, 100) : 16; lastTs = ts; clock += dt;
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  EXPS[S.exp].draw(clock - t0);
+  requestAnimationFrame(frame);
+}
+build();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
