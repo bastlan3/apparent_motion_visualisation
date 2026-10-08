@@ -1,0 +1,537 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif;background:#fafafa}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Shape-Metric Cost Landscape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500&display=swap">
+<style>
+/* Layout: control panel on the left, one white plot of the translation plane on the right */
+:root {
+  --bg: #f3f5f6;
+  --panel: #e8ecee;
+  --fg: #18212b;
+  --muted: #5a6875;
+  --line: #c9d1d6;
+  --accent: #1f5f8b;
+  --plot-bg: #ffffff;
+  --plot-ink: #18212b;
+  --plot-frame: #c9d1d6;
+  --font-display: "IBM Plex Serif", Georgia, serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161b; --panel: #182028; --fg: #e3e9ee; --muted: #93a2b0; --line: #2b3742; --accent: #7db4e0;
+    --plot-frame: #2b3742;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161b; --panel: #182028; --fg: #e3e9ee; --muted: #93a2b0; --line: #2b3742; --accent: #7db4e0;
+  --plot-frame: #2b3742;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
+.app { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; padding-block: 16px; padding-inline: 16px; max-width: 1400px; margin: 0 auto; }
+@media (max-width: 820px) { .app { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 14px; align-self: start; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; }
+@media (max-width: 820px) { .panel { position: static; max-height: none; } }
+fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+legend { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 0 4px; border-bottom: 1px solid var(--line); width: 100%; margin-bottom: 4px; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
+.ctl label { font-size: 13px; }
+.ctl output { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--accent); }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.ctl.disabled { opacity: 0.45; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.check input { accent-color: var(--accent); }
+select { font: inherit; font-size: 13px; padding: 4px 6px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; width: 100%; }
+.hint { font-size: 12px; color: var(--muted); }
+main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.plot { position: relative; }
+.plot canvas { display: block; width: 100%; border: 1px solid var(--plot-frame); border-radius: 4px; background: var(--plot-bg); cursor: crosshair; }
+.busy { position: absolute; right: 10px; top: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--plot-ink); background: var(--plot-bg); border: 1px solid var(--plot-frame); padding: 3px 8px; border-radius: 4px; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; }
+.row { display: flex; gap: 8px; align-items: center; }
+.meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+button { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 4px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
+button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cbar { display: flex; align-items: center; gap: 8px; }
+.back { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-decoration: none; display: block; max-width: 1400px; margin: 0 auto; padding: 12px 16px 0; }
+.back:hover { color: var(--accent); }
+.cbar canvas { width: 180px; height: 10px; border: 1px solid var(--line); border-radius: 2px; }
+</style>
+
+<a class="back" href="index.html">← back to experiments</a>
+<div class="app">
+  <aside class="panel" id="panel">
+    <fieldset>
+      <legend>Shape</legend>
+      <div class="ctl"><label for="L">Length ℓ</label><output id="L_o"></output><input type="range" id="L" min="0.5" max="8" step="0.1" value="4"></div>
+      <div class="ctl"><label for="W">Width w</label><output id="W_o"></output><input type="range" id="W" min="0.5" max="8" step="0.1" value="1"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Cost of motion</legend>
+      <label class="check"><input type="checkbox" id="derive" checked> Use 1/ℓ and 1/w (paper default)</label>
+      <div class="ctl" id="cl_box"><label for="cl">c_ℓ: motion perpendicular to the length</label><output id="cl_o"></output><input type="range" id="cl" min="0.02" max="3" step="0.01" value="0.25"></div>
+      <div class="ctl" id="cw_box"><label for="cw">c_w: motion perpendicular to the width</label><output id="cw_o"></output><input type="range" id="cw" min="0.02" max="3" step="0.01" value="1"></div>
+      <div class="ctl"><label for="crl">c_θ: rotation (log scale)</label><output id="crl_o"></output><input type="range" id="crl" min="-2" max="2" step="0.05" value="0"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Start pose (flash 1)</legend>
+      <div class="ctl"><label for="x0">x</label><output id="x0_o"></output><input type="range" id="x0" min="-9" max="9" step="0.1" value="-4"></div>
+      <div class="ctl"><label for="y0">y</label><output id="y0_o"></output><input type="range" id="y0" min="-5" max="5" step="0.1" value="0"></div>
+      <div class="ctl"><label for="t0">Initial orientation α</label><output id="t0_o"></output><input type="range" id="t0" min="0" max="179" step="1" value="0"></div>
+    </fieldset>
+    <fieldset>
+      <legend>End pose (flash 2)</legend>
+      <div class="ctl"><label for="x1">x</label><output id="x1_o"></output><input type="range" id="x1" min="-9" max="9" step="0.1" value="4"></div>
+      <div class="ctl"><label for="y1">y</label><output id="y1_o"></output><input type="range" id="y1" min="-5" max="5" step="0.1" value="0"></div>
+      <div class="ctl"><label for="dt">Rotation Δθ</label><output id="dt_o"></output><input type="range" id="dt" min="-180" max="180" step="1" value="90"></div>
+      <span class="hint">Click the plot to move the end pose. Shift-click moves the start.</span>
+    </fieldset>
+    <fieldset>
+      <legend>Candidate geodesics</legend>
+      <div class="ctl"><label for="np">Number of paths</label><output id="np_o"></output><input type="range" id="np" min="3" max="61" step="2" value="25"></div>
+      <div class="ctl"><label for="sp">Spread around the midpoint</label><output id="sp_o"></output><input type="range" id="sp" min="0.5" max="6" step="0.1" value="4"></div>
+      <div class="ctl"><label for="it">Smoothing iterations</label><output id="it_o"></output><input type="range" id="it" min="0" max="3000" step="100" value="1500"></div>
+      <div class="ctl"><label for="gh">Ghost shapes on the cheapest path</label><output id="gh_o"></output><input type="range" id="gh" min="0" max="16" step="1" value="6"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Solver</legend>
+      <label for="res" class="hint">Grid resolution (x, y, θ)</label>
+      <select id="res">
+        <option value="coarse">Coarse: 0.4 u, 7.5°</option>
+        <option value="medium" selected>Medium: 0.3 u, 5°</option>
+        <option value="fine">Fine: 0.2 u, 3.75° (slow)</option>
+      </select>
+      <label class="check"><input type="checkbox" id="sym" checked> Identify θ and θ+180° (rectangle symmetry)</label>
+    </fieldset>
+  </aside>
+
+  <main>
+    <section class="plot">
+      <canvas id="cxy" aria-label="Candidate paths between the two poses, coloured by cost"></canvas>
+      <div class="busy" id="busy" hidden>solving…</div>
+    </section>
+    <div class="bar">
+      <button id="play" type="button">Play geodesic</button>
+      <span class="row" id="exportBox" hidden><button id="savePng" type="button">Export PNG</button><button id="saveSvg" type="button">Export SVG</button><span class="meta" id="exportMsg"></span></span>
+      <div class="cbar"><span class="meta" id="cmin"></span><canvas id="cbar" width="180" height="10" aria-label="Colour scale for path cost"></canvas><span class="meta" id="cmax"></span></div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const X0 = -10, X1 = 10, Y0 = -6, Y1 = 6;
+const RES = { coarse: { d: 0.4, nt: 48 }, medium: { d: 0.3, nt: 72 }, fine: { d: 0.2, nt: 96 } };
+const DEG = Math.PI / 180;
+const INK = "#18212b";
+
+/* ---------- solver (Web Worker): Dijkstra from both poses ---------- */
+const WORKER_SRC = `
+function solve(p, si, sj, sk) {
+  const nx = p.nx, ny = p.ny, nt = p.nt, nxy = nx * ny, N = nxy * nt, S = p.S, oi = p.oi, oj = p.oj, ok = p.ok, cost = p.cost;
+  const dist = new Float64Array(N).fill(Infinity), parent = new Int32Array(N).fill(-1);
+  let cap = 1 << 16, hk = new Float64Array(cap), hv = new Int32Array(cap), n = 0, popK = 0;
+  function push(key, v) {
+    if (n === cap) { cap *= 2; const a = new Float64Array(cap); a.set(hk); hk = a; const b = new Int32Array(cap); b.set(hv); hv = b; }
+    let i = n++;
+    while (i > 0) { const pa = (i - 1) >> 1; if (hk[pa] <= key) break; hk[i] = hk[pa]; hv[i] = hv[pa]; i = pa; }
+    hk[i] = key; hv[i] = v;
+  }
+  function pop() {
+    const tv = hv[0]; popK = hk[0]; n--;
+    if (n > 0) {
+      const key = hk[n], v = hv[n]; let i = 0;
+      for (;;) { const l = 2 * i + 1; if (l >= n) break; const r = l + 1; const m = (r < n && hk[r] < hk[l]) ? r : l; if (hk[m] >= key) break; hk[i] = hk[m]; hv[i] = hv[m]; i = m; }
+      hk[i] = key; hv[i] = v;
+    }
+    return tv;
+  }
+  const s0 = (sk * ny + sj) * nx + si;
+  dist[s0] = 0; push(0, s0);
+  while (n > 0) {
+    const v = pop(), d = popK;
+    if (d > dist[v]) continue;
+    const i = v % nx, t = (v - i) / nx, j = t % ny, k = (t - j) / ny, base = k * S;
+    for (let s = 0; s < S; s++) {
+      const ni = i + oi[s]; if (ni < 0 || ni >= nx) continue;
+      const nj = j + oj[s]; if (nj < 0 || nj >= ny) continue;
+      let nk = k + ok[s]; if (nk < 0) nk += nt; else if (nk >= nt) nk -= nt;
+      const nv = nk * nxy + nj * nx + ni, nd = d + cost[base + s];
+      if (nd < dist[nv]) { dist[nv] = nd; parent[nv] = v; push(nd, nv); }
+    }
+  }
+  return { dist, parent };
+}
+self.onmessage = function (e) {
+  const p = e.data, nt = p.nt;
+  const oi = [], oj = [], ok = [];
+  const g = (a, b) => (b ? g(b, a % b) : a);
+  for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) for (let c = -2; c <= 2; c++) {
+    if (!a && !b && !c) continue;
+    if (g(g(Math.abs(a), Math.abs(b)), Math.abs(c)) !== 1) continue;
+    oi.push(a); oj.push(b); ok.push(c);
+  }
+  const S = oi.length, cost = new Float64Array(nt * S);
+  // body frame: m along the length axis, n across it
+  for (let k = 0; k < nt; k++) for (let s = 0; s < S; s++) {
+    const th = (k + ok[s] / 2) * p.dth, c = Math.cos(th), sn = Math.sin(th);
+    const X = oi[s] * p.dx, Y = oj[s] * p.dy, T = ok[s] * p.dth;
+    const m = X * c + Y * sn, nn = -X * sn + Y * c;
+    cost[k * S + s] = Math.sqrt(p.cAlong * m * m + p.cAcross * nn * nn + p.cr * T * T);
+  }
+  Object.assign(p, { oi, oj, ok, S, cost });
+  const A = solve(p, p.si, p.sj, p.sk), B = solve(p, p.ei, p.ej, p.ek);
+  self.postMessage({ id: p.id, dA: A.dist, pA: A.parent, dB: B.dist, pB: B.parent }, [A.dist.buffer, A.parent.buffer, B.dist.buffer, B.parent.buffer]);
+};`;
+// Background worker when the browser allows one; otherwise (some browsers block workers in
+// files opened from disk or in sandboxed previews) the same code runs on the main thread.
+let worker = null;
+try { worker = new Worker(URL.createObjectURL(new Blob([WORKER_SRC], { type: "text/javascript" }))); } catch (err) { worker = null; }
+function runInline(job, onDone) {
+  const fake = { postMessage: (data) => onDone({ data }) };
+  new Function("self", WORKER_SRC)(fake);
+  setTimeout(() => fake.onmessage({ data: job }), 30);
+}
+function runSolver(job, onDone) {
+  if (!worker) { runInline(job, onDone); return; }
+  let answered = false;
+  worker.onmessage = (e) => { answered = true; onDone(e); };
+  worker.onerror = () => { if (answered) return; answered = true; worker = null; runInline(job, onDone); };
+  try { worker.postMessage(job); } catch (err) { worker = null; runInline(job, onDone); }
+}
+
+/* ---------- controls ---------- */
+const fmt = {
+  L: (v) => (+v).toFixed(1), W: (v) => (+v).toFixed(1),
+  cl: (v) => (+v).toFixed(2), cw: (v) => (+v).toFixed(2), crl: (v) => Math.pow(10, +v).toPrecision(3),
+  x0: (v) => (+v).toFixed(1), y0: (v) => (+v).toFixed(1), t0: (v) => v + "°",
+  x1: (v) => (+v).toFixed(1), y1: (v) => (+v).toFixed(1), dt: (v) => v + "°",
+  np: (v) => v, it: (v) => v, sp: (v) => (+v).toFixed(1), gh: (v) => v,
+};
+const SOLVE_KEYS = ["L", "W", "cl", "cw", "crl", "x0", "y0", "t0", "x1", "y1", "dt", "res", "sym", "derive"];
+function syncOutputs() {
+  for (const k in fmt) $(k + "_o").textContent = fmt[k]($(k).value);
+  const derive = $("derive").checked;
+  if (derive) {
+    $("cl").value = (1 / +$("L").value).toFixed(2); $("cw").value = (1 / +$("W").value).toFixed(2);
+    $("cl_o").textContent = (1 / +$("L").value).toFixed(3); $("cw_o").textContent = (1 / +$("W").value).toFixed(3);
+  }
+  $("cl").disabled = derive; $("cw").disabled = derive;
+  $("cl_box").classList.toggle("disabled", derive); $("cw_box").classList.toggle("disabled", derive);
+}
+function params() {
+  const L = +$("L").value, W = +$("W").value, derive = $("derive").checked;
+  return {
+    L, W,
+    cl: derive ? 1 / L : +$("cl").value, cw: derive ? 1 / W : +$("cw").value, cr: Math.pow(10, +$("crl").value),
+    x0: +$("x0").value, y0: +$("y0").value, t0: +$("t0").value * DEG,
+    x1: +$("x1").value, y1: +$("y1").value, dt: +$("dt").value * DEG,
+    res: $("res").value, sym: $("sym").checked,
+  };
+}
+
+/* ---------- solve ---------- */
+let R = null, jobId = 0, pending = false, running = false;
+function requestSolve() { pending = true; if (!running) launch(); }
+function launch() {
+  pending = false; running = true; $("busy").hidden = false;
+  const p = params(), rs = RES[p.res];
+  const period = p.sym ? Math.PI : 2 * Math.PI, nt = p.sym ? rs.nt / 2 : rs.nt, dth = period / nt;
+  const nx = Math.round((X1 - X0) / rs.d) + 1, ny = Math.round((Y1 - Y0) / rs.d) + 1;
+  const dx = (X1 - X0) / (nx - 1), dy = (Y1 - Y0) / (ny - 1);
+  const md = (a, m) => ((a % m) + m) % m;
+  const k0 = Math.round(p.t0 / dth), kd = Math.round(p.dt / dth);
+  const meta = {
+    p, nx, ny, nt, dx, dy, dth, period,
+    si: Math.round((p.x0 - X0) / dx), sj: Math.round((p.y0 - Y0) / dy), sk: md(k0, nt),
+    ei: Math.round((p.x1 - X0) / dx), ej: Math.round((p.y1 - Y0) / dy), ek: md(k0 + kd, nt),
+    th0: k0 * dth,
+  };
+  // c_ℓ penalises motion across the length axis, c_w motion across the width axis (i.e. along the length)
+  const job = { id: ++jobId, nx, ny, nt, dx, dy, dth, cAcross: p.cl, cAlong: p.cw, cr: p.cr,
+    si: meta.si, sj: meta.sj, sk: meta.sk, ei: meta.ei, ej: meta.ej, ek: meta.ek };
+  const t0 = performance.now();
+  runSolver(job, (e) => {
+    running = false;
+    if (e.data.id === jobId) { R = Object.assign(meta, e.data, { ms: performance.now() - t0 }); buildPaths(); }
+    if (pending) launch(); else $("busy").hidden = true;
+  });
+}
+
+/* ---------- candidate paths ---------- */
+let paths = [], best = null;
+function nodeIndex(i, j, k) { return (k * R.ny + j) * R.nx + i; }
+function decode(v) { const i = v % R.nx, t = (v - i) / R.nx, j = t % R.ny; return { i, j, k: (t - j) / R.ny }; }
+function chain(parent, v) { const out = []; let g = 0; while (v !== -1 && g++ < 1e6) { out.push(v); v = parent[v]; } return out; }
+function toPoly(nodes, dA) {
+  const pts = []; let prevK = null, th = R.th0;
+  for (const n of nodes) {
+    const { i, j, k } = decode(n);
+    if (prevK !== null) { let d = (k - prevK) * R.dth; d -= R.period * Math.round(d / R.period); th += d; }
+    prevK = k;
+    pts.push({ x: X0 + i * R.dx, y: Y0 + j * R.dy, th, c: dA[n] });
+  }
+  return pts;
+}
+// path from start through grid node v to end: start→v from A's tree (reversed), v→end from B's tree
+function pathThrough(v) {
+  const head = chain(R.pA, v).reverse(), tail = chain(R.pB, v).slice(1);
+  const nodes = head.concat(tail), total = R.dA[v] + R.dB[v];
+  const pts = toPoly(nodes, R.dA);
+  for (let q = head.length; q < pts.length; q++) pts[q].c = total - R.dB[nodes[q]];
+  return { pts, cost: total };
+}
+function buildPaths() {
+  const r = R, nxy = r.nx * r.ny;
+  const ax = X0 + r.si * r.dx, ay = Y0 + r.sj * r.dy, bx = X0 + r.ei * r.dx, by = Y0 + r.ej * r.dy;
+  const mx = (ax + bx) / 2, my = (ay + by) / 2;
+  let ux = -(by - ay), uy = bx - ax; const un = Math.hypot(ux, uy);
+  if (un < 1e-9) { ux = 0; uy = 1; } else { ux /= un; uy /= un; }
+  const N = +$("np").value, spread = +$("sp").value;
+  paths = []; const seen = new Set();
+  for (let q = 0; q < N; q++) {
+    const off = N === 1 ? 0 : -spread + (2 * spread * q) / (N - 1);
+    const i = Math.round((mx + off * ux - X0) / r.dx), j = Math.round((my + off * uy - Y0) / r.dy);
+    if (i < 0 || j < 0 || i >= r.nx || j >= r.ny) continue;
+    let bk = 0, bv = Infinity;
+    for (let k = 0; k < r.nt; k++) { const v = k * nxy + j * r.nx + i, s = r.dA[v] + r.dB[v]; if (s < bv) { bv = s; bk = k; } }
+    const v = nodeIndex(i, j, bk);
+    if (!isFinite(bv) || seen.has(v)) continue;
+    seen.add(v);
+    const raw = pathThrough(v);
+    paths.push(refine(raw.pts, R.dA[v] / raw.cost, true));
+  }
+  const tgt = nodeIndex(r.ei, r.ej, r.ek);
+  best = refine(toPoly(chain(r.pA, tgt).reverse(), r.dA), 0, false);
+  draw();
+}
+
+/* ---------- continuous refinement ----------
+   Resample the grid path to M points at equal cost, then minimise the discrete energy
+   sum dzᵀ G(θ_mid) dz with endpoints fixed (and the waypoint's x, y fixed for constrained paths).
+   Minimising energy rather than length gives a constant-speed geodesic. */
+function metricBlock(th, a, b) { // xy block of R diag(a, b) Rᵀ, with a along the length, b across it
+  const c = Math.cos(th), s = Math.sin(th);
+  return [a * c * c + b * s * s, (a - b) * c * s, a * s * s + b * c * c];
+}
+function refine(pts, pinFrac, pinned) {
+  const p = R.p, a = p.cw, b = p.cl, cr = p.cr, M = 160, ITER = +$("it").value;
+  const tot = pts[pts.length - 1].c || 1;
+  const X = new Float64Array(M + 1), Y = new Float64Array(M + 1), T = new Float64Array(M + 1);
+  let q = 1;
+  for (let m = 0; m <= M; m++) {
+    const target = (m / M) * tot;
+    while (q < pts.length - 1 && pts[q].c < target) q++;
+    const A = pts[q - 1] || pts[0], B = pts[q] || A, span = B.c - A.c || 1, t = Math.min(1, Math.max(0, (target - A.c) / span));
+    X[m] = A.x + (B.x - A.x) * t; Y[m] = A.y + (B.y - A.y) * t; T[m] = A.th + (B.th - A.th) * t;
+  }
+  const pin = pinned ? Math.max(1, Math.min(M - 1, Math.round(pinFrac * M))) : -1;
+  const gx = new Float64Array(M + 1), gy = new Float64Array(M + 1), gt = new Float64Array(M + 1);
+  const hx = new Float64Array(M + 1), hy = new Float64Array(M + 1), ht = new Float64Array(M + 1);
+  for (let it = 0; it < ITER; it++) {
+    gx.fill(0); gy.fill(0); gt.fill(0); hx.fill(0); hy.fill(0); ht.fill(0);
+    for (let m = 0; m < M; m++) {
+      const dx = X[m + 1] - X[m], dy = Y[m + 1] - Y[m], dt = T[m + 1] - T[m], th = (T[m] + T[m + 1]) / 2;
+      const [gxx, gxy, gyy] = metricBlock(th, a, b);
+      const s2 = Math.sin(2 * th), c2 = Math.cos(2 * th), k = a - b;
+      // d/dθ of the energy through the metric's θ dependence (split between the two ends)
+      const dG = 0.5 * k * (-s2 * dx * dx + 2 * c2 * dx * dy + s2 * dy * dy);
+      const fx = 2 * (gxx * dx + gxy * dy), fy = 2 * (gxy * dx + gyy * dy), ft = 2 * cr * dt;
+      gx[m] -= fx; gy[m] -= fy; gt[m] -= ft - dG;
+      gx[m + 1] += fx; gy[m + 1] += fy; gt[m + 1] += ft + dG;
+      hx[m] += 2 * gxx; hx[m + 1] += 2 * gxx; hy[m] += 2 * gyy; hy[m + 1] += 2 * gyy; ht[m] += 2 * cr; ht[m + 1] += 2 * cr;
+    }
+    for (let m = 1; m < M; m++) {
+      if (m !== pin) { X[m] -= 0.45 * gx[m] / hx[m]; Y[m] -= 0.45 * gy[m] / hy[m]; }
+      T[m] -= 0.45 * gt[m] / ht[m];
+    }
+  }
+  const out = [{ x: X[0], y: Y[0], th: T[0], c: 0 }];
+  let c = 0;
+  for (let m = 0; m < M; m++) {
+    const dx = X[m + 1] - X[m], dy = Y[m + 1] - Y[m], dt = T[m + 1] - T[m];
+    const [gxx, gxy, gyy] = metricBlock((T[m] + T[m + 1]) / 2, a, b);
+    c += Math.sqrt(gxx * dx * dx + 2 * gxy * dx * dy + gyy * dy * dy + cr * dt * dt);
+    out.push({ x: X[m + 1], y: Y[m + 1], th: T[m + 1], c });
+  }
+  return { pts: out, cost: c };
+}
+
+/* ---------- drawing ---------- */
+// cheap = green, expensive = red; the middle stays dark enough to read on white
+const RAMP = [[0, [26, 150, 65]], [0.25, [120, 180, 40]], [0.5, [225, 170, 20]], [0.75, [240, 105, 30]], [1, [205, 30, 40]]];
+function ramp(f) {
+  f = Math.max(0, Math.min(1, f));
+  for (let q = 1; q < RAMP.length; q++) if (f <= RAMP[q][0]) {
+    const [fa, a] = RAMP[q - 1], [fb, b] = RAMP[q], t = (f - fa) / (fb - fa);
+    return `rgb(${a.map((v, z) => Math.round(v + (b[z] - v) * t)).join(",")})`;
+  }
+  return `rgb(${RAMP[RAMP.length - 1][1].join(",")})`;
+}
+(function paintBar() { const c = $("cbar").getContext("2d"); for (let x = 0; x < 180; x++) { c.fillStyle = ramp(x / 179); c.fillRect(x, 0, 1, 10); } })();
+
+function sizeCanvas(cv, aspect) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = Math.round(w * aspect);
+  cv.style.height = h + "px";
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return { ctx, w, h };
+}
+function rectShape(ctx, map, s, x, y, th, L, W) {
+  const [cx, cy] = map(x, y);
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(-th); ctx.beginPath(); ctx.rect(-L * s / 2, -W * s / 2, L * s, W * s); ctx.restore();
+}
+function polyline(ctx, pts, map) { ctx.beginPath(); pts.forEach((p, q) => { const [a, b] = map(p.x, p.y); q ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); ctx.stroke(); }
+function at(path, frac) {
+  const g = path.pts; if (!g.length) return null;
+  const total = g[g.length - 1].c, target = frac * total;
+  let q = 1; while (q < g.length - 1 && g[q].c < target) q++;
+  const a = g[q - 1], b = g[q] || a, span = b.c - a.c || 1, t = Math.min(1, Math.max(0, (target - a.c) / span));
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, th: a.th + (b.th - a.th) * t };
+}
+
+let anim = null;
+function costRange() {
+  const lo = Math.min(best.cost, ...paths.map((q) => q.cost));
+  return [lo, Math.max(lo * 1.0001, ...paths.map((q) => q.cost))];
+}
+function draw() {
+  if (!R || !best) return;
+  const { ctx, w, h } = sizeCanvas($("cxy"), (Y1 - Y0) / (X1 - X0));
+  const [lo, hi] = costRange();
+  $("cmin").textContent = lo.toFixed(2); $("cmax").textContent = hi.toFixed(2);
+  render(ctx, w, h, !!anim, false);
+}
+function render(ctx, w, h, withAnim, withBar) {
+  const p = R.p, [lo, hi] = costRange();
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h);
+  const s = w / (X1 - X0), map = (x, y) => [(x - X0) * s, (Y1 - y) * s];
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  // expensive first so cheap paths sit on top
+  [...paths].sort((a, b) => b.cost - a.cost).forEach((q) => {
+    ctx.strokeStyle = ramp((q.cost - lo) / (hi - lo)); ctx.lineWidth = 1.6; polyline(ctx, q.pts, map);
+  });
+  // ghosts on the geodesic
+  const ng = +$("gh").value;
+  ctx.strokeStyle = ramp(0); ctx.lineWidth = 1; ctx.globalAlpha = 0.55;
+  for (let g = 1; g <= ng; g++) { const q = at(best, g / (ng + 1)); if (q) { rectShape(ctx, map, s, q.x, q.y, q.th, p.L, p.W); ctx.stroke(); } }
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = ramp(0); ctx.lineWidth = 3.2; polyline(ctx, best.pts, map);
+  // the two flashes
+  const A = best.pts[0], B = best.pts[best.pts.length - 1];
+  ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.fillStyle = "rgba(255,255,255,0.7)";
+  rectShape(ctx, map, s, A.x, A.y, A.th, p.L, p.W); ctx.fill(); ctx.stroke();
+  rectShape(ctx, map, s, B.x, B.y, B.th, p.L, p.W); ctx.fill(); ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+  if (withAnim) { const q = at(best, anim.frac); if (q) { ctx.fillStyle = ramp(0); ctx.globalAlpha = 0.8; rectShape(ctx, map, s, q.x, q.y, q.th, p.L, p.W); ctx.fill(); ctx.globalAlpha = 1; } }
+  if (withBar) {
+    const bw = 160, bh = 8, bx = w - bw - 70, by = h - 26;
+    for (let x = 0; x < bw; x++) { ctx.fillStyle = ramp(x / (bw - 1)); ctx.fillRect(bx + x, by, 1, bh); }
+    ctx.fillStyle = INK; ctx.font = "11px 'IBM Plex Mono', ui-monospace, monospace"; ctx.textBaseline = "middle";
+    ctx.textAlign = "right"; ctx.fillText(lo.toFixed(2), bx - 6, by + bh / 2);
+    ctx.textAlign = "left"; ctx.fillText(hi.toFixed(2), bx + bw + 6, by + bh / 2);
+  }
+}
+
+/* ---------- export ---------- */
+function exportSvg() {
+  const p = R.p, [lo, hi] = costRange(), w = 1000, h = Math.round(w * (Y1 - Y0) / (X1 - X0)), s = w / (X1 - X0);
+  const map = (x, y) => [((x - X0) * s).toFixed(2), ((Y1 - y) * s).toFixed(2)];
+  const pl = (pts) => pts.map((q) => map(q.x, q.y).join(",")).join(" ");
+  const rect = (q, attrs) => { const [cx, cy] = map(q.x, q.y); return `<rect x="${(-p.L * s / 2).toFixed(2)}" y="${(-p.W * s / 2).toFixed(2)}" width="${(p.L * s).toFixed(2)}" height="${(p.W * s).toFixed(2)}" transform="translate(${cx} ${cy}) rotate(${(-q.th / DEG).toFixed(3)})" ${attrs}/>`; };
+  const out = [`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`, `<rect width="${w}" height="${h}" fill="#ffffff"/>`, `<g fill="none" stroke-linejoin="round" stroke-linecap="round">`];
+  [...paths].sort((a, b) => b.cost - a.cost).forEach((q) => out.push(`<polyline points="${pl(q.pts)}" stroke="${ramp((q.cost - lo) / (hi - lo))}" stroke-width="1.6"><title>cost ${q.cost.toFixed(4)}</title></polyline>`));
+  const ng = +$("gh").value;
+  for (let g = 1; g <= ng; g++) { const q = at(best, g / (ng + 1)); if (q) out.push(rect(q, `stroke="${ramp(0)}" stroke-width="1" stroke-opacity="0.55"`)); }
+  out.push(`<polyline points="${pl(best.pts)}" stroke="${ramp(0)}" stroke-width="3.2"><title>geodesic cost ${best.cost.toFixed(4)}</title></polyline>`);
+  const A = best.pts[0], B = best.pts[best.pts.length - 1];
+  out.push(rect(A, `fill="#ffffff" fill-opacity="0.7" stroke="${INK}" stroke-width="2"`));
+  out.push(rect(B, `fill="#ffffff" fill-opacity="0.7" stroke="${INK}" stroke-width="2" stroke-dasharray="4 3"`));
+  out.push(`</g>`);
+  const bw = 160, bh = 8, bx = w - bw - 70, by = h - 26;
+  out.push(`<defs><linearGradient id="cb">${[0, 0.25, 0.5, 0.75, 1].map((f) => `<stop offset="${f}" stop-color="${ramp(f)}"/>`).join("")}</linearGradient></defs>`);
+  out.push(`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="url(#cb)"/>`);
+  out.push(`<g font-family="IBM Plex Mono, monospace" font-size="11" fill="${INK}" dominant-baseline="middle"><text x="${bx - 6}" y="${by + bh / 2}" text-anchor="end">${lo.toFixed(2)}</text><text x="${bx + bw + 6}" y="${by + bh / 2}">${hi.toFixed(2)}</text></g>`);
+  out.push(`</svg>`);
+  return out.join("\n");
+}
+function exportPng() {
+  const w = 3000, h = Math.round(w * (Y1 - Y0) / (X1 - X0)), cv = document.createElement("canvas");
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d"), k = w / 1000; ctx.scale(k, k);
+  render(ctx, 1000, h / k, false, true);
+  return new Promise((res) => cv.toBlob(res, "image/png"));
+}
+function exportName(ext) {
+  const p = R.p, f = (v) => (+v).toFixed(1).replace("-", "m");
+  return `geodesics_l${f(p.L)}_w${f(p.W)}_a${Math.round(p.t0 / DEG)}_dth${Math.round(p.dt / DEG)}_cth${(+p.cr).toPrecision(2)}.${ext}`;
+}
+let downloads = null;
+async function save(kind) {
+  if (!R || !best || !downloads) return;
+  const msg = $("exportMsg"); msg.textContent = "";
+  try {
+    const data = kind === "svg" ? exportSvg() : await exportPng();
+    await downloads.save({ filename: exportName(kind), data });
+    msg.textContent = "Saved";
+  } catch (e) {
+    const code = e && e.code;
+    if (code === "declined") msg.textContent = "Not saved";
+    else if (code === "rate_limited") msg.textContent = "A save prompt is already open";
+    else { msg.textContent = "Export is not available here"; $("exportBox").hidden = true; }
+  }
+}
+$("savePng").addEventListener("click", () => save("png"));
+$("saveSvg").addEventListener("click", () => save("svg"));
+if (window.claude && window.claude.use) {
+  window.claude.use("downloads").then((d) => { downloads = d; $("exportBox").hidden = !d; }).catch(() => {});
+} else {
+  // standalone copy opened from disk: plain browser download
+  downloads = { save: async ({ filename, data }) => {
+    const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type: "image/svg+xml" }));
+    const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return { status: "saved" };
+  } };
+  $("exportBox").hidden = false;
+}
+
+/* ---------- interaction ---------- */
+$("cxy").addEventListener("click", (e) => {
+  const rc = e.currentTarget.getBoundingClientRect(), s = rc.width / (X1 - X0);
+  const x = X0 + (e.clientX - rc.left) / s, y = Y1 - (e.clientY - rc.top) / s;
+  const [xs, ys] = e.shiftKey ? ["x0", "y0"] : ["x1", "y1"];
+  $(xs).value = Math.max(-9, Math.min(9, x)).toFixed(1); $(ys).value = Math.max(-5, Math.min(5, y)).toFixed(1);
+  syncOutputs(); requestSolve();
+});
+$("play").addEventListener("click", () => {
+  if (anim) { anim = null; $("play").textContent = "Play geodesic"; draw(); return; }
+  $("play").textContent = "Stop";
+  anim = { t0: performance.now(), frac: 0 };
+  const step = (now) => {
+    if (!anim) return;
+    anim.frac = Math.min(1, ((now - anim.t0) / 2500) % 1.25);
+    draw(); requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+});
+let solveTimer = null;
+document.querySelectorAll("#panel input, #panel select").forEach((el) => {
+  el.addEventListener("input", () => {
+    syncOutputs();
+    if (SOLVE_KEYS.includes(el.id)) { clearTimeout(solveTimer); solveTimer = setTimeout(requestSolve, 120); }
+    else if (el.id === "np" || el.id === "sp" || el.id === "it") { if (R) buildPaths(); }
+    else draw();
+  });
+});
+new ResizeObserver(() => draw()).observe($("cxy"));
+syncOutputs();
+requestSolve();
+})();
+</script>
+</body></html>
