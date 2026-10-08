@@ -2,56 +2,199 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Burt & Sperling (1981) — Competing AM Paths</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Burt &amp; Sperling (1981) - Multiple-path motion stimulus</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#000; display:block; }
-.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
-input[type=range] { width:160px; accent-color:#888; }
-button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a1a;color:#aaa;font-family:sans-serif;font-size:13px;display:flex;flex-direction:column;align-items:center;padding:14px 12px 30px}
+a.back{align-self:flex-start;color:#888;text-decoration:none;font-size:12px;margin-bottom:10px}
+a.back:hover{color:#ccc}
+h1{font-size:15px;font-weight:600;color:#ccc;margin-bottom:10px;text-align:center}
+canvas{background:#000;display:block;max-width:100%;height:auto}
+.row{margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+label{display:flex;gap:6px;align-items:center}
+select,input[type=number]{background:#2a2a2a;color:#ddd;border:1px solid #555;border-radius:4px;padding:3px 6px;font-size:13px}
+button{background:#333;color:#ddd;border:1px solid #555;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:13px}
+button:disabled{opacity:.35;cursor:default}
+.hint{margin-top:10px;max-width:700px;text-align:center;line-height:1.5;color:#999}
+.status{margin-top:8px;min-height:18px;color:#8a8}
+.panel{margin-top:18px;max-width:700px;width:100%;font-size:12px;line-height:1.5;color:#888;border-top:1px solid #333;padding-top:10px}
+.panel h2{font-size:13px;color:#bbb;margin-bottom:6px}
+.panel table{border-collapse:collapse;width:100%}
+.panel td{padding:3px 6px;border-bottom:1px solid #2a2a2a;vertical-align:top}
+.panel td:first-child{color:#aaa;white-space:nowrap}
+.assume{color:#c9a54b}
 </style>
 </head>
 <body>
-<canvas id="c" width="560" height="360"></canvas>
-<div class="controls">
-  <button id="btn">Pause</button>
-  <label>ISI: <span id="lbl">25</span> ms &nbsp;<input type="range" id="isi" min="5" max="200" value="25" step="5"></label>
+<a class="back" href="index.html">&larr; back to experiments</a>
+<h1>Burt &amp; Sperling (1981) - multiple-path motion stimulus</h1>
+<canvas id="c" width="660" height="350"></canvas>
+<div class="row">
+  <label>Experiment
+    <select id="exp">
+      <option value="1">Exp 1 - strength rating vs. control</option>
+      <option value="2">Exp 2 - right/left forced choice</option>
+      <option value="3">Exp 3 - element types, right/left</option>
+    </select></label>
+  <label>Direction <select id="dir"><option value="1">H positive (rows step right)</option><option value="-1">mirror image (rows step left)</option></select></label>
 </div>
-<div class="meta">Burt &amp; Sperling (1981). Two dot rows — competing horizontal and vertical apparent motion paths. Short ISI favors the shorter spatial path.</div>
+<div class="row" id="opts1">
+  <label>Rate motion on path <select id="judge"><option value="P1">P1 (control M1)</option><option value="P2">P2 (control M2)</option></select></label>
+  <label>t (ms) <select id="t1"></select></label>
+</div>
+<div class="row" id="opts2" style="display:none">
+  <label>Configuration (Table 2) <select id="cfg"></select></label>
+  <label>t (ms) <input type="number" id="t2" min="8" max="40" step="1" value="20" style="width:64px"></label>
+</div>
+<div class="row" id="opts3" style="display:none">
+  <label>Elements <select id="elem"><option value="dot">dots</option><option value="ring">rings</option><option value="alt">dots and rings alternated</option><option value="bar">orthogonal bars alternated</option></select></label>
+  <label>V (mm) <select id="v3"><option>1.84</option><option>2.45</option><option>3.06</option></select></label>
+  <label>t (ms) <input type="number" id="t3" min="8" max="40" step="1" value="20" style="width:64px"></label>
+</div>
+<div class="row"><button id="run">Run trial</button></div>
+<div class="hint" id="instr"></div>
+<div class="row" id="resp"></div>
+<div class="status" id="status"></div>
+
+<div class="panel">
+<h2>Methods (Psychol. Rev. 88, 171-195)</h2>
+<table>
+<tr><td>Stimulus</td><td>One horizontal row of evenly spaced dots, flashed repeatedly; between presentations the row moves horizontally by H and downward by V; the stack of rows sweeps through a rectangular window (p. 173-174, Fig. 1a).</td></tr>
+<tr><td>Dot separation D</td><td>17 mm (1.70 cm) = 29.3 arcmin at 2 m (p. 174)</td></tr>
+<tr><td>Row shift H, V (Exp 1)</td><td>H = +/-6.8 mm (11.7 arcmin), V = 1.8 mm (3.09 arcmin) (p. 174, Table 1)</td></tr>
+<tr><td>Interflash interval t</td><td>Exp 1: ten values, logarithmic steps, 12-56 ms (p. 175). Exp 2/3: seven values per configuration around the transition (about 8-40 ms in Table 2); the seven values are <span class="assume">not listed in the paper - free input here</span>.</td></tr>
+<tr><td>Flash</td><td>Each row presentation = 2 refreshes of a fast P4 phosphor, 3 ms apart (p. 175). <span class="assume">Here: one display frame per presentation.</span></td></tr>
+<tr><td>Control stimuli (Exp 1)</td><td>M1: every other dot removed (dot separation 2D, same H, V, t). M2: every other row removed (H, V, t doubled, separation D). (Table 1)</td></tr>
+<tr><td>Exp 1 trial</td><td>Ambiguous M1,2 alternated with the control three times, beginning with M1 (P1 trials), 1 s pause between stimuli; mirror images on half the trials; rating 0-6 at the end (p. 175). <span class="assume">P2 trials: the paper does not state which stimulus comes first; control first assumed.</span> Authors as observers, 40 trials per session (4 motion types x 10 t).</td></tr>
+<tr><td>Exp 1 rating scale</td><td>0 = undetectable; 1 = 20% as strong as the reference; ... 5 = equal strength; 6 = stronger in M1,2 than in the control (p. 175).</td></tr>
+<tr><td>Window and fixation</td><td>Rows within a 22 cm x 6 cm area (6.3 x 1.72 deg at 2 m); bottom of area 4 cm (1.15 deg) above the fixation point; observers fixate carefully (p. 174-175).</td></tr>
+<tr><td>Viewing</td><td>2 m (Exp 1, 3), 1 m and 2 m (Exp 2); dark room, display surface 0.058 cd/m2; dot energy about 1.6e-6 cd-s per refresh (p. 175).</td></tr>
+<tr><td>Exp 2</td><td>18 configurations, D = 17 mm; H, V pairs of Table 2 (list in the menu). One sweep of the row through the window per trial (max 3 s); observer reports whether dominant motion was to the right or left; 7 t values, reflections interleaved (p. 177-181).</td></tr>
+<tr><td>Exp 3</td><td>Same as Exp 2 with dots, rings, alternating dots/rings, or alternating orthogonal bars; D = 17 mm, H = 6.8 mm, V = 1.84, 2.45, 3.06 mm, 2 m; P1-P2 geometry (p. 181-184).</td></tr>
+<tr><td class="assume">Assumptions</td><td class="assume">Dot diameter, ring and bar sizes (not given in text; drawn here as about 2 mm dot, 3.3 mm ring, 3.3 mm bar); on-screen scale 3 px/mm so the window is 660 x 180 px (physical size and viewing distance depend on your screen); equal brightness for all elements (paper gives different energies); 500 ms fixation before each stimulus; start of the sweep at the top of the window; one sweep = V-step count to the window bottom (Exp 1 length unspecified).</td></tr>
+<tr><td>Realised timing</td><td id="real"></td></tr>
+</table>
+</div>
+
 <script>
-const c = document.getElementById('c');
-const ctx = c.getContext('2d');
-const CX=c.width/2, CY=c.height/2;
-const FRAME_MS=50, R=7;
-// Row A (top): 9 dots spaced 75px apart —extends beyond screen edges
-// Row B (bottom): same dots shifted right by 37.5px (half-spacing), 80px below
-const N=9, HSPACE=75, VSPACE=90;
-const rowA = Array.from({length:N}, (_,i) => [CX + (i-(N-1)/2)*HSPACE, CY-VSPACE/2]);
-const rowB = Array.from({length:N}, (_,i) => [CX + (i-(N-1)/2)*HSPACE + HSPACE/2, CY+VSPACE/2]);
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+const $=id=>document.getElementById(id);
+const PX=3;                 // px per mm (assumption)
+const WX=0, WY=20, WW=220*PX, WH=60*PX;   // 22 x 6 cm window
+const FIX={x:WW/2, y:WY+WH+40*PX};
+const D=17;
+// Table 2: [type, H, V, label]
+const CFG=[];
+[[ 'P1-P2',[6.81,7.23],[1.84,2.45,3.06] ],['P1-P3',[5.11,5.32],[.82,1.22,1.63]],['P1-P4',[3.83,4.04],[.41,.61,.82]]].forEach(([n,Hs,Vs])=>
+  Hs.forEach(h=>Vs.forEach(v=>CFG.push({H:h,V:v,label:n+'  H '+h+' mm, V '+v+' mm'}))));
+CFG.forEach((g,i)=>{const o=document.createElement('option');o.value=i;o.textContent=g.label;$('cfg').appendChild(o);});
+const T1=[];for(let i=0;i<10;i++)T1.push(12*Math.pow(56/12,i/9));
+T1.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t.toFixed(1);$('t1').appendChild(o);});
 
-let isiMs=25, running=true, phase='f1', phaseStart=performance.now();
+// refresh calibration: advance display one step per ~16.7 ms
+let step=1,rate=60;
+(function cal(){const ts=[];function f(n){ts.push(n);if(ts.length<40)requestAnimationFrame(f);else{const d=[];for(let i=1;i<ts.length;i++)d.push(ts[i]-ts[i-1]);d.sort((a,b)=>a-b);const m=d[d.length>>1];rate=1000/m;step=Math.max(1,Math.round(rate/60));upd();}}requestAnimationFrame(f);})();
+const FMS=1000/60;
 
-function drawDots(dots) {
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height);
-  ctx.fillStyle='#fff';
-  for(const [x,y] of dots){ ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill(); }
+function drawFix(){ctx.strokeStyle='#bbb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(FIX.x-6,FIX.y);ctx.lineTo(FIX.x+6,FIX.y);ctx.moveTo(FIX.x,FIX.y-6);ctx.lineTo(FIX.x,FIX.y+6);ctx.stroke();}
+function drawEl(x,y,kind){
+  ctx.fillStyle='#fff';ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
+  if(kind==='dot'){ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill();}
+  else if(kind==='ring'){ctx.beginPath();ctx.arc(x,y,5,0,7);ctx.stroke();}
+  else if(kind==='h'){ctx.fillRect(x-5,y-1,10,2);}
+  else if(kind==='v'){ctx.fillRect(x-1,y-5,2,10);}
 }
-
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
-  if(phase==='f1') drawDots(rowA);
-  else if(phase==='f2') drawDots(rowB);
-  else { ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height); }
-  requestAnimationFrame(tick);
+// build element list for one presentation n of a stimulus
+function elementsFor(n,s){
+  const els=[];
+  const x0=n*s.H*s.dir*PX, y=WY+n*s.V*PX;
+  if(y>WY+WH)return null;
+  const Dx=s.D*PX, cx=WW/2;
+  const kmin=Math.floor((-WW-x0)/Dx)-2, kmax=Math.ceil((WW*2)/Dx)+2;
+  for(let k=kmin;k<=kmax;k++){
+    const x=cx+x0+k*Dx; if(x<WX||x>WX+WW)continue;
+    let kind='dot';
+    if(s.elem==='ring')kind='ring';
+    else if(s.elem==='alt')kind=(((k%2)+2)%2)?'ring':'dot';
+    else if(s.elem==='bar')kind=(((k%2)+2)%2)?'v':'h';
+    els.push([x,y,kind]);
+  }
+  return els;
 }
+// frames list for a stimulus: s={H,V,D,dir,k (frames per t),elem}
+function stimFrames(s){
+  const fr=[];const maxF=Math.round(3000/FMS);
+  for(let n=0;fr.length<maxF;n++){
+    const e=elementsFor(n,s); if(!e)break;
+    fr.push(e);for(let j=1;j<s.k;j++)fr.push(null);
+  }
+  return fr;
+}
+function tFrames(ms){return Math.max(1,Math.round(ms/FMS));}
+let frames=[],pos=0,tick=0,running=false,trialType=1;
 
-document.getElementById('isi').addEventListener('input',e=>{isiMs=+e.target.value;document.getElementById('lbl').textContent=isiMs;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+function build(){
+  const e=+$('exp').value,dir=+$('dir').value;
+  const fix=Math.round(500/FMS),pause=60;
+  const blank=n=>Array(n).fill(null);
+  let seq=[];let info='';
+  if(e===1){
+    const t=+$('t1').value,k=tFrames(t),judge=$('judge').value;
+    const amb={H:6.8,V:1.8,D:D,dir:dir,k:k,elem:'dot'};
+    let ctrl,nm;
+    if(judge==='P1'){ctrl={...amb,D:2*D};nm='M1';}
+    else{ctrl={H:13.6,V:3.6,D:D,dir:dir,k:2*k,elem:'dot'};nm='M2';}
+    const A=stimFrames(amb),C=stimFrames(ctrl);
+    seq=blank(fix);
+    for(let i=0;i<3;i++){seq=seq.concat(C,blank(pause),A);if(i<2)seq=seq.concat(blank(pause));}
+    info='t requested '+t.toFixed(1)+' ms; M1,2 t = '+k+' frame(s) = '+(k*FMS).toFixed(1)+' ms; '+nm+' t = '+(ctrl.k)+' frame(s) = '+(ctrl.k*FMS).toFixed(1)+' ms; sweep M1,2 = '+A.length+' frames ('+(A.length*FMS).toFixed(0)+' ms)';
+  }else{
+    let H,V,elem='dot',t;
+    if(e===2){const g=CFG[+$('cfg').value];H=g.H;V=g.V;t=+$('t2').value;}
+    else{H=6.8;V=+$('v3').value;elem=$('elem').value;t=+$('t3').value;}
+    const k=tFrames(t),s={H:H,V:V,D:D,dir:dir,k:k,elem:elem};
+    const A=stimFrames(s);
+    seq=blank(fix).concat(A);
+    info='t requested '+t+' ms; realised '+k+' frame(s) = '+(k*FMS).toFixed(1)+' ms; sweep '+A.length+' frames ('+(A.length*FMS).toFixed(0)+' ms'+(A.length>=Math.round(3000/FMS)?', cut at 3 s':'')+')';
+  }
+  $('real').textContent='Display frame = '+FMS.toFixed(2)+' ms (60 Hz; measured display about '+rate.toFixed(0)+' Hz, advancing every '+step+' refresh). Times are multiples of one frame, so t below 16.7 ms cannot be shown. This trial: '+info;
+  return seq;
+}
+function upd(){ $('real').textContent='Display frame = '+FMS.toFixed(2)+' ms (60 Hz; measured display about '+rate.toFixed(0)+' Hz, advancing every '+step+' refresh). Times are multiples of one frame; t below 16.7 ms cannot be shown. Run a trial to see its realised values.';}
+
+function render(f){
+  ctx.fillStyle='#000';ctx.fillRect(0,0,c.width,c.height);
+  if(f)for(const [x,y,k] of f)drawEl(x,y,k);
+  drawFix();
+}
+function loop(){
+  if(!running)return;
+  tick++;
+  if(tick%step===0){
+    if(pos>=frames.length){running=false;render(null);$('status').textContent='Respond now.';enableResp(true);return;}
+    render(frames[pos++]);
+  }
+  requestAnimationFrame(loop);
+}
+function setupUI(){
+  const e=+$('exp').value;
+  $('opts1').style.display=e===1?'':'none';$('opts2').style.display=e===2?'':'none';$('opts3').style.display=e===3?'':'none';
+  const R=$('resp');R.innerHTML='';
+  if(e===1){
+    $('instr').textContent='Fixate the cross. M1,2 and the control are shown alternately three times. Rate the strength of motion on the selected path in M1,2 relative to the control: 0 = undetectable, 1 = 20% as strong, ... 5 = equal strength, 6 = stronger in M1,2.';
+    for(let i=0;i<=6;i++){const b=document.createElement('button');b.textContent=i;b.onclick=()=>answer(i);R.appendChild(b);}
+  }else{
+    $('instr').textContent='Fixate the cross. After the row has swept through the window, report whether the dominant motion was to the right or to the left.';
+    ['Left','Right'].forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>answer(n);R.appendChild(b);});
+  }
+  enableResp(false);render(null);$('status').textContent='';
+}
+function enableResp(on){document.querySelectorAll('#resp button').forEach(b=>b.disabled=!on);}
+function answer(a){enableResp(false);$('status').textContent='Response recorded ('+a+'). Not scored.';}
+$('run').onclick=()=>{if(running)return;enableResp(false);frames=build();pos=0;tick=0;running=true;$('status').textContent='Running...';requestAnimationFrame(loop);};
+$('exp').onchange=setupUI;
+setupUI();
 </script>
 </body>
 </html>

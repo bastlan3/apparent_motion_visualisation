@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attneave &amp; Block (1973) — Apparent movement in tridimensional space</title>
+<title>Attneave &amp; Block (1973) — Experiment II</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
@@ -11,213 +11,243 @@
   .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
-  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
-  canvas { background:#000; display:block; border-radius:3px; }
-
-  .participant { margin-top:12px; width:720px; max-width:96vw; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:720px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  .box { margin-top:12px; width:720px; max-width:96vw; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
-  .soaBig { text-align:center; margin-top:8px; font-size:20px; color:#e8e8e8; font-variant-numeric:tabular-nums; }
-  .soaBig small { font-size:12px; color:#777; }
+  .status { text-align:center; margin-top:8px; font-size:13px; color:#cfcfcf; min-height:18px; }
   .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
-  .prow .lab { font-size:11px; color:#777; margin-right:4px; }
-
-  .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel { margin-top:18px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
   .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
   .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
   .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
-  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
   .seg { display:flex; gap:5px; flex-wrap:wrap; }
-  .ctrl input[type=range] { width:150px; accent-color:#8a93b8; }
   button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
            border-radius:4px; cursor:pointer; font-size:12px; }
   button:hover { background:#26262e; }
   button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
-  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
-  .readouts b { color:#cfcfcf; font-weight:600; }
-  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+  table { border-collapse:collapse; font-size:11px; width:100%; margin-top:6px; }
+  td, th { border-top:1px solid #222228; padding:4px 6px; text-align:left; vertical-align:top; color:#8a8a92; }
+  th { color:#6b6b75; font-weight:600; }
+  td b { color:#cfcfcf; font-weight:600; }
+  .A { color:#c9a14a; }
+  .meta { margin-top:16px; width:720px; max-width:96vw; font-size:10.5px; color:#666; line-height:1.6; }
 </style>
 </head>
 <body>
   <a class="back" href="index.html">← back to experiments</a>
-  <h1>Attneave &amp; Block (1973) — apparent movement in tridimensional space</h1>
-  <div class="sub">Two lights flash in a central alley at a fixed <i>retinal</i> separation. A perspective grid makes them appear
-    farther apart in depth — and, per Korte's law, raises the minimum SOA needed to see movement.</div>
+  <h1>Attneave &amp; Block (1973) — Experiment II (pictorial depth)</h1>
+  <div class="sub">Two small red lights alternate in a clear central alley of a drawn grid. Stimulus reconstruction of Experiment II
+    (Perception &amp; Psychophysics 13, 301–307). Experiments I and III used physical lights in real space and are not reproduced.</div>
 
-  <canvas id="c" width="560" height="430"></canvas>
+  <canvas id="c" width="480" height="480"></canvas>
 
-  <div class="participant">
+  <div class="box">
     <div class="instr">
-      Raise the interval from below until the two lights stop flickering and clearly <b>move</b> back and forth
-      (ascending method of limits). Mark that first-movement point as the threshold.
+      Watch the lights while fixating the indicated region. Press <b>Movement</b> (or the space bar) when the lights
+      appear to move back and forth. Adopt as stable a criterion as possible for “good” (believable) movement.
+      You may have to wait an irregular number of trials before it appears.
     </div>
-    <div class="soaBig">SOA <span id="soaVal">80</span> <small>ms  (duration <span id="durVal">50</span> + ISI <span id="isiVal">30</span>)</small></div>
+    <div class="status" id="status">Choose a condition, then start a series.</div>
     <div class="prow">
-      <div><span class="lab">interval</span>
-        <button id="down">◀ shorter</button>
-        <button id="up">longer ▶</button></div>
-      <div><button id="mark">Movement appears → mark threshold</button></div>
-      <div><button id="record">Record</button> <button id="export">Export CSV</button></div>
+      <button id="start">Start series</button>
+      <button id="move">Movement</button>
+      <button id="stop">Stop series</button>
     </div>
   </div>
 
   <div class="panel">
-    <h2>Experimenter parameters</h2>
+    <h2>Experimenter</h2>
     <div class="grid">
-      <div class="ctrl">Depth context (Exp II)
-        <div class="seg" id="ctx">
-          <button data-v="control" class="on">Control (flat grid)</button>
-          <button data-v="persp">Experimental (perspective)</button>
+      <div class="ctrl">Condition
+        <div class="seg" id="cond">
+          <button data-v="C4" class="on">C4 · flat grid, 4 cm</button>
+          <button data-v="C8">C8 · flat grid, 8 cm</button>
+          <button data-v="E4">E4 · perspective grid, 4 cm</button>
         </div>
       </div>
-      <div class="ctrl">Retinal separation
-        <div class="seg" id="sep">
-          <button data-v="4" class="on">4 cm</button><button data-v="8">8 cm</button>
+      <div class="ctrl">Display orientation
+        <div class="seg" id="ori">
+          <button data-v="H" class="on">Horizontal (sessions 1, 3)</button>
+          <button data-v="V">Vertical (sessions 2, 4)</button>
         </div>
-      </div>
-      <div class="ctrl">Perspective slant: <span class="v" id="pLbl">0.8</span>
-        <input type="range" id="p" min="0.2" max="1.2" step="0.05" value="0.8"></div>
-      <div class="ctrl">Stimulus duration: <span class="v" id="durLbl">50</span> ms
-        <input type="range" id="dur" min="20" max="120" step="5" value="50"></div>
-      <div class="ctrl">Light size: <span class="v" id="dotLbl">2.0</span> mm
-        <input type="range" id="dot" min="1" max="6" step="0.5" value="2"></div>
-      <div class="ctrl">Show grid
-        <div class="seg" id="showGrid"><button data-v="on" class="on">on</button><button data-v="off">off</button></div>
       </div>
     </div>
-
-    <div class="readouts">
-      <div>Retinal separation: <b id="retLbl">4 cm</b> (fixed across grid)</div>
-      <div>Threshold marked: <b id="threshLbl">—</b></div>
-      <div>Paper thresholds: <b>C4 ≈ 125 · E4 ≈ 141 · C8 ≈ 189 ms</b> (β = .27)</div>
-      <div>Trials logged: <b id="nLog">0</b></div>
+    <div class="status" style="text-align:left;margin-top:12px;font-size:12px;color:#888">
+      Series run: <b id="nSeries">0</b> · Fixation region this series: <b id="fixLbl">upper</b> ·
+      Trial: <b id="trialLbl">—</b> · Refresh measured ≈ <b id="hzLbl">…</b> Hz ·
+      This trial: stimulus <b id="durF">–</b> frames, onset-to-onset <b id="soaF">–</b> frames (<b id="soaMs">–</b> ms realised), ISI <b id="isiF">–</b> frames
     </div>
   </div>
 
-  <div class="meta">
-    Faithful reconstruction of <b>Experiment II</b> of Attneave, F. &amp; Block, G. (1973), <i>Perception &amp; Psychophysics</i> 13(2),
-    301–307. Two 2-mm light apertures flash alternately (50 ms each) in a clear central alley; the surrounding grid is either a flat
-    frontal grid (control) or a perspective grid depicting a plane receding into depth along the horizontal axis that separates the two lights (experimental). The lights keep the
-    <b>same retinal separation</b> (4 cm) in both — only the pictorial depth changes — yet the perspective display raises the minimum
-    SOA for apparent movement, showing that Korte's law operates on <i>phenomenal 3-D</i> separation, not retinal distance. Threshold
-    found by the ascending method of limits. Experiments I (real depth via a diagonal light array) and III (varied viewing distance)
-    relied on physical 3-D apparatus that a flat screen cannot reproduce; this page reconstructs the inherently 2-D pictorial-depth
-    experiment, which isolates the same phenomenon. Paper thresholds shown for reference.
+  <div class="panel">
+    <h2>Methods (Experiment II, pp. 303–304)</h2>
+    <table>
+      <tr><th>Parameter</th><th>Paper</th><th>This page</th></tr>
+      <tr><td>Viewing</td><td>Monocular, enclosed display box, 47 cm, display in frontal plane</td><td class="A">Assumption: view one-eyed at about 47 cm; the on-screen scale is 24 px/cm nominal and depends on your screen</td></tr>
+      <tr><td>Display</td><td>Black ground, fluorescent threads glowing red under UV; 19 cm long × 15.8 cm average width; same number of lines / elements in both</td><td>Dim red lines; control 19 × 15.8 cm flat grid; experimental perspective grid rotated about 70° from frontal plane (near side left, verticals vertical)</td></tr>
+      <tr><td>Grid line counts, spacing, thread luminance, alley height, UV set-up</td><td class="A">Not specified</td><td class="A">Assumption: 20 vertical lines, 17 row cells with the middle cell as the alley (read off Fig. 2); far/near height ratio 2 in the perspective grid</td></tr>
+      <tr><td>Lights</td><td>2 mm apertures, neon lamps ≈ 225 cd/m²; 4 or 8 cm apart in a central alley free of lines</td><td>2 mm diameter discs, bright red; 4 or 8 cm apart (about 5 px across at 24 px/cm). In E4 the pair sits right of the display centre as in Fig. 2 (assumption: +2 cm)</td></tr>
+      <tr><td>Conditions</td><td>C4, C8, E4 (no E8)</td><td>Same three</td></tr>
+      <tr><td>Orientation</td><td>Display horizontal in sessions 1 and 3, rotated to vertical in sessions 2 and 4</td><td>Toggle</td></tr>
+      <tr><td>Fixation</td><td>Two regions, each bounded by four points, equidistant from the two lights, 2 cm to either side of the path between them; S alternated regions from one ascending series to the next</td><td>Four dots per region (assumption: ±0.5 cm square around the midline); active region alternates every series and is highlighted</td></tr>
+      <tr><td>Stimulus duration</td><td>50 ms, same ISI in both directions</td><td>3 frames at 60 Hz = 50 ms (frames counted; realised values shown above)</td></tr>
+      <tr><td>Trial</td><td>2 s of regular alternation A, B, A, B …; interval varied across trials</td><td>120 frames at 60 Hz = 2 s; inter-trial pause and response window 1.5 s <span class="A">(assumption)</span></td></tr>
+      <tr><td>Procedure</td><td>Ascending method of limits controlled by the experimenter; S reports movement. Start 10, 20 or 30 ms below the lower of the two preceding thresholds; steps 5 or 10 ms (taken from Exp. I, “as before”)</td><td>As described; the first series starts at 70 ms <span class="A">(assumption)</span>; a series ends without report at 400 ms <span class="A">(assumption)</span>. Intervals are rounded to whole frames, so at 60 Hz (16.7 ms/frame) 5 and 10 ms steps cannot always be displayed; use a 120 or 240 Hz display for finer steps</td></tr>
+      <tr><td>Session structure</td><td>10 min adaptation to room light; 12 blocks of 6 thresholds per condition, order counterbalanced; 4 sessions; 6 observers</td><td>Not automated: choose conditions manually. View in a dim room</td></tr>
+      <tr><td>Response device</td><td class="A">Not specified</td><td class="A">Assumption: button or space bar</td></tr>
+    </table>
   </div>
 
 <script>
 const c = document.getElementById('c');
 const ctx = c.getContext('2d');
 const W = c.width, H = c.height;
-const PXCM = 24;                 // px per cm
-const CX = W/2, CY = 232;        // alley centre
-const GX0 = 36, GX1 = W-36, GYTOP = 28, GYBOT = H-26;
-const GWB = GX1 - GX0;           // bottom width
+const PXCM = 24;
+const GW = 19*PXCM, GH = 15.8*PXCM;       // grid size in display coordinates
+const NV = 20, NR = 17, ALLEY = 8;        // vertical lines, row cells, alley row index (middle cell)
+const FAR = 2;                            // assumption: far/near height ratio in perspective grid
 
-const st = {
-  ctx:'control', sep:4, p:0.8, dur:50, dot:2, showGrid:true,
-  soa:80, thresh:null
-};
+const st = { cond:'C4', ori:'H', phase:'idle', fixUpper:true,
+             hist:{C4:[],C8:[],E4:[]}, nSeries:0 };
+const $ = id => document.getElementById(id);
 
-// perspective plane point: u = horizontal DEPTH axis (0 near-left, 1 far-right — the axis the
-// lights are separated along), t = vertical cross axis. Depth recedes along x, not y.
-function pointAt(u, t) {
-  const fullH = GYBOT - GYTOP;
-  if (st.ctx === 'control' || !st.showGrid) {
-    return { x: GX0 + u*GWB, y: CY + (t-0.5)*fullH };
-  }
-  const p = st.p;
-  const depth = 1 + 3*p*u;                     // near (left) = 1, far (right) = 1+3p
-  const invFar = 1/(1+3*p);
-  const xFrac = (1 - 1/depth) / (1 - invFar);  // 0..1, columns bunch toward the far side
-  const halfH = (fullH/2) / depth;             // plane shrinks vertically toward the far side
-  return { x: GX0 + xFrac*GWB, y: CY + (t-0.5)*2*halfH };
+// ----- frame clock -----
+let frameMs = 1000/60, lastTs = 0, calib = [];
+function setFrame(ms){ frameMs = ms; $('hzLbl').textContent = (1000/ms).toFixed(0); }
+const fr = ms => Math.max(1, Math.round(ms/frameMs));
+
+// display coords: origin at grid centre, x right, y down (cm*PXCM)
+function gridPt(u, t, persp){
+  // u: 0..1 along the long axis, t: 0..1 across
+  if (!persp) return { x:(u-0.5)*GW, y:(t-0.5)*GH };
+  const k = FAR-1;
+  const depth = 1 + k*u;                           // near (left) = 1
+  const xf = (1 - 1/depth) / (1 - 1/FAR);          // columns bunch toward the far right
+  return { x:(xf-0.5)*GW, y:(t-0.5)*GH/depth };
 }
-
-function drawGrid() {
-  if (!st.showGrid) return;
-  ctx.strokeStyle = '#8a2f2f'; ctx.lineWidth = 1;      // faint red (fluorescent-thread look)
-  ctx.globalAlpha = 0.55;
-  const Nd = 14, Nc = 11;
-  // depth lines (vertical, at constant depth) — bunch up toward the far side
-  for (let k=0;k<=Nd;k++){
-    const u=k/Nd, a=pointAt(u,0), b=pointAt(u,1);
-    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+function drawGrid(persp){
+  ctx.strokeStyle = '#8a2f2f'; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
+  const t0 = ALLEY/NR, t1 = (ALLEY+1)/NR;
+  for (let k=0;k<=NV;k++){
+    const u = k/NV;
+    [[0,t0],[t1,1]].forEach(([a,b])=>{
+      const p=gridPt(u,a,persp), q=gridPt(u,b,persp);
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+    });
   }
-  // cross lines (running into depth along x) — converge toward the far side
-  for (let j=0;j<=Nc;j++){
-    const t=j/Nc; ctx.beginPath();
-    for (let k=0;k<=40;k++){ const pt=pointAt(k/40, t); k?ctx.lineTo(pt.x,pt.y):ctx.moveTo(pt.x,pt.y); }
-    ctx.stroke();
+  for (let j=0;j<=NR;j++){
+    const t=j/NR; const p=gridPt(0,t,persp), q=gridPt(1,t,persp);
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
   }
   ctx.globalAlpha = 1;
 }
 
-// timing: A on [0,dur), ISI, B on [dur+ISI, 2dur+ISI), ISI ; SOA = dur + ISI
-let clock = 0, lastTs = 0;
-function drawFrame() {
-  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-  drawGrid();
+// ----- trial state -----
+let trial = null;      // {f, total, durF, soaF}
+let series = null;     // {soa, steps}
+let respUntil = 0;
 
-  // clear the central alley
-  const alleyH = Math.max(30, st.dot*PXCM/10 + 26);
-  ctx.fillStyle = '#000'; ctx.fillRect(0, CY-alleyH/2, W, alleyH);
-
-  // two lights, fixed retinal separation, alternating
-  const sepPx = st.sep*PXCM, r = Math.max(2, st.dot*PXCM/10);
-  const xA = CX - sepPx/2, xB = CX + sepPx/2;
-  const isi = st.soa - st.dur, dur = st.dur;
-  const cycle = 2*(dur + Math.max(0,isi));
-  const t = clock % cycle;
-  function light(x){ ctx.fillStyle='#ff5a4a'; ctx.beginPath(); ctx.arc(x, CY, r, 0, 2*Math.PI); ctx.fill(); }
-  if (t < dur) light(xA);
-  else if (t >= dur+isi && t < 2*dur+isi) light(xB);
-
-  document.getElementById('soaVal').textContent = Math.round(st.soa);
-  document.getElementById('durVal').textContent = st.dur;
-  document.getElementById('isiVal').textContent = Math.round(Math.max(0, st.soa - st.dur));
+function lightPos(){
+  const sepPx = (st.cond==='C8'?8:4)*PXCM;
+  const cx = st.cond==='E4' ? 2*PXCM : 0;
+  return [cx - sepPx/2, cx + sepPx/2];
 }
-function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
-requestAnimationFrame(loop);
+function draw(showLight){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  ctx.translate(W/2,H/2);
+  if (st.ori==='V') ctx.rotate(Math.PI/2);
+  drawGrid(st.cond==='E4');
+  // fixation regions: 2 cm above / below the light path, centred between the lights
+  const cx = st.cond==='E4' ? 2*PXCM : 0;
+  [[-1,true],[1,false]].forEach(([s,isUpper])=>{
+    const active = st.phase!=='idle' || true ? (isUpper===st.fixUpper) : false;
+    ctx.fillStyle = active ? '#d8d8d8' : '#4a2a2a';
+    [[-.5,-.5],[.5,-.5],[-.5,.5],[.5,.5]].forEach(([dx,dy])=>{
+      ctx.beginPath(); ctx.arc(cx+dx*PXCM, s*2*PXCM+dy*PXCM, 1.5, 0, 6.2832); ctx.fill();
+    });
+  });
+  if (showLight){
+    const [xa,xb] = lightPos();
+    ctx.fillStyle='#ff5a4a'; ctx.beginPath();
+    ctx.arc(showLight==='A'?xa:xb, 0, 0.1*PXCM/1*1.2/1.2*1, 0, 6.2832); ctx.fill(); // 2 mm diameter -> radius 1 mm
+  }
+  ctx.setTransform(1,0,0,1,0,0);
+}
 
-// ---- SOA (ascending method of limits) ----
-function clampSOA(){ st.soa = Math.max(50, Math.min(400, st.soa)); }
-document.getElementById('down').addEventListener('click', ()=>{ st.soa -= 10; clampSOA(); });
-document.getElementById('up').addEventListener('click',   ()=>{ st.soa += 10; clampSOA(); });
-document.getElementById('mark').addEventListener('click', ()=>{
-  st.thresh = st.soa;
-  document.getElementById('threshLbl').textContent = Math.round(st.thresh)+' ms';
-});
+function startTrial(){
+  const soaF = Math.max(series.soaF, fr(50)+1);
+  trial = { f:0, total:fr(2000), durF:fr(50), soaF };
+  st.phase = 'trial';
+  $('durF').textContent = trial.durF; $('soaF').textContent = soaF;
+  $('soaMs').textContent = (soaF*frameMs).toFixed(1); $('isiF').textContent = soaF-trial.durF;
+  series.n++; $('trialLbl').textContent = series.n;
+  $('status').textContent = 'Presenting (2 s)…';
+}
+function endSeries(msg){
+  st.phase='idle'; trial=null;
+  $('status').textContent = msg;
+}
+function respond(){
+  if (st.phase!=='trial' && st.phase!=='resp') return;
+  // internal record only (not displayed)
+  st.hist[st.cond].push(series.soa);
+  endSeries('Movement reported. Series ended. Start the next series.');
+}
+function nextTrial(){
+  series.soa += Math.random()<0.5 ? 5 : 10;
+  if (series.soa > 400){ endSeries('No report by the upper limit. Series aborted.'); return; }
+  series.soaF = fr(series.soa);
+  startTrial();
+}
+function tick(){
+  if (st.phase==='trial'){
+    const f = trial.f;
+    const idx = Math.floor(f/trial.soaF), w = f%trial.soaF;
+    draw(w<trial.durF ? (idx%2===0?'A':'B') : null);
+    trial.f++;
+    if (trial.f >= trial.total){ st.phase='resp'; respUntil = fr(1500); $('status').textContent='Did the lights move?'; }
+  } else if (st.phase==='resp'){
+    draw(null);
+    if (--respUntil <= 0) nextTrial();
+  } else draw(null);
+}
+function frame(ts){
+  if (lastTs){
+    const dt = ts-lastTs;
+    if (calib.length<40 && dt>4 && dt<40){ calib.push(dt); if (calib.length===40){
+      const s=[...calib].sort((a,b)=>a-b); const m=s[20]; setFrame([1000/240,1000/144,1000/120,1000/90,1000/60].reduce((a,b)=>Math.abs(b-m)<Math.abs(a-m)?b:a)); } }
+    const n = calib.length<40 ? 1 : Math.max(1, Math.round(dt/frameMs));
+    for (let i=0;i<Math.min(n,3);i++) tick();
+  }
+  lastTs = ts; requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
 
-// ---- logging ----
-const log=[];
-document.getElementById('record').addEventListener('click', ()=>{
-  log.push({ context:st.ctx, sepCm:st.sep, perspective:+st.p.toFixed(2),
-             durationMs:st.dur, thresholdMs: st.thresh!=null?Math.round(st.thresh):'' });
-  document.getElementById('nLog').textContent = log.length;
-  st.thresh = null; document.getElementById('threshLbl').textContent = '—';
+// ----- controls -----
+$('start').addEventListener('click', ()=>{
+  if (st.phase!=='idle') return;
+  const h = st.hist[st.cond];
+  let soa = 70;
+  if (h.length){ const lo = Math.min(...h.slice(-2)); soa = lo - [10,20,30][Math.floor(Math.random()*3)]; }
+  soa = Math.max(soa, 60);
+  st.nSeries++; st.fixUpper = (st.nSeries%2===1);
+  $('nSeries').textContent = st.nSeries; $('fixLbl').textContent = st.fixUpper?'upper':'lower';
+  series = { soa, soaF:fr(soa), n:0 };
+  startTrial();
 });
-document.getElementById('export').addEventListener('click', ()=>{
-  if(!log.length) return;
-  const cols=Object.keys(log[0]);
-  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download='attneave_block_1973.csv'; a.click();
-});
-
-// ---- experimenter controls ----
+$('move').addEventListener('click', respond);
+$('stop').addEventListener('click', ()=>{ if (st.phase!=='idle') endSeries('Series stopped.'); });
+document.addEventListener('keydown', e=>{ if (e.code==='Space'){ e.preventDefault(); respond(); } });
 function seg(id, fn){
   document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
     document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on'); fn(b.dataset.v);
   }));
 }
-seg('ctx', v=>st.ctx=v);
-seg('sep', v=>{ st.sep=+v; document.getElementById('retLbl').textContent = v+' cm'; });
-seg('showGrid', v=>st.showGrid = v==='on');
-document.getElementById('p').addEventListener('input', e=>{ st.p=+e.target.value; document.getElementById('pLbl').textContent=st.p.toFixed(2); });
-document.getElementById('dur').addEventListener('input', e=>{ st.dur=+e.target.value; document.getElementById('durLbl').textContent=st.dur; });
-document.getElementById('dot').addEventListener('input', e=>{ st.dot=+e.target.value; document.getElementById('dotLbl').textContent=st.dot.toFixed(1); });
+seg('cond', v=>{ if (st.phase==='idle') st.cond=v; else { document.querySelectorAll('#cond button').forEach(x=>x.classList.toggle('on', x.dataset.v===st.cond)); } });
+seg('ori', v=>st.ori=v);
 </script>
 </body>
 </html>

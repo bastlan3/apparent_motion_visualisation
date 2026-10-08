@@ -39,160 +39,187 @@
 <body>
   <a class="back" href="index.html">← back to experiments</a>
   <h1>Farrell &amp; Shepard (1981) — shape, orientation &amp; apparent rotational motion</h1>
-  <div class="sub">A polygon alternates between two orientations (no gap). Find the fastest rate at which it still rotates as a
-    rigid whole. Near-symmetric shapes break down early — a shorter rotation the other way competes.</div>
+  <div class="sub">One polygon alternates continuously between two orientations, each view replacing the other with no gap. Participant task and response keys as in the paper.</div>
 
   <canvas id="c" width="440" height="360"></canvas>
 
   <div class="participant">
-    <div class="instr">
-      Speed up (shorten SOA) until rigid rotation breaks into nonrigid deformation → mark <b>SOA₁</b>. Then slow down until
-      rigid rotation returns → mark <b>SOA₂</b>. Critical SOA = their mean (note the hysteresis).
-    </div>
-    <div class="soaBig">SOA <span id="soaVal">1000</span> <small>ms per view (no ISI)</small></div>
+    <div class="instr" id="instr">“Try to imagine the shape rigidly rotating from one orientation into the other, as if the shape were actually physically rotating in the picture plane.”</div>
     <div class="prow">
-      <div><span class="lab">rate</span>
-        <button id="down">◀ faster (−10%)</button><button id="up">slower (+10%) ▶</button></div>
-      <div>
-        <button id="mark1">breakdown → SOA₁</button>
-        <button id="mark2">reemerge → SOA₂</button></div>
-      <div><button id="record">Record</button><button id="export">Export CSV</button></div>
+      <button id="kL"></button><button id="kC">● centre key</button><button id="kR"></button>
     </div>
+    <div class="instr" style="margin-top:8px;font-size:11px">Response panel (also keyboard: <b>Z</b> = left, <b>Space</b> = centre, <b>M</b> = right). One tap changes each field's duration by 10%. Tap the speed-up key until rigid rotation breaks down into nonrigid motion, press centre (SOA₁); then tap the slow-down key until rigid motion first reappears, press centre (SOA₂), which ends the trial.</div>
+    <div class="prow"><button id="norigid">Could not see rigid rotation (comment sheet)</button></div>
+    <div class="instr" id="stateLbl" style="margin-top:8px;color:#777">No trial running.</div>
   </div>
 
   <div class="panel">
-    <h2>Experimenter parameters</h2>
+    <h2>Experimenter: trial setup</h2>
     <div class="grid">
-      <div class="ctrl">Approximation to 180° symmetry
-        <div class="seg" id="sym">
-          <button data-v="0" class="on">0%</button><button data-v="25">25%</button>
-          <button data-v="50">50%</button><button data-v="75">75%</button><button data-v="100">100%</button>
-        </div>
-      </div>
+      <div class="ctrl">Polygon (generated per paper recipe, see notes)
+        <div class="seg" id="poly"><button data-v="0" class="on">A</button><button data-v="1">B</button><button data-v="2">C</button></div></div>
+      <div class="ctrl">Version
+        <div class="seg" id="side"><button data-v="L" class="on">left-side</button><button data-v="R">right-side</button></div></div>
+      <div class="ctrl">Imposed 180° symmetry
+        <div class="seg" id="sym"><button data-v="0" class="on">0%</button><button data-v="25">25%</button><button data-v="50">50%</button><button data-v="75">75%</button><button data-v="100">100%</button></div></div>
       <div class="ctrl">Angular disparity
-        <div class="seg" id="ang">
-          <button data-v="30">30°</button><button data-v="60">60°</button>
-          <button data-v="90" class="on">90°</button><button data-v="120">120°</button>
-          <button data-v="150">150°</button><button data-v="180">180°</button>
-        </div>
-      </div>
+        <div class="seg" id="ang"><button data-v="30">30°</button><button data-v="60">60°</button><button data-v="90" class="on">90°</button><button data-v="120">120°</button><button data-v="150">150°</button><button data-v="180">180°</button></div></div>
       <div class="ctrl">Direction
-        <div class="seg" id="dir"><button data-v="1" class="on">CW</button><button data-v="-1">CCW</button></div>
-      </div>
+        <div class="seg" id="dir"><button data-v="1" class="on">clockwise</button><button data-v="-1">counterclockwise</button></div></div>
+      <div class="ctrl">Key assignment (counterbalanced in paper)
+        <div class="seg" id="map"><button data-v="0" class="on">left = speed up</button><button data-v="1">left = slow down</button></div></div>
     </div>
-
-    <div class="readouts">
-      <div>SOA₁ / SOA₂ / critical: <b id="threshLbl">— / — / —</b></div>
-      <div>Hysteresis (SOA₂−SOA₁): <b id="hystLbl">—</b></div>
-      <div id="noteLbl" style="color:#7a7a55"></div>
-      <div>Trials: <b id="nLog">0</b></div>
+    <div class="prow" style="justify-content:flex-start;margin-top:14px">
+      <button id="start">Start trial (SOA = 1 s)</button>
+      <button id="rand">Random trial from 180-trial design</button>
+      <button id="export">Export CSV</button>
     </div>
+    <div class="readouts"><div>Trials logged: <b id="nLog">0</b></div><div>Display: <b id="rt">—</b></div><div id="soaDbg"></div></div>
+    <div class="readouts"><label><input type="checkbox" id="showSoa"> experimenter strip: show current SOA (participants saw no SOA value)</label></div>
   </div>
 
   <div class="meta">
-    Faithful reconstruction of Farrell, J. E. &amp; Shepard, R. N. (1981), <i>J. Exp. Psychol.: HPP</i> 7(2), 477–486. A polygon (18 radii;
-    ≈ 4.8° visual angle) is generated at a chosen approximation to 180° rotational symmetry (0/25/50/75/100%) and shown in continuous
-    alternation between an upright orientation and one rotated by 30–180° in the picture plane — each view immediately replacing the
-    other (no interstimulus interval). Starting at SOA = 1 s, the observer speeds up in 10% steps until rigid rotation breaks down
-    (SOA₁), then slows until it re-emerges (SOA₂); critical SOA = their mean. For asymmetric polygons the critical SOA rises ~linearly
-    with disparity (~2 ms/°); for near-/fully-symmetric polygons it peaks near 90° and falls (an inverted-V), because beyond 90° a
-    shorter <i>supplementary</i> rotation in the opposite direction competes — rigid rotation through the larger angle becomes unstable.
-    The smooth rigid rotation is the observer's percept; only the two real alternating views are drawn.
+    <b style="color:#888">Methods (Farrell &amp; Shepard, 1981, JEP:HPP 7(2), 477–486)</b><br>
+    <b>Observers</b>: 8; 3 sessions × 60 recorded trials = 180 recorded trials each, after practice trials and a few warm-up trials per session (p. 479–480).<br>
+    <b>Stimulus</b>: one polygon at a time, centred. Each of 3 random polygons (A, B, C) has one vertex on each of 18 equally spaced radii (20° apart); two vertices 8 units from the origin in opposite directions define the vertical axis; the other 16 radii are drawn from 1–17 excluding 8, without replacement; adjacent vertices joined by straight lines (p. 479). Symmetric versions: cut along the vertical axis and join the half to a copy rotated 180° (left-side / right-side versions). Intermediate polygons interpolate along each radius ¼, ½, ¾ of the way from asymmetric to symmetric: 0, 25, 50, 75, 100% (27 distinct polygons; each observer saw 15, with left- or right-side versions counterbalanced). Size: ≈ 4.8° visual angle at a “standard viewing distance” (p. 480).<br>
+    <b>Sequence</b>: alternation between the “upright” orientation (defined by the vertical axis) and an orientation displaced by 30, 60, 90, 120, 150 or 180° clockwise or counterclockwise (fixed within a trial); each view immediately replaces the other, no ISI, so SOA = duration of each view. SOA starts at 1 s on every trial (p. 480).<br>
+    <b>Response</b>: left/right keys of a response panel change each field's duration by 10% (speed up / slow down; assignment counterbalanced), centre key records SOA₁ then SOA₂, which ends the trial. If rigid rotation could not be seen, observers noted this on a comment sheet. Design: random order, 1 trial per polygon (15) × 12 cw/ccw disparities (180° counted once) = 180 (p. 480).<br>
+    <b>Page timing</b>: frame-counted at an assumed 60 Hz (16.67 ms/frame). Each view lasts round(SOA/16.67) frames; 1 s = 60 frames; after each 10% step the SOA is re-quantised to whole frames. Realised durations are shown above under “Display”.<br>
+    <b>Assumptions (not specified in paper)</b>: exact radii of A, B, C are shown only in the paper's Fig. 1, so polygons here are seeded random draws following the recipe (placeholders). Speed-up multiplies SOA by 0.9; slow-down by 1.1 (paper says “the same 10% steps”). Minimum SOA 1 frame; no upper cap. Rendered as a green (P31 phosphor) outline, 2 px line, black background, no fill, no fixation point; luminance, line width, viewing distance, refresh rate unspecified. 4.8° taken as the diameter of the circle containing radius 17, at an assumed 40 px/degree (≈192 px). Which view is shown first is unspecified (upright first here). Apparatus: Tektronix 604 CRT, P31 phosphor, dimly lit room.
   </div>
 
 <script>
-const c = document.getElementById('c');
-const ctx = c.getContext('2d');
-const W = c.width, H = c.height;
-const CX = W/2, CY = H/2;
-const SCALE = 7.2;               // px per polygon unit (max r 17 -> ~122 px)
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+const W=c.width, H=c.height, CX=W/2, CY=H/2;
+const PX_PER_DEG=40, SCALE=(4.8*PX_PER_DEG/2)/17;   // px per polygon unit (assumption)
+const FRAME=1000/60;
 
-// 18 radii at 90° + i*20°; indices 0 (top) & 9 (bottom) are the vertical-axis points (r = 8)
-const R_ASYM = [8, 5,14,3,11,16,6,2,13,  8, 4,15,7,12,1,10,17,9];
-function rSym(i){ return R_ASYM[i % 9]; }        // enforce r[i] = r[i+9] -> 180° symmetry
-function radii(symFrac){
-  const out=[]; for(let i=0;i<18;i++){ out.push(R_ASYM[i]*(1-symFrac) + rSym(i)*symFrac); } return out;
+// seeded RNG -> polygons A,B,C following the paper's recipe
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+function makePoly(seed){
+  const rnd=mulberry(seed), pool=[]; for(let i=1;i<=17;i++) if(i!==8) pool.push(i);
+  const r=new Array(18); r[0]=8; r[9]=8;
+  for(let i=0;i<18;i++){ if(i===0||i===9) continue; r[i]=pool.splice(Math.floor(rnd()*pool.length),1)[0]; }
+  return r;
 }
-function polyPoints(symFrac){
-  const r = radii(symFrac), pts=[];
-  for(let i=0;i<18;i++){ const a=(90 + i*20)*Math.PI/180; pts.push([r[i]*Math.cos(a), -r[i]*Math.sin(a)]); }
-  return pts;
+const POLYS=[makePoly(11),makePoly(23),makePoly(37)];
+// radius i is at angle 90+20i deg (i=0 top, i=9 bottom); left half = i 1..8, right half = i 10..17
+function symRadii(r,side){
+  const s=r.slice();
+  if(side==='L'){ for(let i=1;i<=8;i++) s[i+9]=r[i]; }
+  else { for(let i=10;i<=17;i++) s[i-9]=r[i]; }
+  return s;
 }
-function drawPoly(symFrac, rotDeg){
-  const pts = polyPoints(symFrac), a = rotDeg*Math.PI/180, co=Math.cos(a), sn=Math.sin(a);
+function polyRadii(pi,side,sym){
+  const a=POLYS[pi], b=symRadii(a,side), f=sym/100;
+  return a.map((v,i)=>v*(1-f)+b[i]*f);
+}
+function draw(radii,rotDeg){
+  ctx.fillStyle='#050505'; ctx.fillRect(0,0,W,H);
+  if(!radii) return;
+  const a=rotDeg*Math.PI/180, co=Math.cos(a), sn=Math.sin(a);
   ctx.beginPath();
-  pts.forEach((p,i)=>{
-    const x = CX + (p[0]*co - p[1]*sn)*SCALE, y = CY + (p[0]*sn + p[1]*co)*SCALE;
-    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  radii.forEach((r,i)=>{
+    const t=(90+i*20)*Math.PI/180, x=r*Math.cos(t), y=-r*Math.sin(t);
+    const X=CX+(x*co-y*sn)*SCALE, Y=CY+(x*sn+y*co)*SCALE;
+    i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
   });
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(150,190,150,0.10)'; ctx.fill();
-  ctx.strokeStyle = '#9fe0a0'; ctx.lineWidth = 2; ctx.lineJoin='round'; ctx.stroke();
+  ctx.closePath(); ctx.strokeStyle='#9fe0a0'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
 }
 
-const st = { sym:0, ang:90, dir:1, soa:1000, soa1:null, soa2:null };
-
-// timeline: view A (0°) [0,SOA), view B (V°) [SOA,2SOA) ; no ISI
-let clock = 0, lastTs = 0;
-function drawFrame(){
-  ctx.fillStyle = '#050505'; ctx.fillRect(0,0,W,H);
-  const cycle = 2*st.soa;
-  const showB = (clock % cycle) >= st.soa;
-  drawPoly(st.sym/100, showB ? st.dir*st.ang : 0);
-  document.getElementById('soaVal').textContent = Math.round(st.soa);
-}
-function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
-requestAnimationFrame(loop);
-
-// ---- staircase (10% steps), hysteresis ----
-function clampSOA(){ st.soa = Math.max(60, Math.min(1500, st.soa)); }
-document.getElementById('down').addEventListener('click', ()=>{ st.soa*=0.9; clampSOA(); });
-document.getElementById('up').addEventListener('click',   ()=>{ st.soa/=0.9; clampSOA(); });
-function showThresh(){
-  const f = x => x==null ? '—' : Math.round(x)+' ms';
-  const crit = (st.soa1!=null && st.soa2!=null) ? Math.round((st.soa1+st.soa2)/2)+' ms' : '—';
-  document.getElementById('threshLbl').textContent = f(st.soa1)+' / '+f(st.soa2)+' / '+crit;
-  document.getElementById('hystLbl').textContent =
-    (st.soa1!=null && st.soa2!=null) ? Math.round(st.soa2-st.soa1)+' ms' : '—';
-}
-document.getElementById('mark1').addEventListener('click', ()=>{ st.soa1=st.soa; showThresh(); });
-document.getElementById('mark2').addEventListener('click', ()=>{ st.soa2=st.soa; showThresh(); });
-
-// ---- logging ----
+const cfg={poly:0,side:'L',sym:0,ang:90,dir:1,map:0};
+const T={running:false,soa:1000,soa1:null,stage:0,frameCount:0,view:0};
 const log=[];
-document.getElementById('record').addEventListener('click', ()=>{
-  const crit = (st.soa1!=null && st.soa2!=null) ? Math.round((st.soa1+st.soa2)/2) : '';
-  log.push({ symmetryPct:st.sym, angleDeg:st.ang, direction: st.dir>0?'CW':'CCW',
-             soa1: st.soa1!=null?Math.round(st.soa1):'', soa2: st.soa2!=null?Math.round(st.soa2):'', criticalSOA:crit });
-  document.getElementById('nLog').textContent = log.length;
-  st.soa1=st.soa2=null; showThresh();
+const frames=()=>Math.max(1,Math.round(T.soa/FRAME));
+function updInfo(){
+  const f=frames();
+  document.getElementById('rt').textContent = T.running ? f+' frames = '+(f*FRAME).toFixed(1)+' ms per view @60 Hz' : '—';
+  document.getElementById('soaDbg').textContent = (document.getElementById('showSoa').checked && T.running) ? 'SOA ≈ '+Math.round(T.soa)+' ms' : '';
+}
+function setLabels(){
+  const up=cfg.map===0?'kL':'kR', dn=cfg.map===0?'kR':'kL';
+  document.getElementById(up).textContent='◀ speed up (−10%)'.replace('◀',cfg.map===0?'◀':'▶');
+  document.getElementById(dn).textContent='slow down (+10%) ▶'.replace('▶',cfg.map===0?'▶':'◀');
+  document.getElementById('kL').textContent=(cfg.map===0?'LEFT: speed up (−10%)':'LEFT: slow down (+10%)');
+  document.getElementById('kR').textContent=(cfg.map===0?'RIGHT: slow down (+10%)':'RIGHT: speed up (+−10%)').replace('+−','−');
+}
+function state(msg){document.getElementById('stateLbl').textContent=msg;}
+
+// frame-counted loop
+let radii=null;
+function tick(){
+  if(T.running){
+    draw(radii, T.view? cfg.dir*cfg.ang : 0);
+    T.frameCount++;
+    if(T.frameCount>=frames()){ T.frameCount=0; T.view^=1; }
+  } else draw(null,0);
+  updInfo();
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+function startTrial(){
+  radii=polyRadii(cfg.poly,cfg.side,cfg.sym);
+  Object.assign(T,{running:true,soa:1000,soa1:null,stage:0,frameCount:0,view:0,tr:{...cfg}});
+  state('Trial running. Speed up until rigid rotation breaks down, then press centre.');
+}
+function press(which){ // which: 'up' faster | 'down' slower | 'centre'
+  if(!T.running) return;
+  if(which==='up') T.soa*=0.9;
+  else if(which==='down') T.soa*=1.1;
+  else if(which==='centre'){
+    if(T.stage===0){ T.soa1=T.soa; T.stage=1; state('SOA₁ recorded. Now slow down until rigid motion first reappears, then press centre.'); }
+    else { finish(T.soa1,T.soa,false); }
+  }
+  if(T.soa<FRAME) T.soa=FRAME;
+}
+function finish(s1,s2,none){
+  const t=T.tr;
+  log.push({polygon:'ABC'[t.poly],version:t.side,symmetryPct:t.sym,angleDeg:t.ang,direction:t.dir>0?'CW':'CCW',
+    keyMap:t.map?'left=slower':'left=faster',soa1_ms:s1!=null?Math.round(s1):'',soa2_ms:s2!=null?Math.round(s2):'',noRigid:none?1:0});
+  document.getElementById('nLog').textContent=log.length;
+  T.running=false; state('Trial ended. Start the next trial.');
+}
+const keyUp=()=>cfg.map===0?'kL':'kR';
+document.getElementById('kL').onclick=()=>press(cfg.map===0?'up':'down');
+document.getElementById('kR').onclick=()=>press(cfg.map===0?'down':'up');
+document.getElementById('kC').onclick=()=>press('centre');
+document.getElementById('norigid').onclick=()=>{ if(T.running) finish(T.stage?T.soa1:null,null,true); };
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.code==='KeyZ') document.getElementById('kL').click();
+  else if(e.code==='KeyM') document.getElementById('kR').click();
+  else if(e.code==='Space'){ e.preventDefault(); press('centre'); }
 });
-document.getElementById('export').addEventListener('click', ()=>{
+document.getElementById('start').onclick=startTrial;
+
+// random trial from 15 polygons (3 polys x 5 sym levels; side fixed by selection) x 12 cw/ccw disparities
+let queue=[];
+function buildQueue(){
+  queue=[];
+  for(let p=0;p<3;p++)for(const s of [0,25,50,75,100])for(const a of [30,60,90,120,150,180])for(const d of (a===180?[1]:[1,-1])) queue.push({poly:p,sym:s,ang:a,dir:d});
+  for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]];}
+}
+document.getElementById('rand').onclick=()=>{
+  if(!queue.length) buildQueue();
+  Object.assign(cfg,queue.pop()); syncSeg(); startTrial();
+};
+function syncSeg(){
+  const m={poly:cfg.poly,side:cfg.side,sym:cfg.sym,ang:cfg.ang,dir:cfg.dir,map:cfg.map};
+  for(const k in m) document.querySelectorAll('#'+k+' button').forEach(b=>b.classList.toggle('on',b.dataset.v==String(m[k])));
+}
+function seg(id,fn){document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset.v); if(id==='map') setLabels();}));}
+seg('poly',v=>cfg.poly=+v); seg('side',v=>cfg.side=v); seg('sym',v=>cfg.sym=+v);
+seg('ang',v=>cfg.ang=+v); seg('dir',v=>cfg.dir=+v); seg('map',v=>cfg.map=+v);
+document.getElementById('export').onclick=()=>{
   if(!log.length) return;
   const cols=Object.keys(log[0]);
   const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='farrell_shepard_1981.csv'; a.click();
-});
-
-// ---- experimenter controls ----
-function seg(id, fn){
-  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
-    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on'); fn(b.dataset.v);
-  }));
-}
-function note(){
-  const el = document.getElementById('noteLbl');
-  if (st.sym>=75 && st.ang>=120) el.textContent = 'Near-symmetric + large angle: expect early breakdown (competing shorter rotation).';
-  else if (st.sym===100 && st.ang===180) el.textContent = '100% symmetric at 180°: supplementary angle = 0° → no motion.';
-  else el.textContent = '';
-}
-seg('sym', v=>{ st.sym=+v; note(); });
-seg('ang', v=>{ st.ang=+v; note(); });
-seg('dir', v=>st.dir=+v);
-showThresh();
+};
+setLabels();
 </script>
 </body>
 </html>

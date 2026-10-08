@@ -12,7 +12,9 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
-  canvas { display:block; border-radius:3px; max-width:96vw; height:auto; }
+  #wrap { max-width:100%; overflow-x:auto; }
+  canvas { display:block; border-radius:3px; }
+  input[type=number] { width:60px; background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; border-radius:4px; padding:3px 5px; font-size:12px; }
   .participant { margin-top:12px; width:720px; max-width:96vw; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
   .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
@@ -42,11 +44,11 @@
   <div class="sub">Two views of the same character, differing in size and in rotation in the picture plane, alternate continuously with no blank
     interval. The observer speeds up the alternation until the impression of one shape-preserving moving object breaks down, then slows it again until it returns.</div>
 
-  <canvas id="c" width="640" height="480"></canvas>
+  <div id="wrap"><canvas id="c" width="640" height="480"></canvas></div>
 
   <div class="participant">
     <div class="instr">
-      Free viewing, binocular. The pair alternates from an initial SOA of 1000 ms.<br>
+      Free viewing, binocular, no fixation mark. The pair alternates from an initial SOA of 1000 ms. Keys act on single presses (key repeat ignored).<br>
       <b>Right key (→)</b>: faster (SOA decreased by 1/11), repeat until form-preserving movement disappears (plastic deformation, partial movement, flicker); then press <b>centre key (Space)</b>.<br>
       <b>Left key (←)</b>: slower (SOA increased by 1/10), repeat until form-preserving movement reappears; then press <b>centre key (Space)</b>, which ends the trial.
     </div>
@@ -55,10 +57,12 @@
       <button id="bL">◀ left key: slower (+1/10)</button>
       <button id="bC">centre key: register limit</button>
       <button id="bR">right key: faster (−1/11) ▶</button>
-      <button id="bNew">New trial (SOA = 1000 ms)</button>
+      <button id="bNew">Restart this pair (SOA = 1000 ms)</button>
+      <button id="bRand">Next pair from the design (random)</button>
     </div>
     <label class="chk"><input type="checkbox" id="showSoa"> experimenter view: show current SOA (the observer was not shown it)</label>
-    <div class="readout" id="soaOut" style="display:none">SOA <b id="soaVal">1000</b> ms</div>
+    <div class="readout" style="font-size:11px;color:#777">Display calibration: <input type="number" id="pxcm" value="50" min="10" max="60" step="1"> px per cm (canvas is 640 x 480; the largest format, 7.9 cm, must fit: max about 60). Viewing distance in the paper: 60 cm.</div>
+    <div class="readout" id="soaOut" style="display:none">SOA <b id="soaVal">1000</b></div>
   </div>
 
   <div class="panel">
@@ -78,7 +82,7 @@
         <div class="seg" id="uu"></div></div>
     </div>
     <div class="readout">Views: <b id="viewOut"></b></div>
-    <div class="readout" style="font-size:11px;color:#666">Pairs with v = 0° and s = 1 were not used (identical views).</div>
+    <div class="readout" style="font-size:11px;color:#666">The random button draws u, v, s and format combination from the design of the paper for the chosen character/version (the paper used 270 pairs per observer in random order, three replications per cell, in 4-6 sessions after about 25 practice trials; this page does not run the full sequence). Pairs with v = 0° and s = 1 were not used (identical views).</div>
   </div>
 
   <div class="meta">
@@ -95,17 +99,28 @@
       <tr><td>Sequence (p. 553)</td><td>two views in continuous alternation, zero ISI, zero intercycle interval; SOA initially 1 s</td></tr>
       <tr><td>Response (p. 553)</td><td>right key: SOA decreased by 1/11 per tap until form-preserving movement disappears; centre key registers SOA₁. Left key: SOA increased by 1/10 per tap until it reappears; centre key registers SOA₂ and ends the trial. About 25 practice trials; 4–6 sessions of experimental trials.</td></tr>
     </table>
-    <b class="as">Assumptions / not specified in the paper:</b> character typeface and stroke weight (a bold sans-serif is used); exact aspect of the middle format (taken as 2 × the smallest, about 2 × 1.3 cm, with the 7.9 cm side as height); display colour and the 40 Hz raster structure (a plain light-on-dark rendering is used, phosphor luminance not calibrated for your screen); the scale here is 1 cm = 50 px at the canvas's nominal size, so true visual angle depends on your screen and distance (at 60 cm the largest format would subtend about 7.5° × 5.1°); which view comes first within the alternation; key mapping (arrow keys and Space are this page's choice); timing is tied to the browser's frame rate, so very short SOAs are quantised to display frames. The page records and shows no thresholds.
+    <b class="as">Assumptions / not specified in the paper:</b>
+    <ul style="margin:4px 0 0 18px">
+    <li>Typeface and stroke weight: the paper used a point/vector character drawn on a CRT; here the glyph outline of a sans-serif font is drawn as a thin line (about 2 px).</li>
+    <li>Ink extent: each glyph is stretched non-uniformly so its ink bounding box (in its own upright frame, height × width) equals the format size: largest 7.9 × 5.3 cm (p. 553), smallest 1 × 0.67 cm (p. 553), middle format 2 × 1.3 cm (assumed from the 1:2:8 ratio, p. 552).</li>
+    <li>Which view comes first: the first-orientation (u) view is shown first, then the (u + v) view; the paper does not say.</li>
+    <li>Timing: alternation is counted in display frames and assumes a 60 Hz display (16.7 ms/frame). The SOA is kept as a continuous value (start 1000 ms, × 10/11 per right tap, × 1.1 per left tap) and realised as round(SOA / 16.7 ms) frames, minimum 1 frame (the paper's hardware had no such minimum). The realised duration is shown in the experimenter readout. Dropped frames are not detected. The 40 Hz raster intensification and P-31 persistence are not simulated.</li>
+    <li>Colour and luminance: green on near-black as a proxy for the P-31 phosphor; not calibrated to 0.6 cd·µs·cm⁻¹ or 0.5 cd/m².</li>
+    <li>Scale: 1 cm = the px/cm setting at the canvas's nominal size (no CSS shrinking); visual angle is correct only if the screen is calibrated and viewed from 60 cm.</li>
+    <li>Keys: arrows and Space are this page's choice; the right key in phase 2 and the left key in phase 1 do nothing (the paper does not say). When the trial ends the screen goes blank; what happened after termination is not specified.</li>
+    <li>Each observer in the paper saw one pattern only; here character and version are free to change.</li>
+    </ul>
   </div>
 
 <script>
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-const W = cv.width, H = cv.height, PXCM = 50;           // 1 cm = 50 px (nominal)
+const W = cv.width, H = cv.height;
+let PXCM = 50;
 const CHARS = ['3','4','7','J','P','R'];
-// linear sizes: index 0,1,2 -> factors 1,2,8 of smallest (1 cm wide x ... see assumptions)
 const FAC = [1,2,8];
-const BASE_H = 7.9/8, BASE_W = 5.3/8;                    // cm of smallest format (height x width)
-const st = { chr:'R', rev:0, v:120, s:2, fmt:null, u:0, soa:1000, stage:1, done:false, t0:0, shown:'' };
+const BASE_H = 7.9/8, BASE_W = 5.3/8;   // cm, smallest format (height x width)
+const FRAME_MS = 1000/60;
+const st = { chr:'R', rev:0, v:120, s:2, fmt:null, u:0, soa:1000, stage:1, done:false, fcount:0 };
 
 function fmtOptions(s){
   if (s===1) return [[0,0],[1,1],[2,2]];
@@ -118,12 +133,12 @@ function mkSeg(id, items, key, cb){
   items.forEach(([val,label])=>{
     const b=document.createElement('button'); b.textContent=label; b.dataset.v=val;
     if(String(st[key])===String(val)) b.className='on';
-    b.onclick=()=>{ st[key]= (typeof val==='number'?val:val); cb(); };
+    b.onclick=()=>{ st[key]=val; b.blur(); cb(); };
     el.appendChild(b);
   });
 }
-function bindStatic(id,key,num){
-  document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{ st[key]=num?+b.dataset.v:b.dataset.v; refresh(); });
+function bindStatic(id,key){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{ st[key]=+b.dataset.v; b.blur(); refresh(); });
 }
 function refresh(){
   if (st.v===0 && st.s===1) st.s=2;
@@ -131,9 +146,7 @@ function refresh(){
   if (!st.fmt || !opts.some(o=>o.join()===st.fmt.join())) st.fmt=opts[0];
   mkSeg('chr', CHARS.map(c=>[c,c]), 'chr', refresh);
   document.querySelectorAll('#rev button').forEach(b=>b.classList.toggle('on',+b.dataset.v===st.rev));
-  document.querySelectorAll('#vv button').forEach(b=>{
-    b.classList.toggle('on',+b.dataset.v===st.v);
-  });
+  document.querySelectorAll('#vv button').forEach(b=>b.classList.toggle('on',+b.dataset.v===st.v));
   document.querySelectorAll('#ss button').forEach(b=>{
     const dis = (st.v===0 && +b.dataset.v===1);
     b.disabled=dis; b.style.opacity=dis?.3:1; b.classList.toggle('on',+b.dataset.v===st.s);
@@ -142,66 +155,86 @@ function refresh(){
   opts.forEach(o=>{
     const b=document.createElement('button'); b.textContent=FAC[o[0]]+':'+FAC[o[1]];
     if(o.join()===st.fmt.join()) b.className='on';
-    b.onclick=()=>{ st.fmt=o; refresh(); }; f.appendChild(b);
+    b.onclick=()=>{ st.fmt=o; b.blur(); refresh(); }; f.appendChild(b);
   });
   const u=document.getElementById('uu'); u.innerHTML='';
   [0,60,120,180,240,300].forEach(x=>{
     const b=document.createElement('button'); b.textContent=x+'°'; if(x===st.u) b.className='on';
-    b.onclick=()=>{ st.u=x; refresh(); }; u.appendChild(b);
+    b.onclick=()=>{ st.u=x; b.blur(); refresh(); }; u.appendChild(b);
   });
   document.getElementById('viewOut').textContent =
-    `${st.chr}${st.rev?' (reversed)':''}: size ${FAC[st.fmt[0]]} at ${st.u}°  ↔  size ${FAC[st.fmt[1]]} at ${(st.u+st.v)%360}°  (s = ${st.s}, v = ${st.v}°)`;
+    `${st.chr}${st.rev?' (reversed)':''}: size ${FAC[st.fmt[0]]} at ${st.u}°  <->  size ${FAC[st.fmt[1]]} at ${(st.u+st.v)%360}°  (s = ${st.s}, v = ${st.v}°)`;
   newTrial();
 }
+function randomPair(){
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  st.u = pick([0,60,120,180,240,300]);
+  st.v = pick([0,60,120,180]);
+  st.s = pick(st.v===0 ? [2,4,8] : [1,2,4,8]);
+  st.fmt = pick(fmtOptions(st.s));
+  refresh();
+}
+function nFrames(){ return Math.max(1, Math.round(st.soa/FRAME_MS)); }
 function drawView(k){
-  const fi = st.fmt[k], f = FAC[fi];
+  const f = FAC[st.fmt[k]];
   const ang = (st.u + (k?st.v:0))*Math.PI/180;
   const h = BASE_H*f*PXCM, w = BASE_W*f*PXCM;
   ctx.save();
   ctx.translate(W/2,H/2); ctx.rotate(ang);
   if (st.rev) ctx.scale(-1,1);
-  ctx.fillStyle='#b8ffc4'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.strokeStyle='#b8ffc4'; ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.lineJoin='round';
   ctx.font='bold 100px "Helvetica Neue",Arial,sans-serif';
   const m = ctx.measureText(st.chr);
-  const asc = m.actualBoundingBoxAscent, desc = m.actualBoundingBoxDescent;
-  const gw = m.actualBoundingBoxRight + m.actualBoundingBoxLeft, gh = asc+desc;
-  const sc = Math.min(w/gw, h/gh);               // fit glyph into w x h box
-  ctx.scale(sc,sc);
-  ctx.fillText(st.chr, (m.actualBoundingBoxLeft-m.actualBoundingBoxRight)/2, (asc-desc)/2);
+  const L=m.actualBoundingBoxLeft, R=m.actualBoundingBoxRight, A=m.actualBoundingBoxAscent, D=m.actualBoundingBoxDescent;
+  const gw=L+R, gh=A+D;
+  ctx.scale(w/gw, h/gh);                   // ink box -> w x h (non-uniform)
+  ctx.lineWidth = 2 / Math.min(w/gw, h/gh);
+  ctx.strokeText(st.chr, -gw/2 + L, (A-D)/2);
   ctx.restore();
 }
-function frame(now){
+function frame(){
   ctx.fillStyle='#050805'; ctx.fillRect(0,0,W,H);
-  const k = Math.floor((now - st.t0)/st.soa) & 1;
-  drawView(k);
+  if (!st.done){
+    const n = nFrames();
+    drawView(Math.floor(st.fcount/n) & 1);
+    st.fcount++;
+  }
   requestAnimationFrame(frame);
 }
 function setState(){
   const el=document.getElementById('state');
-  el.textContent = st.done ? 'Trial ended (both limits registered).' :
+  el.textContent = st.done ? 'Trial ended. Choose another pair or restart.' :
     (st.stage===1 ? 'Phase 1: tap right key until form-preserving movement disappears, then centre key.'
                   : 'Phase 2: tap left key until form-preserving movement reappears, then centre key.');
-  document.getElementById('soaVal').textContent=st.soa.toFixed(0);
+  const n=nFrames();
+  document.getElementById('soaVal').textContent=st.soa.toFixed(0)+' ms (realised: '+n+' frame'+(n>1?'s':'')+' = '+(n*FRAME_MS).toFixed(1)+' ms at 60 Hz)';
 }
-function newTrial(){ st.soa=1000; st.stage=1; st.done=false; st.t0=performance.now(); setState(); }
-function changeSoa(f){ if(st.done) return; const now=performance.now();
-  // keep current view continuous: restart phase from current view
-  const k = Math.floor((now-st.t0)/st.soa)&1;
-  st.soa*=f; st.t0 = now - (k? st.soa:0); setState(); }
+function newTrial(){ st.soa=1000; st.stage=1; st.done=false; st.fcount=0; setState(); }
+function changeSoa(f){
+  if(st.done) return;
+  const k = Math.floor(st.fcount/nFrames()) & 1;   // keep the current view
+  st.soa*=f; st.fcount = k*nFrames(); setState();
+}
 function right(){ if(!st.done && st.stage===1) changeSoa(1-1/11); }
 function left(){ if(!st.done && st.stage===2) changeSoa(1.1); }
 function centre(){ if(st.done) return; if(st.stage===1) st.stage=2; else st.done=true; setState(); }
-document.getElementById('bR').onclick=right;
-document.getElementById('bL').onclick=left;
-document.getElementById('bC').onclick=centre;
-document.getElementById('bNew').onclick=newTrial;
+document.getElementById('bR').onclick=e=>{right();e.target.blur();};
+document.getElementById('bL').onclick=e=>{left();e.target.blur();};
+document.getElementById('bC').onclick=e=>{centre();e.target.blur();};
+document.getElementById('bNew').onclick=e=>{newTrial();e.target.blur();};
+document.getElementById('bRand').onclick=e=>{randomPair();e.target.blur();};
+document.getElementById('pxcm').onchange=e=>{ PXCM=Math.max(10,Math.min(60,+e.target.value||50)); e.target.value=PXCM; };
 document.getElementById('showSoa').onchange=e=>{ document.getElementById('soaOut').style.display=e.target.checked?'block':'none'; };
 document.addEventListener('keydown',e=>{
-  if(e.key==='ArrowRight'){right();e.preventDefault();}
-  else if(e.key==='ArrowLeft'){left();e.preventDefault();}
-  else if(e.key===' '){centre();e.preventDefault();}
+  if (e.target && e.target.tagName==='INPUT') return;
+  if (!['ArrowRight','ArrowLeft',' '].includes(e.key)) return;
+  e.preventDefault();
+  if (e.repeat) return;
+  if(e.key==='ArrowRight') right();
+  else if(e.key==='ArrowLeft') left();
+  else centre();
 });
-bindStatic('rev','rev',true); bindStatic('vv','v',true); bindStatic('ss','s',true);
+bindStatic('rev','rev'); bindStatic('vv','v'); bindStatic('ss','s');
 refresh(); requestAnimationFrame(frame);
 </script>
 </body>

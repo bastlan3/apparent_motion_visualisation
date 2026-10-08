@@ -37,22 +37,23 @@
 <body>
   <a class="back" href="index.html">← back to experiments</a>
   <h1>Robins &amp; Shepard (1977) — Spatio-temporal probing of apparent rotational movement</h1>
-  <div class="sub">A vertical and a horizontal white bar alternate with coincident centres (an ambiguous 90° rotation).
-    A brief yellow probe dot is interjected in the blank interval between them; the observer judges whether the dot appeared
-    <i>before</i> or <i>after</i> the bar "passed through" the dot's position.</div>
+  <div class="sub">A vertical and a horizontal white bar alternate with coincident centres. A brief yellow dot is shown in the blank interval between them, in one of the two upper quadrants, and the repeating sequence runs continuously.</div>
 
   <canvas id="c" width="740" height="420"></canvas>
   <div id="status"></div>
 
   <div class="participant">
     <div class="instr">
-      Watch the repeating sequence. Does the yellow dot appear <b>before</b> or <b>after</b> the bar passes the dot's place of appearance?
-      Take as long as you need; the response is not timed. No feedback is given. (Responses are not recorded here; a response only draws a new random delay.)
+      "You will see a vertical bar and a horizontal bar, alternating in rapid succession. This may give the appearance of a movement through space of a bar, rocking back and forth. Do you see that? Through which quadrants does the bar seem to pass? Now a yellow dot should appear at some point in the bar's path, during the downswing of the top end. Your task is to say whether the dot appears <b>before</b> or <b>after</b> the bar passes the dot's place of appearance."<br>
+      "... take as long as you need to feel really certain about it. Your response will not be timed. Please do not guess unless and until you have really tried to decide and cannot. ... judge each trial independently."<br>
+      "There will be two types of blocks of trials. In one case, the dot will appear in a quadrant through which the bar seems to pass; in the other case, the dot will be in a quadrant through which the bar is not passing. In this case you are to make the analogous judgment, that is, whether the probe appears before or after the bar would pass that point if it were rotating in the opposite direction, or if the probe were in the symmetrically opposite position."<br>
+      <span style="color:#666">(Abridged from the instructions quoted on p. 13. If the direction of rotation changes for you, switch the probe quadrant below, as the experimenter would. Responses are not recorded; no feedback.)</span>
     </div>
     <div class="prow">
       <button id="before">Before</button>
       <button id="after">After</button>
       <button id="run">Pause</button>
+      <span id="trial" style="font-size:11px;color:#777"></span>
     </div>
   </div>
 
@@ -66,7 +67,7 @@
         </div></div>
       <div class="ctrl">Probe quadrant (upper)
         <div class="seg" id="side">
-          <button data-v="1" class="on">Upper right (NE)</button><button data-v="-1">Upper left (NW)</button>
+          <button data-v="1" class="on">Upper right (quadrant 1)</button><button data-v="-1">Upper left (quadrant 2)</button>
         </div></div>
       <div class="ctrl">Probe delay (pre-probe ISI₁)
         <div class="seg" id="dly">
@@ -75,10 +76,10 @@
         </div></div>
       <div class="ctrl">Delay order
         <div class="seg" id="mode">
-          <button data-v="fixed" class="on">Fixed (as set)</button><button data-v="rand">Random per trial</button>
+          <button data-v="fixed" class="on">Fixed (as set)</button><button data-v="rand">12-trial block (each delay twice, shuffled)</button>
         </div></div>
     </div>
-    <div style="font-size:11px;color:#666;margin-top:10px;">Cycle: <span id="cyc"></span></div>
+    <div style="font-size:11px;color:#666;margin-top:10px;">Cycle (frames at 60 Hz): <span id="cyc"></span></div>
   </div>
 
   <div class="meta">
@@ -92,7 +93,7 @@
       <tr><td>Trials</td><td>12 subjects; per condition and probe angle one block of 12 trials (each of 6 delays twice, random order); 6 practice trials per condition per session; two 1-h sessions. Blocks were run with the dot position fixed within block.</td></tr>
       <tr><td>Fixation</td><td>Not instructed. Fixation point not used (black centre dot was only a pivot marker).</td></tr>
     </table>
-    <span class="assume"><b>Assumptions / unspecified in the paper:</b> luminance of bars and probe, and background luminance, are not given (white-on-black rendered at full screen contrast; yellow #ffdc00). Screen scale is arbitrary (1 cm drawn as 18 px, so proportions match but visual angle depends on your screen and distance; the paper's 90 cm gives 5°40′ only if the bar is about 8.9 cm on screen). Dot is drawn at a hard-edged circle. Whether the probe appeared in every repeated cycle is not stated; here it is shown in every cycle. Response was spoken to the experimenter; the buttons are a substitute. Which quadrant the observer perceives rotation in (experimental vs control) was determined per observer and is not manipulated by the stimulus, so the page has no condition switch: choose the probe quadrant and judge whichever one you see the rotation through. The page shows no path, answer or data. Timing is quantized to display frames (typically 16.7 ms), unlike the tachistoscope.</span>
+    <span class="assume"><b>Assumptions / unspecified in the paper:</b> luminance of bars and probe, and background luminance, are not given (white-on-black rendered at full screen contrast; yellow #ffdc00). Screen scale is arbitrary (1 cm drawn as 18 px, so proportions match but visual angle depends on your screen and distance; the paper's 90 cm gives 5°40′ only if the bar is about 8.9 cm on screen). Dot is a hard-edged circle; the size of the black pivot dot is not given (5 px here). Whether the probe appeared in every repeated cycle is not stated; here it is shown in every cycle. Response was spoken to the experimenter; the buttons are a substitute. Which quadrant the observer perceives rotation in (experimental vs control) was determined per observer and is not manipulated by the stimulus, so the page has no condition switch: choose the probe quadrant and judge whichever one you see the rotation through. The page shows no path, answer or data. Timing is counted in display frames assuming 60 Hz (16.7 ms): the realised durations are listed under the controls (the 20-ms probe becomes 1 frame = 16.7 ms; the 760-ms cycle becomes 46 frames = 767 ms). On a display with another refresh rate the durations scale accordingly. Practice trials (6 per condition) are not implemented. The cycle keeps running while you respond, as in the paper; a new delay takes effect at the next cycle start.</span>
   </div>
 
 <script>
@@ -101,61 +102,67 @@ const CM = 18;                                  // px per cm (assumption)
 const cx = c.width/2, cy = c.height/2;
 const LEN = 8.9*CM, WID = 1.3*CM, R = 3.2*CM, DOT = 0.6*CM;
 const st = { ang:40, side:1, delay:90, mode:'fixed', running:true };
-
+const FMS = 1000/60;
 function drawBar(vertical){
   ctx.fillStyle = '#fff';
   if (vertical) ctx.fillRect(cx-WID/2, cy-LEN/2, WID, LEN);
   else ctx.fillRect(cx-LEN/2, cy-WID/2, LEN, WID);
-  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 7); ctx.fill();   // pivot dot
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 7); ctx.fill();
 }
 function drawProbe(){
   const a = st.ang*Math.PI/180;
   const x = cx + st.side*R*Math.sin(a), y = cy - R*Math.cos(a);
   ctx.fillStyle = '#ffdc00'; ctx.beginPath(); ctx.arc(x, y, DOT/2, 0, 7); ctx.fill();
 }
-// timeline for one cycle (ms)
-function timeline(){
-  const d = st.delay, post = 160 - d;
-  return [
-    {t:200,  f:()=>drawBar(true)},
-    {t:d,    f:()=>{}},
-    {t:20,   f:()=>drawProbe()},
-    {t:post, f:()=>{}},
-    {t:200,  f:()=>drawBar(false)},
-    {t:180,  f:()=>{}}
-  ];
+// segments in ms; frame boundaries from cumulative ms rounded to whole frames
+function segs(d){
+  return [[200,()=>drawBar(true)],[d,null],[20,drawProbe],[160-d,null],[200,()=>drawBar(false)],[180,null]];
 }
+function plan(d){
+  let cum=0, prev=0; const out=[];
+  for (const [ms,f] of segs(d)){ cum+=ms; const e=Math.round(cum/FMS); out.push({n:e-prev,f}); prev=e; }
+  return out;
+}
+let cur = plan(st.delay), pendingDelay = null;
 function describe(){
-  const d = st.delay;
-  document.getElementById('cyc').textContent =
-    `vertical 200 – blank ${d} – probe 20 – blank ${160-d} – horizontal 200 – blank 180 = 760 ms`;
+  const p = plan(st.delay), n=p.reduce((a,x)=>a+x.n,0);
+  const names=['vertical','blank','probe','blank','horizontal','blank'];
+  document.getElementById('cyc').textContent = p.map((x,i)=>names[i]+' '+x.n+'f ('+(x.n*FMS).toFixed(0)+' ms)').join(' - ')+' = '+n+' frames ('+(n*FMS).toFixed(0)+' ms; nominal 760)';
 }
-let t0 = performance.now(), pendingNew = false;
-function frame(now){
+let frameNo = 0;
+function frame(){
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,c.width,c.height);
   if (st.running){
-    let tl = timeline(), tot = 760;
-    let e = (now - t0) % tot;
-    if (pendingNew && e < 20){ pendingNew = false; }
-    let acc = 0;
-    for (const s of tl){ if (e < acc + s.t){ s.f(); break; } acc += s.t; }
+    const tot = cur.reduce((a,x)=>a+x.n,0);
+    let e = frameNo % tot;
+    if (e===0 && pendingDelay!==null){ st.delay=pendingDelay; pendingDelay=null; cur=plan(st.delay); markDelay(); describe(); e=0; }
+    let acc=0;
+    for (const s of cur){ if (e < acc + s.n){ if (s.f) s.f(); break; } acc += s.n; }
+    frameNo++;
   }
   requestAnimationFrame(frame);
 }
+function markDelay(){ document.querySelectorAll('#dly button').forEach(b=>b.classList.toggle('on', +b.dataset.v===st.delay)); }
+let block=[], bi=0;
+function newBlock(){
+  block=[30,50,70,90,110,130,30,50,70,90,110,130];
+  for (let i=block.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [block[i],block[j]]=[block[j],block[i]]; }
+  bi=0;
+}
+function showTrial(){ document.getElementById('trial').textContent = st.mode==='rand' ? 'trial '+(bi+1)+' / 12' : ''; }
 function nextTrial(){
   if (st.mode === 'rand'){
-    const opts = [30,50,70,90,110,130];
-    st.delay = opts[Math.floor(Math.random()*6)];
-    document.querySelectorAll('#dly button').forEach(b=>b.classList.toggle('on', +b.dataset.v===st.delay));
-    describe();
+    bi++; if (bi>=12) newBlock();
+    pendingDelay = block[bi]; showTrial();
   }
-  t0 = performance.now();
 }
+function applyNow(){ cur=plan(st.delay); frameNo=0; describe(); }
 function seg(id, key, num){
   document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on'); st[key] = num ? +b.dataset.v : b.dataset.v;
-    describe(); t0 = performance.now();
+    if (id==='mode'){ if (st.mode==='rand'){ newBlock(); st.delay=block[0]; markDelay(); showTrial(); } else showTrial(); }
+    pendingDelay=null; applyNow();
   });
 }
 seg('ang','ang',true); seg('side','side',true); seg('dly','delay',true); seg('mode','mode',false);
@@ -163,7 +170,7 @@ const stat = document.getElementById('status');
 function resp(){ stat.textContent = 'Response taken (not recorded, no feedback).'; setTimeout(()=>stat.textContent='',900); nextTrial(); }
 document.getElementById('before').onclick = resp;
 document.getElementById('after').onclick = resp;
-document.getElementById('run').onclick = e=>{ st.running=!st.running; e.target.textContent = st.running?'Pause':'Resume'; t0=performance.now(); };
+document.getElementById('run').onclick = e=>{ st.running=!st.running; e.target.textContent = st.running?'Pause':'Resume'; };
 describe(); requestAnimationFrame(frame);
 </script>
 </body>

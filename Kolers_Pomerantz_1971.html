@@ -12,7 +12,10 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:740px; text-align:center; line-height:1.5; }
-  canvas { display:block; border-radius:3px; max-width:96vw; height:auto; }
+  canvas { display:block; border-radius:3px; }
+  .cal { margin-top:10px; font-size:11px; color:#888; max-width:740px; text-align:center; line-height:1.6; }
+  .card { height:0; background:#2a2a34; border:1px solid #5a5a6a; margin:6px auto 0; }
+  input[type=range]{ vertical-align:middle; width:220px; }
   .participant { margin-top:12px; width:740px; max-width:96vw; text-align:center; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; }
   .prow { margin-top:10px; display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
@@ -40,17 +43,21 @@
 <body>
   <a class="back" href="index.html">← back to experiments</a>
   <h1>Kolers &amp; Pomerantz (1971) — Figural change in apparent motion</h1>
-  <div class="sub">Two disparate shapes are flashed in sequence on a lit field while the observer fixates a point; the observer
-    reports with button presses whether the transition looked smooth and continuous. Only the physical flashes are shown.</div>
+  <div class="sub">Two shapes are flashed in sequence on a lit field while the observer fixates a point; the observer
+    responds with button presses during the intercycle interval. Only the physical flashes are shown.</div>
 
-  <canvas id="c" width="630" height="540"></canvas>
+  <div style="max-width:100%;overflow-x:auto"><canvas id="c" width="630" height="540"></canvas></div>
   <div class="status" id="status">&nbsp;</div>
+  <div class="cal">Size calibration (the paper's field was 12.5 × 10.5 cm = 7° × 6° at 1 m, viewed with the right eye; the canvas is drawn at true physical size and is never rescaled). Hold a bank card against the grey bar and drag until it matches the card width (85.6 mm), then view from 1 m (arm's length is about 0.6 m, so sit back).
+    <div><input type="range" id="cal" min="200" max="600" value="324"> <span id="calv"></span></div>
+    <div class="card" id="cardbar"></div>
+  </div>
 
   <div class="participant">
     <div class="instr" id="instr"></div>
     <div class="prow" id="resp"></div>
     <div class="prow">
-      <button id="run">▶ Run continuously (cycle every 3.2 s ICI)</button>
+      <button id="run">▶ Run continuously (one presentation per 3.2 s ICI)</button>
       <button id="one">Run one trial</button>
       <button id="stop">■ Stop</button>
     </div>
@@ -93,7 +100,7 @@
           <button data-v="sep">Separated (one on A, one on B)</button>
         </div>
       </div>
-      <div class="ctrl hide" id="cdur">Shape duration (each)
+      <div class="ctrl hide" id="cdur">Shape duration (each; default 100 ms is my assumption)
         <div class="seg" id="dur"></div>
       </div>
     </div>
@@ -108,26 +115,30 @@
     <b>Methods (Kolers &amp; Pomerantz, 1971, J. Exp. Psychol. 87, 99–108). Values from the paper; <span class="as">amber = not stated / my assumption</span>.</b>
     <table>
       <tr><td>Apparatus (p.99)</td><td>Multichannel electronic tachistoscope; two shapes in sequence with two lighted pauses between. Target area 12.5 × 10.5 cm = 7° × 6° at 1 m viewing distance. Lamp rise 1.5 ms, 90% decay 3.5 ms. Field brightness ≈ 4 ft-L. Timing error &lt; 1%.</td></tr>
-      <tr><td>Stimuli (p.100)</td><td>Circle, square, triangle, hollow arrow drawn in black ink on white board, contour 1 mm wide (≈ 3.4′), area equated at 1.56π cm². A circle "subtended 43′" (this equals the circle's <i>radius</i> for 1.56π cm², so the page draws it at that area, diameter ≈ 86′). Centres of gravity coincide with Line A or B of Fig. 1. Shapes are outline only.</td></tr>
-      <tr><td>Layout (Fig. 1)</td><td>Fixation point FP = small neon point source. Figure labels 3.7°, 1.7°, 0.5°. <span class="as">Positions here (B ≈ 1.2° from left edge, A ≈ 5.55°, FP ≈ 6.25°, all at mid-height) are scaled from the printed drawing; the dimension labels are ambiguous. FP colour/size are assumed (small orange dot).</span></td></tr>
-      <tr><td>Timing (Fig. 1, p.100)</td><td>Shape 1 (25–400 ms; 80 ms in Exp I) → ISI 10, 25, 50, 71, 100, 125, 165, 210, 260, 390 ms (field lit) → shape 2 (same duration) → ICI 3200 ms during which the observer responds → next cycle. <span class="as">The browser's frame rate (~16.7 ms at 60 Hz) quantises shape and ISI durations; page timing is not tachistoscope-accurate, especially for the 10 ms ISI.</span></td></tr>
+      <tr><td>Stimuli (p.100)</td><td>Circle, square, triangle, hollow arrow drawn in black ink on white board, contour 1 mm wide (≈ 3.4′), area equated at 1.56π cm². A circle "subtended 43′" (this equals the circle's <i>radius</i> for 1.56π cm², so the page draws it at that area, diameter ≈ 86′). Centres of gravity coincide with Line A or B of Fig. 1. Shapes are outline only. <span class="as">Triangle (isosceles) and hollow-arrow (block arrow with rectangular shaft) proportions are not given in the paper: assumed.</span></td></tr>
+      <tr><td>Layout (Fig. 1)</td><td>Fixation point FP = small neon point source. Fig. 1 dimension labels 3.7°, 1.7°, 0.5° run B→A, A→FP, FP→right edge. Used here: B 1.1° from the left edge, A = B + 3.7° = 4.8°, FP = A + 1.7° = 6.5° (0.5° from the right edge); A and B at 44% of field height, FP at 48% (read from the printed figure). <span class="as">FP size (small dot with glow) and colour (orange, as for a neon lamp) are assumed.</span></td></tr>
+      <tr><td>Timing (Fig. 1, p.100)</td><td>Shape 1 (25–400 ms; 80 ms in Exp I) → ISI 10, 25, 50, 71, 100, 125, 165, 210, 260, 390 ms (field lit) → shape 2 (same duration) → ICI 3200 ms during which the observer responds → next cycle. <span class="as">Presented here in whole display frames (assumes 60 Hz, 16.7 ms/frame; each period is rounded to the nearest frame, minimum 1 frame, so the 10 ms ISI becomes 1 frame = 16.7 ms and 25 ms becomes 1 frame). The status line shows the realised frame counts and ms. Not tachistoscope-accurate (paper: rise 1.5 ms, timing error under 1%).</span></td></tr>
       <tr><td>Viewing</td><td>Light-adapted right eye only, fixation on FP. 3 min dark adaptation then 1 min light adaptation to a blank field before testing (not reproduced). Extensive practice before each session.</td></tr>
       <tr><td>Exp I (pp.100–102)</td><td>4 shapes → 16 pairs (4 same, 12 disparate); shapes 80 ms each; 10 ISIs; shapes centred on Lines A and B (<span class="as">assumed: first shape at A, second at B</span>). Response: one button if smooth continuous motion was seen, another if anything else. Later part ("complement"): arrow→square, arrow→circle, arrow→triangle.</td></tr>
-      <tr><td>Exp II (p.104)</td><td>Right-angled trapezoid (truncated isosceles right triangle), area equal to Exp I shapes, paired with its mirror reflection (M), inversion (I) or 180° planar rotation (R); both members centred on Line A. 5 durations (25, 50, 100, 200, 400 ms; the printed Fig. 4 legend) × 10 ISIs. Response during the ICI: button 1 smooth rotation of a rigid shape, button 2 smooth movement of a plastic shape, button 3 neither. Observers were first never told what to see, then given these instructions. <span class="as">Exact proportions of the trapezoid and which orientation is shown first are not given; I used legs L with the tip cut at 0.7 L, narrow end pointing left first.</span></td></tr>
+      <tr><td>Exp II (p.104)</td><td>Right-angled trapezoid (truncated isosceles right triangle), area equal to Exp I shapes, paired with its mirror reflection (M), inversion (I) or 180° planar rotation (R); both members centred on Line A. 5 durations (25, 50, 100, 200, 400 ms; the printed Fig. 4 legend) × 10 ISIs. Response during the ICI: button 1 smooth rotation of a rigid shape, button 2 smooth movement of a plastic shape (the paper gives no further explanation of "plastic"), button 3 neither. Observers were first never told what to see, then given these instructions. <span class="as">Exact proportions and which orientation is shown first are not given. Used here: truncated isosceles right triangle with parallel sides 1 and 0.45 and base 0.55 (45° slanted side), narrow end pointing left first. Default duration 100 ms is arbitrary.</span></td></tr>
       <tr><td>Exp III (p.105)</td><td>Five trapezoid pairs, each shape 100 ms: large left-pointing with its mirror image; small left-pointing with its mirror image; large left vs small left; large right vs small right; large left vs small right. Large = Exp II area, small = half that area. Superposed (both on Line A) and then separated (one on A, one on B). Response: one button for smooth continuous change of any kind, another if the transition was not smooth and continuous.</td></tr>
-      <tr><td>Not specified</td><td class="as">Inter-trial order randomisation shown here is not used: the page repeats the selected condition. Which shape of Exp III pairs was first, shape-to-location mapping for the "separated" case, and the brightness of the shapes beyond "black ink on a lit board" are unspecified. Responses on this page are not recorded or scored.</td></tr>
+      <tr><td>Not specified / not reproduced</td><td class="as">Randomised or counterbalanced pair and ISI order (paper: counterbalanced within sessions) is not used: the page repeats the selected condition. Exp III shape order and shape-to-A/B mapping in the separated case are assumed (first shape at A, second at B). Surround and luminance: the paper gives 4 ft-L field brightness and a darkened-room procedure implied by 3 min dark adaptation; the monitor here is uncalibrated. 3 min dark and 1 min light adaptation, and monocular viewing, are not enforced (view with the right eye only). Responses on this page are not recorded or scored.</td></tr>
     </table>
   </div>
 
 <script>
 const c = document.getElementById('c'), ctx = c.getContext('2d');
-const PX = 90;                         // px per degree (field 7 x 6 deg = 630 x 540)
-const FW = 7*PX, FH = 6*PX;
 const CM = 0.5729;                     // deg per cm at 1 m
-const AREA = 1.56*Math.PI*CM*CM*PX*PX; // px^2 for 1.56*pi cm^2
-const LINEW = 0.0573*PX;               // 1 mm contour
-const POS = { B:{x:1.2*PX, y:FH/2}, A:{x:5.55*PX, y:FH/2} };
-const FP = { x:6.25*PX, y:FH/2 };
+let PXCM = 32.4, PX, FW, FH, AREA, LINEW, POS, FP;  // px per cm (calibrated), derived values
+function setScale(pxcm){
+  PXCM = pxcm; PX = pxcm/CM;           // px per degree at 1 m
+  FW = 12.5*PXCM; FH = 10.5*PXCM;      // 12.5 x 10.5 cm = 7 x 6 deg
+  AREA = 1.56*Math.PI*PXCM*PXCM;       // px^2 for 1.56*pi cm^2
+  LINEW = 0.1*PXCM;                    // 1 mm contour
+  POS = { B:{x:1.1*PX, y:0.44*FH}, A:{x:4.8*PX, y:0.44*FH} };
+  FP = { x:6.5*PX, y:0.48*FH };
+  c.width = Math.round(FW); c.height = Math.round(FH);
+}
 const FIELD = '#d8d8d0', INK = '#050505';
 const ISIS = [10,25,50,71,100,125,165,210,260,390];
 const ICI = 3200;
@@ -141,12 +152,9 @@ const BASE = {
   square: [[-1,-1],[1,-1],[1,1],[-1,1]],
   triangle: [[0,-1.15],[1.15,0.85],[-1.15,0.85]],
   arrow: [[-1.2,-0.25],[0.2,-0.25],[0.2,-0.8],[1.2,0],[0.2,0.8],[0.2,0.25],[-1.2,0.25]],
-  // right trapezoid, narrow end pointing LEFT: truncated isosceles right triangle (assumed 0.7 L cut)
-  trap: [[0,0],[0.7,0],[0.7,0.3],[0,1]].map(([x,y])=>[1-x,y])  // mirrored so narrow side is left... see below
+  // truncated isosceles right triangle: parallel sides 1 (right) and 0.45 (left), base 0.55 -> 45 deg slant; narrow end LEFT
+  trap: [[0,0],[0.55,0],[0.55,1],[0,0.45]]
 };
-// trapezoid: vertical right-angle side on the right, slanted top; narrow (pointing) end at left
-BASE.trap = [[0,0.3],[0.7,0],[0.7,1],[0,1]].map(([x,y])=>[x,y]); // vertices: left short edge at x=0 (height .7), right tall edge x=.7 (height 1)
-BASE.trap = [[0,0],[0.7,0],[0.7,1],[0,0.7]]; // tall edge right, short edge left: points left
 function shape(name, areaMul, flipX, flipY){
   const p = norm(BASE[name], AREA*areaMul).map(([x,y])=>[flipX?-x:x, flipY?-y:y]);
   return p;
@@ -160,7 +168,8 @@ function drawShape(poly, at){
 function drawField(shapes){   // shapes: [{poly, at}]
   ctx.fillStyle = FIELD; ctx.fillRect(0,0,FW,FH);
   shapes.forEach(s=>drawShape(s.poly, s.at));
-  ctx.fillStyle='#ff6a2a'; ctx.beginPath(); ctx.arc(FP.x,FP.y,3,0,7); ctx.fill();
+  const g=ctx.createRadialGradient(FP.x,FP.y,0,FP.x,FP.y,8); g.addColorStop(0,'rgba(255,106,42,1)'); g.addColorStop(.35,'rgba(255,106,42,.9)'); g.addColorStop(1,'rgba(255,106,42,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(FP.x,FP.y,8,0,7); ctx.fill();
 }
 
 // ---- state ----
@@ -189,33 +198,46 @@ function pairShapes(){
   return [ {poly:a, at:POS.A}, {poly:b, at:loc2} ];
 }
 
-// ---- trial engine ----
-let running=false, mode='none', t0=0, phase='idle', pair=null, raf=0;
+// ---- trial engine (frame counted; assumes 60 Hz) ----
+const FRAME = 1000/60;
+let running=false, mode='none', phase='idle', pair=null, raf=0, frameNo=0, plan=null, lastTs=0;
 function durNow(){ return S.exp===1?80 : S.exp===2?S.dur : 100; }
-function schedule(){ // phases: [name, startOffset]
-  const d=durNow(), i=S.isi;
-  return [['s1',0],['isi',d],['s2',d+i],['post',2*d+i],['ici',2*d+i]];
+function frames(ms){ return Math.max(1, Math.round(ms/FRAME)); }
+function mkPlan(){
+  const d=frames(durNow()), i=frames(S.isi), ici=Math.round(3200/FRAME);
+  return {d, i, ici, total:2*d+i+ici};
+}
+function phaseAt(n){
+  if(n<plan.d) return 's1';
+  if(n<plan.d+plan.i) return 'isi';
+  if(n<2*plan.d+plan.i) return 's2';
+  return 'ici';
 }
 function render(ph){
   if(ph==='s1') drawField([pair[0]]);
   else if(ph==='s2') drawField([pair[1]]);
   else drawField([]);
 }
-function startTrial(){ pair=pairShapes(); t0=performance.now(); phase='s1'; render('s1'); setStatus(); cancelAnimationFrame(raf); raf=requestAnimationFrame(tick); }
+function startTrial(){ pair=pairShapes(); plan=mkPlan(); frameNo=0; phase=''; lastTs=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(tick); }
 function tick(now){
-  if(!running && mode!=='one'){ drawField([]); setStatus('stopped'); return; }
-  const d=durNow(), i=S.isi, e=now-t0;
-  let ph;
-  if(e<d) ph='s1'; else if(e<d+i) ph='isi'; else if(e<2*d+i) ph='s2'; else ph='ici';
+  if(!running){ drawField([]); setStatus('stopped'); return; }
+  // advance one display frame per rAF callback (one drawn frame = one count)
+  const ph=phaseAt(frameNo);
   if(ph!==phase){ phase=ph; render(ph); }
-  if(e>=2*d+i+ICI){
+  if(ph==='ici') setStatus('response interval (ICI 3200 ms)');
+  else setStatus();
+  frameNo++;
+  if(frameNo>=plan.total){
     if(mode==='cont'){ startTrial(); return; }
-    mode='none'; running=false; setStatus('trial finished'); return;
+    mode='none'; running=false; drawField([]); setStatus('trial finished'); return;
   }
-  if(e>=2*d+i) setStatus('response interval (ICI 3200 ms)');
   raf=requestAnimationFrame(tick);
 }
-function setStatus(m){ document.getElementById('status').textContent = m || ('Shape 1 '+durNow()+' ms · ISI '+S.isi+' ms · Shape 2 '+durNow()+' ms · ICI 3200 ms'); }
+function setStatus(m){
+  const p=mkPlan(), r=n=>(n*FRAME).toFixed(1);
+  document.getElementById('status').textContent = m ? m+' · ' : '';
+  document.getElementById('status').textContent += 'Shape 1 '+p.d+' fr ('+r(p.d)+' ms) · ISI '+p.i+' fr ('+r(p.i)+' ms) · Shape 2 '+p.d+' fr · ICI 3200 ms (at 60 Hz; requested '+durNow()+' / '+S.isi+' ms)';
+}
 document.getElementById('run').onclick=()=>{ mode='cont'; running=true; startTrial(); };
 document.getElementById('one').onclick=()=>{ mode='one'; running=true; startTrial(); };
 document.getElementById('stop').onclick=()=>{ running=false; mode='none'; };
@@ -239,9 +261,9 @@ S.dur=100;
 seg('dur',b=>{ S.dur=+b.dataset.v; setStatus(); });
 
 const INSTR = {
-  1:'Fixate the orange point with your right eye. Press one button if you saw smooth continuous motion of the test shape across the screen, the other button if you saw anything other than smooth continuous motion.',
-  2:'Fixate the point. Press button 1 if you saw smooth rotation of a rigid shape, button 2 if you saw smooth movement of a plastic (deforming) shape, button 3 if you saw neither.',
-  3:'Fixate the point. Press one button if you saw smooth continuous change of any kind between the shapes, the other if the transition was not smooth and continuous.'
+  1:'Cover your left eye and fixate the orange point with your right eye. Press one button if you saw smooth continuous motion of the test shape across the screen, the other button if you saw anything other than smooth continuous motion.',
+  2:'Fixate the point with your right eye. Press button 1 if you saw smooth rotation of a rigid shape, button 2 if you saw smooth movement of a plastic shape, button 3 if you saw neither.',
+  3:'Fixate the point with your right eye. Press one button if you saw smooth continuous change of any kind between the shapes, the other if the transition was not smooth and continuous.'
 };
 const RESP = {
   1:['Smooth continuous motion','Other than smooth continuous motion'],
@@ -254,7 +276,7 @@ function buildResp(){
     b.onclick=()=>{ b.classList.add('flash'); setTimeout(()=>b.classList.remove('flash'),150); }; r.appendChild(b); });
   document.getElementById('instr').textContent = INSTR[S.exp];
 }
-function showStatic(){ if(!running){ pair=pairShapes(); drawField(pair.length?[]:[]); } setStatus(); }
+function showStatic(){ if(!running){ drawField([]); } setStatus(); }
 seg('exp',b=>{
   running=false; mode='none'; S.exp=+b.dataset.v;
   document.getElementById('c1pair').classList.toggle('hide',S.exp!==1);
@@ -264,6 +286,16 @@ seg('exp',b=>{
   document.getElementById('cdur').classList.toggle('hide',S.exp!==2);
   buildResp(); showStatic();
 });
+const calEl=document.getElementById('cal');
+function applyCal(){
+  const cardPx=+calEl.value;
+  document.getElementById('cardbar').style.width=cardPx+'px';
+  document.getElementById('calv').textContent=cardPx+' px = 85.6 mm';
+  setScale(cardPx/8.56);
+  if(!running) showStatic();
+}
+calEl.addEventListener('input',applyCal);
+applyCal();
 buildResp(); showStatic();
 </script>
 </body>

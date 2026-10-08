@@ -2,89 +2,222 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Shiffrar & Freyd (1993) — Body Photograph AM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shiffrar & Freyd (1993) — Body photographs, SOA and half cycles</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#c8c8c8; display:block; }
-.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
-input[type=range] { width:160px; accent-color:#888; }
-button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+body { background:#1a1a1a; font-family:sans-serif; color:#aaa; padding:16px; display:flex; flex-direction:column; align-items:center; }
+a.back { align-self:flex-start; color:#888; font-size:13px; text-decoration:none; margin-bottom:10px; }
+a.back:hover { color:#ccc; }
+h1 { font-size:15px; font-weight:600; color:#ccc; margin-bottom:10px; text-align:center; }
+canvas { display:block; max-width:100%; }
+#c { background:#000; }
+#ans { background:#8a8a8a; cursor:crosshair; touch-action:none; }
+.controls { margin-top:14px; display:flex; align-items:center; gap:14px 22px; font-size:13px; flex-wrap:wrap; justify-content:center; max-width:640px; }
+select, button { background:#333; color:#ddd; border:1px solid #555; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:13px; }
+button.on { background:#556; border-color:#99a; }
+.soa { display:flex; gap:4px; }
+.panel { margin-top:14px; max-width:640px; width:100%; font-size:12px; line-height:1.5; color:#999; border:1px solid #333; border-radius:6px; padding:10px 14px; }
+.panel h2 { font-size:12px; color:#ccc; margin-bottom:6px; }
+table { border-collapse:collapse; width:100%; margin-top:4px; }
+td, th { border-top:1px solid #2c2c2c; padding:3px 6px; text-align:left; vertical-align:top; }
+th { color:#bbb; font-weight:600; }
+.warn { color:#c9a65a; }
+#readout { font-size:12px; color:#8a8; margin-top:8px; text-align:center; max-width:640px; }
 </style>
 </head>
 <body>
+<a class="back" href="index.html">&larr; back to experiments</a>
+<h1>Shiffrar &amp; Freyd (1993): human-body picture pairs alternated at different SOAs</h1>
+
 <canvas id="c" width="500" height="420"></canvas>
+<div id="readout"></div>
+
 <div class="controls">
-  <button id="btn">Pause</button>
-  <label>SOA: <span id="lbl">200</span> ms &nbsp;<input type="range" id="soa" min="40" max="800" value="200" step="40"></label>
+  <label>Experiment
+    <select id="exp"><option value="1">Experiment 1</option><option value="2">Experiment 2</option></select>
+  </label>
+  <label>Picture pair <select id="pair"></select></label>
+  <label>Temporal arrangement
+    <select id="cyc"><option value="full">Full cycle (ISI1 = ISI2)</option><option value="half">Half cycle (ISI2 = 1 s)</option></select>
+  </label>
 </div>
-<div class="meta">Shiffrar &amp; Freyd (1993). Body in two arm positions — at long SOA the anatomically possible path (around the body) is preferred over the shorter direct path.</div>
+<div class="controls">
+  <span>SOA (ms):</span><span class="soa" id="soaBtns"></span>
+  <button id="go">Start</button>
+</div>
+
+<div class="panel" id="ansPanel">
+  <h2>Answer sheet (response interface)</h2>
+  <p>After viewing, the observer indicated the path(s) of the motion, if any, on a paper answer sheet with diagrams, once per SOA level. Here, draw with the mouse on the diagram of the two poses (hand-drawn, nothing is recorded or scored). Several paths may be drawn, or tick "no motion".</p>
+  <canvas id="ans" width="300" height="250" style="margin:8px auto 6px"></canvas>
+  <div style="display:flex;gap:12px;justify-content:center;align-items:center">
+    <button id="clr">Clear sheet</button>
+    <label><input type="checkbox" id="nomo"> no motion seen</label>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Methods (Shiffrar &amp; Freyd, 1993, Psychological Science 4(6), 379-384)</h2>
+  <p class="warn">The original stimuli were full-colour photographs of a real model (Figs 1, 3, pp. 380, 382). They are not reproduced here: this page draws schematic placeholder figures whose limb poses only approximate the described pairs.</p>
+  <table>
+    <tr><th>Parameter</th><th>Paper</th><th>This page</th></tr>
+    <tr><td>Apparatus</td><td>Gerbrands four-field tachistoscope, IBM PC/XT; head against a visor (p. 380)</td><td>Canvas; size, viewing distance, luminance, fixation: not specified in paper (assumed; none mentioned)</td></tr>
+    <tr><td>Stimuli</td><td>Pairs of colour photographs of one model in two poses, one limb moving between them (p. 380)</td><td>Schematic figure on grey backdrop (placeholder)</td></tr>
+    <tr><td>Sequence</td><td>Picture 1, ISI1, picture 2, ISI2, repeated for as many cycles as the observer wished (p. 380)</td><td>Loops until Stop; picture 1 is shown first (assumed)</td></tr>
+    <tr><td>Inter-stimulus field</td><td>Black (p. 380)</td><td>Black</td></tr>
+    <tr><td>SOA levels (p. 380, Fig. 4)</td><td>150 ms = 100 ms SD + 50 ms ISI; each further level adds 50 ms to both SD and ISI: 150, 250, 350, 450, 550, 650 ms (the 650 end point is stated in Exp 2; intermediate splits derived)</td><td>Same six levels; SD/ISI shown above</td></tr>
+    <tr><td>Full cycle</td><td>ISI1 = ISI2 = the SOA's ISI</td><td>Selectable (Exp 1)</td></tr>
+    <tr><td>Half cycle</td><td>ISI1 as for the SOA, ISI2 always 1 s (black)</td><td>Selectable (Exp 1)</td></tr>
+    <tr><td>Exp 1 stimuli</td><td>12 pairs: two groups of 6 (shortest path correct / shortest path impossible), each 3 joint-constraint + 3 solidity-constraint (p. 380)</td><td>Pair menu follows these names</td></tr>
+    <tr><td>Exp 1 design</td><td>N = 32 naive students; between-subjects 2 (full/half) x 2 (path group); each observer saw one set of 6 pairs at all 6 SOAs in one session, order randomised, half ascending SOA and half descending (p. 380)</td><td>Single pair and SOA chosen manually; no session sequencing</td></tr>
+    <tr><td>Exp 2 stimuli</td><td>16 pairs: 4 joint + 4 solidity poses, each in a concise and a lengthy version; shortest path always impossible (p. 382)</td><td>Pair menu follows these names</td></tr>
+    <tr><td>Exp 2 design</td><td>N = 8, within subjects; full cycle, SOA 150-650 ms as Exp 1 (assumed same SD/ISI split); all concise or all lengthy stimuli first (p. 382)</td><td>Full cycle enforced</td></tr>
+    <tr><td>Response</td><td>Path(s) of motion, if any, marked on diagrams on an answer sheet, for each SOA level; no RT (pp. 380, 382)</td><td>Drawing sheet above</td></tr>
+    <tr><td>Instructions</td><td>Rapidly flashing pictures of a model in different poses; view as many cycles as desired; sometimes a kind of motion might be seen, with a clear path, multiple paths or none (p. 380)</td><td>Not displayed beyond this paraphrase</td></tr>
+    <tr><td>Not specified</td><td colspan="2">Picture size and position, viewing distance, luminance, number of cycles/repetitions, inter-trial interval, trial order in Exp 2, SOA order in Exp 2.</td></tr>
+  </table>
+  <p style="margin-top:6px">Timing is counted in display frames (refresh measured at start). At 60 Hz: SD 100/150/200/250/300/350 ms = 6/9/12/15/18/21 frames (realised 100.0/150.0/200.0/250.0/300.0/350.0 ms); ISI 50/100/150/200/250/300 ms = 3/6/9/12/15/18 frames; 1 s = 60 frames. The measured values are shown under the canvas while running.</p>
+</div>
+
 <script>
-const c=document.getElementById('c');
-const ctx=c.getContext('2d');
-const CX=c.width/2, CY=c.height/2;
-let soaMs=200, running=true, phase='f1', phaseStart=performance.now();
-
-// Draw a simple stick figure with arm at given angle from shoulder
-// armAngle: 0 = arm pointing down, negative = arm behind body, positive = arm in front
-function drawFigure(armAngle) {
-  ctx.fillStyle='#c8c8c8'; ctx.fillRect(0,0,c.width,c.height);
-
-  const ox=CX, oy=CY; // center of figure
-  ctx.strokeStyle='#222'; ctx.lineWidth=4; ctx.lineCap='round';
-
-  // Head
-  ctx.fillStyle='#222';
-  ctx.beginPath(); ctx.arc(ox, oy-120, 22, 0, Math.PI*2); ctx.fill();
-
-  // Torso
-  ctx.beginPath(); ctx.moveTo(ox,oy-98); ctx.lineTo(ox,oy-20); ctx.stroke();
-
-  // Legs
-  ctx.beginPath(); ctx.moveTo(ox,oy-20); ctx.lineTo(ox-30,oy+60); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(ox,oy-20); ctx.lineTo(ox+30,oy+60); ctx.stroke();
-
-  // Left arm (static, at rest)
-  ctx.beginPath(); ctx.moveTo(ox,oy-80); ctx.lineTo(ox-55,oy-30); ctx.stroke();
-
-  // Right arm (variable position)
-  const shoulderX=ox, shoulderY=oy-80;
-  const armLen=60;
-  const rad=armAngle * Math.PI/180;
-  const elbowX=shoulderX + Math.sin(rad)*armLen;
-  const elbowY=shoulderY + Math.cos(rad)*armLen;
-  const handX=elbowX + Math.sin(rad+0.4)*armLen*0.7;
-  const handY=elbowY + Math.cos(rad+0.4)*armLen*0.7;
-
-  ctx.beginPath(); ctx.moveTo(shoulderX,shoulderY); ctx.lineTo(elbowX,elbowY); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(elbowX,elbowY); ctx.lineTo(handX,handY); ctx.stroke();
-
-  // Hand dot
-  ctx.beginPath(); ctx.arc(handX,handY,6,0,Math.PI*2); ctx.fill();
+// ---------- placeholder figure ----------
+// segment angles in degrees: 0 = down, 90 = screen right, 180 = up, -90 = screen left
+const REST = { L:[-8,-6], R:[8,6], LL:[-6,-6], RL:[6,6], head:0, lean:0, hand:null };
+function P(o){ return Object.assign({}, REST, o); }
+const dir = a => [Math.sin(a*Math.PI/180), Math.cos(a*Math.PI/180)];
+function limb(ctx, x, y, segs, lens, w){
+  let pts=[[x,y]];
+  ctx.lineWidth=w; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.moveTo(x,y);
+  segs.forEach((a,i)=>{ const d=dir(a); x+=d[0]*lens[i]; y+=d[1]*lens[i]; ctx.lineTo(x,y); pts.push([x,y]); });
+  ctx.stroke(); return pts;
+}
+function drawFig(ctx, p, ox, oy, ghost){
+  const cloth = ghost||'#1d1f2b', skin = ghost||'#d9a98c';
+  ctx.save(); ctx.translate(ox, oy);
+  ctx.strokeStyle=cloth; ctx.fillStyle=cloth;
+  // legs (hip at 0,25)
+  limb(ctx,-10,25,p.LL,[70,66],15); limb(ctx,10,25,p.RL,[70,66],15);
+  // trunk (leans about waist)
+  ctx.save(); ctx.translate(0,25); ctx.rotate(p.lean*Math.PI/180);
+  ctx.lineWidth=34; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-70); ctx.stroke();
+  limb(ctx,-18,-70,p.L,[56,50],12); limb(ctx,18,-70,p.R,[56,50],12);
+  // hands (skin) at ends of arms
+  [['L',-18],['R',18]].forEach(([k,sx])=>{
+    let x=sx,y=-70; p[k].forEach((a,i)=>{const d=dir(a);x+=d[0]*[56,50][i];y+=d[1]*[56,50][i];});
+    const d=dir(p[k][1]); ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(x+d[0]*6,y+d[1]*6,8,0,7); ctx.fill();
+  });
+  // head
+  ctx.save(); ctx.translate(0,-92); ctx.rotate(p.head*Math.PI/180);
+  ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(0,-18,20,0,7); ctx.fill();
+  ctx.fillStyle=ghost||'#4a3a2a'; ctx.beginPath(); ctx.arc(0,-22,20,Math.PI,0); ctx.fill();
+  ctx.restore();
+  ctx.restore();
+  ctx.restore();
 }
 
-// Frame 1: arm pointing up-right (angle -60 from down = raised)
-// Frame 2: arm pointing down-left (angle 150 from down = behind body)
-// Short path = across the body (through body obstruction)
-// Long path = around the body (anatomically correct)
-const F1_ANGLE = -70;  // raised up
-const F2_ANGLE =  130; // lowered behind
+// ---------- pair definitions (placeholder poses, approximate) ----------
+// k: group label; A,B: poses. Names follow the paper's descriptions.
+const EXP1 = [
+ {g:'Short path correct, solidity', n:'Arm through hole made by other arm on head (Fig. 1 type)', A:P({L:[-135,90],R:[95,95]}), B:P({L:[-135,90],R:[20,-100]})},
+ {g:'Short path correct, solidity', n:'Closed fist through hole made by other hand on hip', A:P({L:[-35,60],R:[80,80]}), B:P({L:[-35,60],R:[-5,-60]})},
+ {g:'Short path correct, solidity', n:'Arm rotating beneath bent leg, kneeling', A:P({RL:[30,-60],LL:[-6,-6],R:[75,80]}), B:P({RL:[30,-60],LL:[-6,-6],R:[10,-40]})},
+ {g:'Short path correct, joint', n:'Foot rotating about the ankle', A:P({RL:[6,40]}), B:P({RL:[6,-20]})},
+ {g:'Short path correct, joint', n:'Arm rotating about the elbow', A:P({R:[40,40]}), B:P({R:[40,160]})},
+ {g:'Short path correct, joint', n:'Bent leg rotating about the knee', A:P({RL:[10,-40]}), B:P({RL:[10,60]})},
+ {g:'Long path correct, solidity', n:'Closed fist about the head', A:P({R:[130,170]}), B:P({R:[-130,-170]})},
+ {g:'Long path correct, solidity', n:'Open hand about the head, ventro-dorsal', A:P({R:[150,130]}), B:P({R:[150,-60]})},
+ {g:'Long path correct, solidity', n:'One leg about the other leg', A:P({RL:[-10,-10]}), B:P({RL:[30,30]})},
+ {g:'Long path correct, joint', n:'Fingers of right hand about the wrist', A:P({R:[70,70]}), B:P({R:[70,-110]})},
+ {g:'Long path correct, joint', n:'Head about the neck', A:P({head:-60}), B:P({head:60})},
+ {g:'Long path correct, joint', n:'Straightened right arm about the shoulder', A:P({R:[20,20]}), B:P({R:[-165,-165]})}
+];
+const EXP2 = [];
+[
+ ['joint','Right arm about the elbow', P({R:[50,50]}), P({R:[50,100]}), P({R:[50,170]})],
+ ['joint','Fingers of right hand about the wrist', P({R:[75,75]}), P({R:[75,0]}), P({R:[75,-110]})],
+ ['joint','Foot about the ankle', P({RL:[6,45]}), P({RL:[6,-5]}), P({RL:[6,-60]})],
+ ['joint','Body about the waist', P({lean:-10}), P({lean:35}), P({lean:75})],
+ ['solidity','Arm about the torso, ventro-dorsal', P({R:[20,20]}), P({R:[100,100]}), P({R:[170,170]})],
+ ['solidity','Hand about the head, lateral', P({R:[140,140]}), P({R:[170,170]}), P({R:[-150,-150]})],
+ ['solidity','One foot about the other, lateral', P({RL:[-8,-8]}), P({RL:[-30,-30]}), P({RL:[-55,-55]})],
+ ['solidity','One arm about the other arm, lateral', P({R:[60,60]}), P({R:[-10,-10]}), P({R:[-50,-50]})]
+].forEach(d=>{
+  EXP2.push({g:'Exp 2, '+d[0]+', concise', n:d[1]+' (concise)', A:d[2], B:d[3]});
+  EXP2.push({g:'Exp 2, '+d[0]+', lengthy', n:d[1]+' (lengthy)', A:d[2], B:d[4]});
+});
 
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
-  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
-  if(phase==='f1') drawFigure(F1_ANGLE);
-  else if(phase==='f2') drawFigure(F2_ANGLE);
-  else { ctx.fillStyle='#c8c8c8'; ctx.fillRect(0,0,c.width,c.height); }
-  requestAnimationFrame(tick);
+// ---------- UI ----------
+const SOAS=[150,250,350,450,550,650];
+const SD=k=>100+50*k, ISI=k=>50+50*k;
+const $=id=>document.getElementById(id);
+const c=$('c'), ctx=c.getContext('2d');
+let soaK=0, running=false, hz=60;
+const expSel=$('exp'), pairSel=$('pair'), cycSel=$('cyc');
+
+SOAS.forEach((s,k)=>{ const b=document.createElement('button'); b.textContent=s; b.onclick=()=>{soaK=k; refreshBtns(); restart();}; $('soaBtns').appendChild(b); });
+function refreshBtns(){ [...$('soaBtns').children].forEach((b,k)=>b.classList.toggle('on',k===soaK)); }
+function curList(){ return expSel.value==='1'?EXP1:EXP2; }
+function fillPairs(){
+  pairSel.innerHTML=''; let og=null, last='';
+  curList().forEach((p,i)=>{ if(p.g!==last){og=document.createElement('optgroup');og.label=p.g;pairSel.appendChild(og);last=p.g;}
+    const o=document.createElement('option'); o.value=i; o.textContent=p.n; og.appendChild(o); });
+  if(expSel.value==='2'){cycSel.value='full';cycSel.disabled=true;} else cycSel.disabled=false;
+  drawSheet(); restart();
 }
+expSel.onchange=fillPairs; pairSel.onchange=()=>{drawSheet();restart();}; cycSel.onchange=restart;
+const pair=()=>curList()[+pairSel.value||0];
 
-document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+// frame-counted presentation
+let seq=[], si=0, left=0, shown='';
+function frames(ms){ return Math.max(1, Math.round(ms*hz/1000)); }
+function buildSeq(){
+  const k=soaK, sd=frames(SD(k)), i1=frames(ISI(k));
+  const i2=cycSel.value==='half'?frames(1000):i1;
+  seq=[['A',sd],['blank',i1],['B',sd],['blank',i2]];
+  const r=ms=>(frames(ms)*1000/hz).toFixed(1);
+  $('readout').textContent=`SOA ${SOAS[k]} ms: SD ${SD(k)} ms (${sd} frames = ${r(SD(k))} ms), ISI1 ${ISI(k)} ms (${i1} frames = ${r(ISI(k))} ms), ISI2 ${cycSel.value==='half'?'1000':ISI(k)} ms (${i2} frames = ${r(cycSel.value==='half'?1000:ISI(k))} ms); refresh ${hz.toFixed(1)} Hz`;
+}
+function paint(what){
+  if(what===shown) return; shown=what;
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height);
+  if(what==='A'||what==='B'){
+    ctx.fillStyle='#8a8a8a'; ctx.fillRect(40,20,420,380);
+    drawFig(ctx, pair()[what], 250, 175);
+  }
+}
+function restart(){ buildSeq(); si=0; left=seq[0][1]; shown=''; paint(running?seq[0][0]:'blank'); }
+function frame(){
+  if(running){
+    paint(seq[si][0]); left--;
+    if(left<=0){ si=(si+1)%4; left=seq[si][1]; }
+  }
+  requestAnimationFrame(frame);
+}
+$('go').onclick=()=>{ running=!running; $('go').textContent=running?'Stop':'Start'; restart(); };
+
+// answer sheet
+const ans=$('ans'), actx=ans.getContext('2d'); let drawing=false;
+function drawSheet(){
+  actx.fillStyle='#8a8a8a'; actx.fillRect(0,0,ans.width,ans.height);
+  const p=pair(), s=0.62;
+  actx.save(); actx.globalAlpha=0.55; drawFig(actx,p.A,150,125*1.0,'#3b4a7a'); actx.restore();
+  actx.save(); actx.globalAlpha=0.55; drawFig(actx,p.B,150,125*1.0,'#7a3b3b'); actx.restore();
+  actx.fillStyle='#222'; actx.font='11px sans-serif'; actx.fillText('blue = picture 1, red = picture 2', 8, 242);
+}
+function pos(e){ const r=ans.getBoundingClientRect(); return [(e.clientX-r.left)*ans.width/r.width,(e.clientY-r.top)*ans.height/r.height]; }
+ans.onpointerdown=e=>{drawing=true;const p=pos(e);actx.strokeStyle='#111';actx.lineWidth=2.5;actx.lineCap='round';actx.beginPath();actx.moveTo(p[0],p[1]);ans.setPointerCapture(e.pointerId);};
+ans.onpointermove=e=>{if(!drawing)return;const p=pos(e);actx.lineTo(p[0],p[1]);actx.stroke();};
+ans.onpointerup=()=>{drawing=false;};
+$('clr').onclick=()=>{drawSheet();$('nomo').checked=false;};
+
+// measure refresh, then start
+(function meas(){
+  let n=0,t0=0;
+  function f(t){ if(!t0)t0=t; if(++n<40){requestAnimationFrame(f);} else { const h=1000/((t-t0)/(n-1)); hz=Math.abs(h-60)<3?60:h; fillPairs(); refreshBtns(); requestAnimationFrame(frame);} }
+  requestAnimationFrame(f);
+})();
 </script>
 </body>
 </html>

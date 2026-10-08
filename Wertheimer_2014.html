@@ -2,69 +2,68 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wertheimer (1912/2012) — Phi Motion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wertheimer (1912) — Successive two-line exposure</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#f0f0f0; display:block; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; min-height:100vh; font-family:sans-serif; color:#aaa; padding:16px; }
+a.back { align-self:flex-start; color:#8ab; font-size:13px; text-decoration:none; margin-bottom:12px; }
+canvas { background:#f0f0f0; display:block; max-width:100%; }
 .controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
 input[type=range] { width:180px; accent-color:#888; }
 button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.regime { margin-top:8px; font-size:13px; color:#aaa; min-height:20px; }
-.meta { margin-top:12px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+.methods { margin-top:20px; font-size:12px; color:#888; max-width:600px; line-height:1.5; }
+.methods h2 { font-size:13px; color:#aaa; margin-bottom:6px; }
+.methods td { padding:2px 10px 2px 0; vertical-align:top; }
+.methods td:first-child { color:#aaa; white-space:nowrap; }
 </style>
 </head>
 <body>
+<a class="back" href="index.html">← back to experiments</a>
 <canvas id="c" width="540" height="300"></canvas>
-<div class="regime" id="regime"></div>
 <div class="controls">
-  <button id="btn">Pause</button>
-  <label>ISI: <span id="lbl">60</span> ms &nbsp;<input type="range" id="isi" min="0" max="300" value="60" step="5"></label>
+  <button id="go">Present</button>
+  <label><input type="checkbox" id="rep"> repeat</label>
+  <label>Interval (blank frames): <span id="lbl">4</span> <input type="range" id="isi" min="0" max="30" value="4" step="1"></label>
+  <span id="real"></span>
 </div>
-<div class="meta">Wertheimer (1912). Two vertical bars alternating — ISI determines percept: simultaneity → pure phi motion → beta motion → succession.</div>
+<div class="methods">
+<h2>Methods</h2>
+<p style="margin-bottom:8px">The source paper (Wertheimer 1912, via the 2014 reconstruction) was not available when this page was built. Only the following is taken as established: two stimuli (lines) were exposed one after the other at two separate positions, the time interval between them was varied by the experimenter, and observers gave free verbal descriptions. Every numeric value below is an ASSUMPTION, not a value from the paper.</p>
+<table>
+<tr><td>Stimulus</td><td>Two vertical bars, 8 x 120 px, dark on light grey. Shape, size, contrast: ASSUMPTION.</td></tr>
+<tr><td>Positions</td><td>Centres 240 px apart, same height; first at left, second at right. ASSUMPTION. No viewing distance given, so no visual angle.</td></tr>
+<tr><td>Exposure</td><td>5 frames per bar (83 ms at 60 Hz). ASSUMPTION.</td></tr>
+<tr><td>Interval</td><td>0 to 30 blank frames (0 to 500 ms at 60 Hz), set by the slider; the interval is the blank between offset of bar 1 and onset of bar 2 (ISI, not SOA). Levels: ASSUMPTION. Frames are counted per display refresh; realised durations shown at right assume 60 Hz.</td></tr>
+<tr><td>Trial</td><td>One exposure pair per press of Present (bar 1, blank, bar 2, blank field). Optional repeat re-presents the pair after a 30-frame blank: ASSUMPTION.</td></tr>
+<tr><td>Fixation</td><td>None shown; unspecified.</td></tr>
+<tr><td>Response</td><td>Free verbal report by the observer in the original; no response interface on this page.</td></tr>
+<tr><td>Not specified here</td><td>Luminance, field size, observers' instructions, number of trials, other figures (e.g. line plus angle), other separations.</td></tr>
+</table>
+</div>
 <script>
-const c=document.getElementById('c');
-const ctx=c.getContext('2d');
-const CX=c.width/2, CY=c.height/2;
-const FRAME_MS=80;
-const BW=8, BH=120; // bar dimensions
-const LX=CX-120, RX=CX+120;
-let isiMs=60, running=true, phase='f1', phaseStart=performance.now();
-
-function regime(isi) {
-  if(isi<15) return 'Simultaneity — both seen at once';
-  if(isi<40) return 'Pure phi motion — motion without object';
-  if(isi<150) return 'Beta motion — object appears to move';
-  return 'Succession — two separate flashes';
-}
-
-function draw(left, right) {
-  ctx.fillStyle='#f0f0f0'; ctx.fillRect(0,0,c.width,c.height);
-  ctx.fillStyle='#111';
-  if(left) ctx.fillRect(LX-BW/2, CY-BH/2, BW, BH);
-  if(right) ctx.fillRect(RX-BW/2, CY-BH/2, BW, BH);
-}
-
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const e=now-phaseStart;
-  // At very short ISI, both show simultaneously
-  const showBoth = isiMs < 15;
-  const dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
-
-  if(showBoth) draw(true,true);
-  else if(phase==='f1') draw(true,false);
-  else if(phase==='f2') draw(false,true);
-  else draw(false,false);
-
-  document.getElementById('regime').textContent = regime(isiMs);
+const c=document.getElementById('c'), ctx=c.getContext('2d');
+const CX=c.width/2, CY=c.height/2, BW=8, BH=120, LX=CX-120, RX=CX+120;
+const EXPO=5, GAP=30; // frames
+let isi=4, rep=false, seq=null, f=0, active=false;
+function draw(l,r){ctx.fillStyle='#f0f0f0';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#111';
+  if(l)ctx.fillRect(LX-BW/2,CY-BH/2,BW,BH); if(r)ctx.fillRect(RX-BW/2,CY-BH/2,BW,BH);}
+function build(){const s=[];for(let i=0;i<EXPO;i++)s.push(1);for(let i=0;i<isi;i++)s.push(0);for(let i=0;i<EXPO;i++)s.push(2);return s;}
+function upd(){document.getElementById('lbl').textContent=isi;
+  document.getElementById('real').textContent='exposure '+(EXPO*1000/60).toFixed(0)+' ms, interval '+(isi*1000/60).toFixed(0)+' ms (at 60 Hz)';}
+function tick(){
+  if(active){
+    if(f<seq.length){const v=seq[f++];draw(v===1,v===2);}
+    else if(rep && f<seq.length+GAP){f++;draw(false,false);}
+    else if(rep){seq=build();f=0;}
+    else{active=false;draw(false,false);}
+  }
   requestAnimationFrame(tick);
 }
-
-document.getElementById('isi').addEventListener('input',e=>{isiMs=+e.target.value;document.getElementById('lbl').textContent=isiMs;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+document.getElementById('isi').addEventListener('input',e=>{isi=+e.target.value;upd();});
+document.getElementById('rep').addEventListener('change',e=>{rep=e.target.checked;});
+document.getElementById('go').addEventListener('click',()=>{seq=build();f=0;active=true;});
+upd();draw(false,false);requestAnimationFrame(tick);
 </script>
 </body>
 </html>

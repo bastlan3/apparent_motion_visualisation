@@ -12,7 +12,8 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
-  canvas { display:block; border-radius:3px; max-width:96vw; height:auto; background:#000; }
+  canvas { display:block; border-radius:3px; background:#000; }
+  .cwrap { max-width:96vw; overflow-x:auto; }
   .participant { margin-top:12px; width:720px; max-width:96vw; text-align:center; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; min-height:36px; }
   .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
@@ -39,9 +40,9 @@
 <body>
   <a class="back" href="index.html">← back to experiments</a>
   <h1>Kim, Feldman &amp; Singh (2012) — curved apparent motion induced by amodal completion</h1>
-  <div class="sub">Two red rectangles alternate at the two ends of a stationary semicircular tube shown against a random-dot background.
+  <div class="sub">A red rectangle alternates between the two ends of a stationary semicircular tube shown against a random-dot background.
     After 3½ cycles the display vanishes and the observer reports whether the motion went along a straight or a curved path, then rates motion quality.
-    Cited elsewhere as 2011 (online publication).</div>
+</div>
 
   <div class="seg" id="expSel" style="margin-bottom:10px">
     <button data-v="1" class="on">Exp 1: ISI × token duration × distance</button>
@@ -50,7 +51,7 @@
     <button data-v="4">Exp 4: stereo depth order</button>
   </div>
 
-  <canvas id="c" width="620" height="420"></canvas>
+  <div class="cwrap"><canvas id="c" width="620" height="420"></canvas></div>
 
   <div class="participant">
     <div class="instr" id="instr"></div>
@@ -98,7 +99,7 @@ let exp = 1, P = {};
 function resetParams(){
   P = {};
   EXPS[exp].params.concat([startSel]).forEach(p=>P[p.id]=p.def);
-  P.swap = false;
+  P.swap = true;
 }
 
 // ---------- geometry (paper's values) ----------
@@ -129,7 +130,7 @@ function tokenTex(w,h){
   w=Math.max(2,Math.round(w)); h=Math.max(2,Math.round(h));
   const k=w+'x'+h; if(texCache[k]) return texCache[k];
   const t=document.createElement('canvas'); t.width=w; t.height=h; const x=t.getContext('2d');
-  for(let j=0;j<h;j+=2) for(let i=0;i<w;i+=2){ x.fillStyle = rnd()<0.75 ? '#d42a2a' : '#f2e8e8'; x.fillRect(i,j,2,2); }
+  for(let j=0;j<h;j+=2) for(let i=0;i<w;i+=2){ x.fillStyle = rnd()<0.88 ? '#d42a2a' : '#f2e8e8'; x.fillRect(i,j,2,2); }
   return texCache[k]=t;
 }
 
@@ -171,10 +172,10 @@ function drawPanel(ox, oy, pw, ph, PX, g, stage, eye){
   }
   ctx.restore();   // rotation + aperture clip
   ctx.save(); ctx.beginPath(); ctx.rect(ax,ay,aw,ah); ctx.clip();
-  if (stage.fix){                                   // fixation cross at centre, zero disparity
-    ctx.strokeStyle='#fff'; ctx.lineWidth=2; const s=0.25*PX;
-    ctx.beginPath(); ctx.moveTo(ax+aw/2-s,ay+ah/2); ctx.lineTo(ax+aw/2+s,ay+ah/2);
-    ctx.moveTo(ax+aw/2,ay+ah/2-s); ctx.lineTo(ax+aw/2,ay+ah/2+s); ctx.stroke();
+  if (stage.fix){                                   // fixation cross at centre of the background (background disparity in Exp 4)
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; const s=0.25*PX, fx=ax+aw/2+(g.stereo?dsh(24):0);
+    ctx.beginPath(); ctx.moveTo(fx-s,ay+ah/2); ctx.lineTo(fx+s,ay+ah/2);
+    ctx.moveTo(fx,ay+ah/2-s); ctx.lineTo(fx,ay+ah/2+s); ctx.stroke();
   }
   ctx.restore(); ctx.restore();
 }
@@ -199,31 +200,35 @@ function render(stage){
 }
 
 // ---------- trial ----------
-let running=false, t0=0, startSide=0, awaiting=null, raf=0;
+let running=false, startSide=0, awaiting=null, raf=0, fn=0;
+let frameMs = 1000/60;           // measured display refresh interval
+(function measure(){ let last=0, ds=[]; function f(t){ if(last) ds.push(t-last); last=t; if(ds.length<40) requestAnimationFrame(f); else { ds.sort((a,b)=>a-b); const m=ds[20]; if(m>5&&m<40) frameMs=m; if(typeof refresh==='function') refresh(); } } requestAnimationFrame(f); })();
+const nf = ms => Math.max(1, Math.round(ms/frameMs));    // ms -> whole refresh frames
 const FIX = ()=> exp===4 ? 600 : 500;
 const TUBE_PRE = ()=> exp===4 ? 600 : 0;
 const NTOK = 7;      // 3.5 cycles = 7 token frames
-function stageAt(t,g){
-  const f=FIX(), tp=TUBE_PRE();
-  if (t<f) return {fix:true};
-  if (t<f+tp) return {tube:true};
-  const m=t-f-tp, len=g.td+g.isi, total=(NTOK-1)*len+g.td;
+function stageAt(n,g){
+  const f=nf(FIX()), tp=nf(TUBE_PRE());
+  if (n<f) return {fix:true};
+  if (n<f+tp) return {tube:true};
+  const m=n-f-tp, td=nf(g.td), len=td+nf(g.isi), total=(NTOK-1)*len+td;
   if (m>=total) return null;
   const i=Math.floor(m/len), w=m-i*len;
-  return {tube:true, tok: w<g.td ? (startSide+i)%2 : -1};
+  return {tube:true, tok: w<td ? (startSide+i)%2 : -1};
 }
-function frame(now){
+let G=null;
+function frame(){
   if(!running) return;
-  const g=geo(), s=stageAt(now-t0,g);
+  const s=stageAt(fn++,G);
   if (s===null){ running=false; render({blank:true}); askPath(); return; }
   render(s); raf=requestAnimationFrame(frame);
 }
 function runTrial(){
-  if (running) return;
+  if (running || awaiting) return;
   document.getElementById('resp').innerHTML='';
-  awaiting=null;
+  G=geo(); fn=0;
   startSide = P.start==='left'?0 : P.start==='right'?1 : (Math.random()<.5?0:1);
-  running=true; t0=performance.now(); setInstr('Fixate the cross; watch the motion.');
+  running=true; setInstr('Fixate the cross; watch the motion.');
   raf=requestAnimationFrame(frame);
 }
 function setInstr(t){ document.getElementById('instr').innerHTML=t; }
@@ -250,10 +255,10 @@ function answer(k){
   }
 }
 document.addEventListener('keydown',e=>{
-  if (e.code==='Space'){ e.preventDefault(); runTrial(); return; }
+  if (e.code==='Space'){ e.preventDefault(); if(!running&&!awaiting) runTrial(); return; }
   if (awaiting) answer(e.key.toLowerCase());
 });
-document.getElementById('run').onclick=runTrial;
+document.getElementById('run').onclick=()=>{ if(!running&&!awaiting) runTrial(); };
 
 // ---------- UI ----------
 function buildCtrls(){
@@ -263,7 +268,7 @@ function buildCtrls(){
     const s=document.createElement('div'); s.className='seg';
     p.lv.forEach(v=>{
       const b=document.createElement('button'); b.textContent=v; if(v===P[p.id]) b.className='on';
-      b.onclick=()=>{ P[p.id]=v; [...s.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); refresh(); };
+      b.onclick=()=>{ if(running||awaiting) return; P[p.id]=v; [...s.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); refresh(); };
       s.appendChild(b);
     });
     d.appendChild(s); box.appendChild(d);
@@ -271,9 +276,9 @@ function buildCtrls(){
   if (EXPS[exp].stereo){
     const d=document.createElement('div'); d.className='ctrl'; d.textContent='Free-fusion mode (viewing aid, not in paper)';
     const s=document.createElement('div'); s.className='seg';
-    [['parallel (left eye view on left)',false],['cross-eyed (views swapped)',true]].forEach(([l,v])=>{
+    [['cross-eyed (views swapped)',true],['parallel (left eye view on left)',false]].forEach(([l,v])=>{
       const b=document.createElement('button'); b.textContent=l; if(v===P.swap) b.className='on';
-      b.onclick=()=>{ P.swap=v; [...s.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); refresh(); };
+      b.onclick=()=>{ if(running||awaiting) return; P.swap=v; [...s.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); refresh(); };
       s.appendChild(b);
     });
     d.appendChild(s); box.appendChild(d);
@@ -283,15 +288,16 @@ function refresh(){
   const g=geo(), soa=g.td+g.isi;
   document.getElementById('readouts').innerHTML =
    `Token duration <b>${g.td} ms</b> · ISI <b>${g.isi} ms</b> · SOA <b>${soa} ms</b> · token <b>${g.tokW.toFixed(2)}° × ${g.tokH.toFixed(2)}°</b> · tube width <b>${g.tubeW}°</b> · diameter <b>${g.D}°</b>`
-   + (g.gap?` · gap <b>${g.gap.toFixed(3)}°</b>`:'')+ ' · 3½ cycles (7 token frames)';
-  if(!running) render(exp===4?{tube:true}:{blank:false,tube:true});
+   + (g.gap?` · gap <b>${g.gap.toFixed(3)}°</b>`:'')+ ' · 3½ cycles (7 token frames)'
+   + `<br>Frame-counted at the measured refresh (${(1000/frameMs).toFixed(1)} Hz): token <b>${nf(g.td)}</b> fr = <b>${(nf(g.td)*frameMs).toFixed(0)} ms</b>, ISI <b>${nf(g.isi)}</b> fr = <b>${(nf(g.isi)*frameMs).toFixed(0)} ms</b> (at 60 Hz: ${Math.round(g.td/16.667)} and ${Math.round(g.isi/16.667)} frames)`;
+  if(!running&&!awaiting) render(exp===4?{tube:true}:{blank:false,tube:true});
 }
 function setExp(n){
   exp=n; resetParams(); sizeCanvas(); buildCtrls(); buildMeta();
   document.querySelectorAll('#expSel button').forEach(b=>b.classList.toggle('on',+b.dataset.v===n));
   document.getElementById('resp').innerHTML=''; awaiting=null;
   setInstr(exp===4
-   ? 'Free-fuse the two views (shutter glasses in the original). Trial: fixation 600 ms, tube alone 600 ms, then 3½ cycles. Then answer v (straight) / c (curved), then rate 1–3.'
+   ? 'Free-fuse the two views, cross-eyed by default (the original used shutter glasses; panel scale here is not the original visual angle). Trial: fixation 600 ms, tube alone 600 ms, then 3½ cycles. Then answer v (straight) / c (curved), then rate 1–3.'
    : 'Trial: fixation 500 ms, then 3½ cycles. Then answer v (straight) / c (curved), then rate 1–3. Preview shown (tube only); press Run trial.');
   refresh();
 }
@@ -302,11 +308,11 @@ const COMMON = `
 <h3>General (manuscript pp. 4–5)</h3>
 <table>
 <tr><td>Observers</td><td>59 Rutgers undergraduates (Exp 1: 14, Exp 2: 20, Exp 3: 17, Exp 4: 8), normal/corrected vision, naïve (p. 4).</td></tr>
-<tr><td>Apparatus, Exp 1–3</td><td>17-in. eMac, 1152 × 864 px, 80 Hz; dark room; ≈60 cm, no head restraint (p. 4). This page uses requestAnimationFrame (display refresh), not 80 Hz.</td></tr>
+<tr><td>Apparatus, Exp 1–3</td><td>17-in. eMac, 1152 × 864 px, 80 Hz; dark room; ≈60 cm, no head restraint (p. 4). This page counts requestAnimationFrame frames at the measured display refresh (60 Hz assumed for the realised durations), not 80 Hz.</td></tr>
 <tr><td>Token frame</td><td>Small red/white textured rectangle centred on top of each end of a semicircular tube (p. 4). Tube: radial white-to-black gradient on black/white random-dot background; tube stays on screen the whole sequence; only the tokens alternate (p. 4).</td></tr>
 <tr><td>Sequence</td><td>Left token for TD, ISI (tube only), right token for TD, ISI, … 3½ cycles per trial; half the trials start on the left, half on the right (p. 4). Fixation cross 500 ms before (p. 5).</td></tr>
 <tr><td>Task</td><td>After the display disappears, report straight path vs curved path behind/through the tube (key “v” = straight, “c” = curved); if ambiguous choose straight for horizontal and curved for vertical motion at onsets/offsets; then rate motion quality 1–3 (3 = smooth, well-defined path; 1 = jerky/weak/poorly defined or no motion; blinking objects → straight, rating 1) (p. 5).</td></tr>
-<tr><td class="assume">Unspecified (assumptions)</td><td class="assume">Display degrees-per-pixel and absolute luminances; dot size/density of the random-dot field (2 px dots, 50% black/white here); red/white proportion of the token texture (75% red here); exact gradient endpoints (light inner edge to dark outer edge here); the vertical position of the tube on the screen (bounding box centred here); the fixation cross size and background on which it appeared (0.5° cross on the dot background here); whether the display ends on a token or an ISI (ends after the 7th token here); whether the tube was drawn atop or beneath tokens in 2-D Exp 1–3 (tokens abut the tube's end edge, i.e. “zero gap” = bottom edge of token touches the end of the tube).</td></tr>
+<tr><td class="assume">Unspecified (assumptions)</td><td class="assume">Display degrees-per-pixel and absolute luminances; dot size/density of the random-dot field (2 px dots, 50% black/white here); red/white proportion of the token texture (75% red here); exact gradient endpoints (light inner edge to dark outer edge here); the vertical position of the tube on the screen (bounding box centred here); the fixation cross size and background on which it appeared (0.5° cross on the dot background here); whether the display ends on a token or an ISI (ends after the 7th token here); whether the tube was visible during the Exp 1–3 fixation interval (not here). “Zero gap” = token bottom edge touches the flat end face of the tube (Figs. 1a, 4a, 6a). Viewing distance is the participant's own here, so visual angles are nominal (36 px/deg assumed; about 60 cm in the original).</td></tr>
 </table>`;
 const SPEC = {
 1:`<h3>Experiment 1 (pp. 5–6)</h3><table>
@@ -316,7 +322,7 @@ const SPEC = {
 <tr><td>Token duration</td><td>60, 120, 180 ms (p. 4); SOA range 160–680 ms</td></tr>
 <tr><td>Design</td><td>4 × 3 × 3 = 36 sequences × 10 repetitions (5 left-start, 5 right-start) = 360 trials, random order, 4 sessions; 26 practice trials (pp. 5–6). Run here one trial at a time.</td></tr></table>`,
 2:`<h3>Experiment 2 (pp. 7–8)</h3><table>
-<tr><td>Tokens</td><td>Height and width each 1/5, 2/5, 3/5 of tube width (2.2°), i.e. 0.44°, 0.88°, 1.32° → 9 tokens; largest diagonal 1.87° (p. 8). Which axis is “height” vs “width” is set by the two selectors.</td></tr>
+<tr><td>Tokens</td><td>Height and width each 1/5, 2/5, 3/5 of tube width (2.2°), i.e. 0.44°, 0.88°, 1.32° → 9 tokens; largest diagonal 1.87° (p. 8). Rows = height, columns = width, per Fig. 4a.</td></tr>
 <tr><td>Tube</td><td>Width 2.2°, diameter 5.73° (p. 4)</td></tr>
 <tr><td>ISI / token duration</td><td>100, 233, 367, 500 ms / 150 ms (p. 4)</td></tr>
 <tr><td>Design</td><td>4 × 3 × 3 = 36 sequences × 10 = 360 trials, random order, 4 sessions (p. 8). No motion-quality ratings analysed in Exp 2–3 (p. 5); the rating step is kept here.</td></tr></table>`,
@@ -331,7 +337,7 @@ const SPEC = {
 <table>
 <tr><td>Frame</td><td>Gray frame with a 13.5° × 9.1° aperture at zero disparity (monitor plane); background, tokens and tube seen through it (p. 11).</td></tr>
 <tr><td>Token / tube</td><td>Token 0.8° × 0.45°; tube width 1.8°, diameter 4.5° (p. 4).</td></tr>
-<tr><td>Disparities</td><td>Background 24 px (≈32 arcmin); tokens 13 px (≈17.5 arcmin); tube 11 px in front of or behind the tokens (p. 11). Sign convention is not stated (assumption here: uncrossed values, tokens nearer than background, tube-in-front = 2 px, tube-behind = 24 px, so it coincides with the background plane; values larger than the disparity are rendered per eye as ±d/2).</td></tr>
+<tr><td>Disparities</td><td>Background 24 px (≈32 arcmin); tokens 13 px (≈17.5 arcmin); tube 11 px in front of or behind the tokens (p. 11). Sign convention is not stated, and 11 px could alternatively be relative to the background or frame (assumption here: uncrossed values, tokens nearer than background, tube-in-front = 2 px, tube-behind = 24 px, so it coincides with the background plane; values larger than the disparity are rendered per eye as ±d/2).</td></tr>
 <tr><td>Token-in-front display</td><td>Tokens displaced downward by 9 arcmin (1/3 token height), partially overlapping the tube ends (p. 11). Drawn in front of the tube.</td></tr>
 <tr><td>Trial</td><td>Fixation cross 600 ms, tube alone 600 ms (to establish depth), then 3½ cycles; token duration 150 ms; ISI 100, 233, 367, 500 ms (pp. 4, 11).</td></tr>
 <tr><td>Design</td><td>2 depth orders × 4 ISIs = 8 sequences × 16 = 128 trials, random order, 4 sessions, after 26 practice trials; observers screened for stereo vision by a depth-matching task (p. 11).</td></tr>

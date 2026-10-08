@@ -134,6 +134,8 @@ const ISIS = [100,200,400,600,800,1000];
 const AMPS = [0, 0.0675, 0.125, 0.25, 0.5, 1];
 const MICH = [0, 0.038, 0.071, 0.14, 0.28, 0.57];
 const DUR = 50, INTERSEQ = 250;
+let HZ = 60, hzSamples = [];            // refresh rate measured from rAF; durations are realised as whole frames
+const nf = ms => Math.max(1, Math.round(ms*HZ/1000));
 const LOC = [{x:ECC-2.5, y:-2.5}, {x:ECC+2.5, y:2.5}];   // bottom-left, top-right of the 5 x 5 deg square
 
 // trial (Exp 1/2)
@@ -144,12 +146,13 @@ function startTrial() {
   const cued = S.cue==='random' ? Math.floor(Math.random()*3) : parseInt(S.cue)-1;
   const amp = S.exp===2 ? S.amp : 1;
   const ev = [];
-  const seqLen = 3*DUR + 2*isi;
+  const fD = nf(DUR), fI = nf(isi), fG = nf(INTERSEQ);
+  const seqLen = 3*fD + 2*fI;
   for (let s=0;s<2;s++) for (let i=0;i<3;i++) {
-    const t0 = s*(seqLen+INTERSEQ) + i*(DUR+isi);
-    ev.push({t0, t1:t0+DUR, loc: i<2?0:1, el:i});
+    const t0 = s*(seqLen+fG) + i*(fD+fI);
+    ev.push({t0, t1:t0+fD, loc: i<2?0:1, el:i});
   }
-  T = { phase:'seq', t0:performance.now(), ev, cued, amp, end: 2*seqLen+INTERSEQ,
+  T = { phase:'seq', f:0, ev, cued, amp, end: 2*seqLen+fG, last:null,
         probeX: X(ECC)+(Math.random()*8-4)*P, probeY: Y(0)+(Math.random()*6-3)*P, probeO: Math.floor(Math.random()*180) };
   setCursor(false);
   refreshButtons();
@@ -157,11 +160,11 @@ function startTrial() {
 function setCursor(hide){ c.style.cursor = hide ? 'none' : 'default'; }
 
 // ---------------------------------------------------------------- Exp 3
-const E3 = { alpha:0, phase:'idle', t0:0, noiseT:0, nextNoise:0 };
+const E3 = { alpha:0, phase:'idle', f:0 };
 const R3 = 2.5, SECT = [45,-45,-135,135];            // sector 1..4 centre angles (deg, CCW, 0 = right) — assumption: 1 = upper right, clockwise
 function mkDots(coherent) {
   const dots = [];
-  for (let k=0;k<4;k++) for (let n=0;n<30;n++) { const d = {k, col: n%2, age: Math.random()*0.25, h: Math.random()*2*Math.PI}; replot(d); dots.push(d); }
+  for (let k=0;k<4;k++) for (let n=0;n<30;n++) { const d = {k, col: n%2}; replot(d); d.age = Math.random()*0.25; dots.push(d); }
   return dots;
 }
 function replot(d) {
@@ -198,22 +201,22 @@ function pathPos(i, illusory, alpha) {                  // i = 0..7 element inde
   const t = th*Math.PI/180;
   return {th, R: R3 + R3*alpha*Math.sin(2*t)};
 }
-const noiseCv = document.createElement('canvas'); noiseCv.width = noiseCv.height = 238;
+const noiseCv = document.createElement('canvas'); noiseCv.width = noiseCv.height = 160;
 function drawNoise(cx) {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(noiseCv, X(cx)-2.5*P, Y(0)-2.5*P, 5*P, 5*P);
 }
 function refreshNoise() {
-  const nc = noiseCv.getContext('2d'), im = nc.createImageData(238,238), b=gray(6), w=gray(76);
-  for (let i=0;i<238*238;i++){ const g = Math.random()<0.5?b:w; im.data[4*i]=im.data[4*i+1]=im.data[4*i+2]=g; im.data[4*i+3]=255; }
+  const nc = noiseCv.getContext('2d'), im = nc.createImageData(160,160), b=gray(6), w=gray(76);
+  for (let i=0;i<160*160;i++){ const g = Math.random()<0.5?b:w; im.data[4*i]=im.data[4*i+1]=im.data[4*i+2]=g; im.data[4*i+3]=255; }
   nc.putImageData(im,0,0);
 }
 function e3Done() {
   if (E3.phase!=='adjust') return;
-  E3.phase='noise'; E3.t0 = performance.now(); E3.nextNoise = 0; refreshButtons();
+  E3.phase='noise'; E3.f = 0; refreshButtons();
 }
 function e3New() {
-  E3.alpha = Math.round((Math.random()*2-1)/0.025)*0.025; E3.phase='adjust'; E3.t0 = performance.now(); refreshButtons();
+  E3.alpha = Math.round((Math.random()*2-1)/0.025)*0.025; E3.phase='adjust'; E3.f = 0; refreshButtons();
 }
 function e3Adj(sign) { if (E3.phase==='adjust') E3.alpha = Math.max(-1, Math.min(1, Math.round((E3.alpha+sign*0.025)/0.025)*0.025)); }
 
@@ -221,6 +224,7 @@ function e3Adj(sign) { if (E3.phase==='adjust') E3.alpha = Math.max(-1, Math.min
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.1,(now-last)/1000); last = now;
+  if (hzSamples.length<90) { hzSamples.push(dt); if (hzSamples.length===90) { const m = hzSamples.slice().sort((a,b)=>a-b)[45]; const est = 1/m; HZ = [60,75,90,100,120,144,165,240].reduce((a,b)=>Math.abs(b-est)<Math.abs(a-est)?b:a); buildMeta(); } }
   ctx.fillStyle = css(BG); ctx.fillRect(0,0,c.width,c.height);
   if (S.exp===3) renderE3(now, dt); else renderE12(now);
   requestAnimationFrame(frame);
@@ -231,12 +235,12 @@ function renderE12(now) {
   for (const sx of [-3.2, 3.2]) ctx.fillRect(X(ECC+sx)-0.05*P, Y(3), 0.1*P, 6*P);
   drawFixation();
   if (T.phase==='seq') {
-    const t = now - T.t0;
+    const t = T.f++;
     for (const e of T.ev) if (t>=e.t0 && t<e.t1) {
       const l = LOC[e.loc], phi = S.ori[e.loc]==='H' ? 0 : 90;
       drawElem(l.x, l.y, phi, e.el===T.cued ? 60 : 30, T.amp);
     }
-    if (t >= T.end) { T.phase='probe'; setCursor(true); mouse = {x:T.probeX, y:T.probeY}; refreshButtons(); }
+    if (t >= T.end) { T.phase='probe'; setCursor(true); mouse = {x:T.probeX, y:T.probeY}; lastPtr = null; refreshButtons(); }
   } else if (T.phase==='probe') {
     drawProbe(mouse.x, mouse.y, T.probeO);
     fixationOver();
@@ -247,16 +251,16 @@ function renderE3(now, dt) {
   drawFixation();
   const illusory = (S.e3type==='illusory');
   if (E3.phase==='noise') {
-    if (now - E3.noiseT > 1000/15) { refreshNoise(); E3.noiseT = now; }
+    if (E3.f % Math.max(1,Math.round(HZ/15)) === 0) refreshNoise();
     drawNoise(ECC); drawNoise(-ECC);
     drawFixation();
-    if (now - E3.t0 > 10000) e3New();
+    if (++E3.f >= 10*HZ) e3New();
     return;
   }
   stepDots(dotsTest, dt, true); stepDots(dotsRef, dt, false);
   drawDots(dotsTest, ECC); drawDots(dotsRef, -ECC);
-  const tm = (now - E3.t0) % 2000, i = Math.floor(tm/250);
-  if (tm % 250 < DUR) {
+  const fp = nf(250), fl = E3.f++ % (8*fp), i = Math.floor(fl/fp);
+  if (fl % fp < nf(DUR)) {
     const t = pathPos(i, illusory, 0), r = pathPos(i, false, E3.alpha);
     const a = t.th*Math.PI/180, b = r.th*Math.PI/180;
     drawElem(ECC + t.R*Math.cos(a), t.R*Math.sin(a), t.th, 30, 1);
@@ -267,9 +271,10 @@ requestAnimationFrame(frame);
 
 // ---------------------------------------------------------------- input
 function ptr(e) { const r = c.getBoundingClientRect(); return {x:(e.clientX-r.left)*c.width/r.width, y:(e.clientY-r.top)*c.height/r.height}; }
-c.addEventListener('mousemove', e => { if (T.phase==='probe') mouse = ptr(e); });
+let lastPtr = null;
+c.addEventListener('mousemove', e => { if (T.phase==='probe') { const p = ptr(e); if (lastPtr) { mouse.x += p.x-lastPtr.x; mouse.y += p.y-lastPtr.y; } lastPtr = p; } });
 c.addEventListener('pointerdown', e => {
-  if (S.exp!==3 && T.phase==='probe') { mouse = ptr(e); T = {phase:'idle'}; setCursor(false); refreshButtons(); }
+  if (S.exp!==3 && T.phase==='probe') { T = {phase:'idle'}; setCursor(false); refreshButtons(); }
 });
 document.addEventListener('keydown', e => {
   if (S.exp===1 && T.phase==='probe') {
@@ -316,7 +321,7 @@ function build() {
     pr.appendChild(seg('Test stimulus (left)', [['illusory','Illusory saltation (2 elements × 4 locations)'],['real','Non-illusory (8 positions, circle)']], S.e3type, v=>S.e3type=v, 'tSeg'));
     pr.appendChild(seg('Background motion configuration (test side)', [['A','Sectors 1&3 outward, 2&4 inward'],['B','Sectors 1&3 inward, 2&4 outward']], S.e3bg, v=>S.e3bg=v, 'bgSeg'));
     pr.appendChild(seg('Dot speed (°/s)', [0,1,2,4,8].map(x=>[x,String(x)]), S.e3speed, v=>S.e3speed=v, 'spSeg'));
-    ins.innerHTML = 'Fixate the black spot. The left display is the test; the right display is the adjustable reference. <b>↑/→</b> or <b>↓/←</b> change the reference path shape in small steps until it matches the shape of the test’s motion path; <b>Enter</b> (or the button) accepts. Then 10 s of dynamic noise is shown and a new trial starts with a random starting shape.';
+    ins.innerHTML = 'Fixate the black spot. The left display is the test; the right display is the adjustable reference. <b>↑/→</b> or <b>↓/←</b> change the reference shape in small steps (task: match the reference to the test); <b>Enter</b> (or the button) accepts. Then 10 s of dynamic noise is shown and a new trial starts with a random starting shape.';
     const m = document.createElement('button'); m.textContent='− reshape'; m.onmousedown=()=>e3Adj(-1);
     const p = document.createElement('button'); p.textContent='reshape +'; p.onmousedown=()=>e3Adj(1);
     const ok = document.createElement('button'); ok.id='okBtn'; ok.textContent='Accept match (Enter)'; ok.onclick=e3Done;
@@ -373,10 +378,10 @@ function buildMeta() {
     <tr><th>Background dots</th><td>4 wedge sectors on the 45°/225° and 135°/315° axes (relative to vertical), each subtending 45° from the centre, outer radius 4°, 30 dots per sector (≈5 dots/deg²), dot radius 0.08°, black 4 cd/m² and white 76 cd/m²; dots excluded within 1° of centre; replotted at random when leaving; lifetime 0.25 s, asynchronous (p.10–11)</td></tr>
     <tr><th>Background motion</th><td>All dots in a sector move radially, same speed; configuration 1: sectors 1 &amp; 3 outward, 2 &amp; 4 inward; configuration 2: reversed (alternating, clockwise). Speeds 0, 1, 2, 4, 8 °/s (p.11). ${A('Sector numbering (1 = upper right, clockwise), black/white split 50:50, and reference-side dot motion (random directions at the same speed) are assumptions; the paper says only that the reference has no coherent motion.')}</td></tr>
     <tr><th>Task</th><td>Method of adjustment: change α until the reference path shape matches the perceived test path shape, fixation maintained; button press ends the trial (p.11). ${A('Keys used are not stated.')}</td></tr>
-    <tr><th>Inter-trial</th><td>10 s of dynamic noise, 5° × 5°, black 6 / white 76 cd/m² pixels of 0.021°, 15 Hz, over both stimulus positions (p.11). ${A('Rendered with 238 × 238 noise cells.')}</td></tr>
+    <tr><th>Inter-trial</th><td>10 s of dynamic noise, 5° × 5°, black 6 / white 76 cd/m² pixels of 0.021°, 15 Hz, over both stimulus positions (p.11). ${A('Rendered with 160 × 160 cells (≈0.031° each) on this canvas; the paper’s display implies ≈47.6 px/deg.')}</td></tr>
     <tr><th>Design (not run here)</th><td>2 configs × 5 speeds × 5 repeats = 50 trials/block, 10 blocks (p.11)</td></tr>
     </table>`;
-  $('meta').innerHTML = h + '<br>The percept (interpolated element, curved or straight path, shifted positions) and all results are deliberately not drawn; only the physical flashes, dots, probe and reference are shown.';
+  $('meta').innerHTML = h + `<br>${A('Timing: frame-locked, measured refresh ≈ '+HZ+' Hz (paper: 100 Hz). Realised: 50 ms = '+nf(50)+' frames ('+(nf(50)*1000/HZ).toFixed(1)+' ms); 250 ms = '+nf(250)+' frames ('+(nf(250)*1000/HZ).toFixed(1)+' ms); ISI 0.2 s = '+nf(200)+' frames ('+(nf(200)*1000/HZ).toFixed(1)+' ms). Scale: 32 px/deg at a fixed canvas of 928 px; this matches 10° eccentricity only at ≈48 cm viewing distance on a 96-dpi screen (paper: 60 cm), and not if the canvas is shrunk on a narrow window.')}`;
 }
 build();
 </script>

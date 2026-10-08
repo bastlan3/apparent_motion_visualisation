@@ -45,10 +45,11 @@
   <div class="participant">
     <div class="instr" id="instr">Press <b>Start trial</b> (the experimenter's key). A 1-s warning beep sounds with the fixation dot on; then the episode runs.
       Attend to your immediate impression and keep fixating the dot. Watch for as long as you can maintain your first steady interpretation, and
-      press <b>Space</b> (or the button) as soon as it switches to a second one. Pressing ends the display at once; otherwise it ends after 10.7 s.</div>
+      press <b>Space</b> (or the button) as soon as it switches to a second one. Pressing ends the display at once; otherwise it ends after 10.7 s. Afterwards describe the interpretation(s).</div>
     <div class="prow">
       <button id="start">Start trial</button>
       <button id="resp" class="key">Interpretation switched (Space)</button>
+      <button id="stop">Stop demonstration</button>
     </div>
     <div class="status" id="status"></div>
   </div>
@@ -74,6 +75,9 @@
           <button data-v="lines">Line segments</button>
         </div>
       </div>
+      <div class="ctrl">Display size
+        <div class="seg"><button id="calib">True size (60 mm circle, 96 px/in; view from 45 cm)</button></div>
+      </div>
       <div class="ctrl">Arrangement (episodes 4–9)
         <div class="seg" id="arr">
           <button data-v="ferris" class="on">Ferris wheel (upright)</button>
@@ -84,15 +88,10 @@
     <div class="grid" id="demoCtl" style="margin-top:12px; display:none">
       <div class="ctrl">Demonstration
         <div class="seg" id="demo">
-          <button data-v="pretest" class="on">Letter-recognition pretest (150 ms flash)</button>
+          <button data-v="pretest" class="on">Letter-recognition pretest (6 trials, 150 ms)</button>
+          <button data-v="draw">150-ms flash of array 1 of episode 4 (to be drawn)</button>
           <button data-v="beta">Horizontal beta: E between Z and H locations</button>
           <button data-v="circ">Counterclockwise circular motion of T</button>
-        </div>
-      </div>
-      <div class="ctrl" id="cueWrap">Pretest position
-        <div class="seg" id="cue">
-          <button data-v="0" class="on">Unannounced (trials 1–3)</button>
-          <button data-v="1">Announced beforehand (trials 4–6)</button>
         </div>
       </div>
     </div>
@@ -101,7 +100,7 @@
   <div class="meta">
     <b>Reconstruction of Navon, D. (1976), <i>J. Exp. Psychol.: Human Perception &amp; Performance</i> 2(1), 130–138.</b>
     Only the displays and the observer's response key are reproduced; no motion path, interpretation or result is drawn. Observers saw each
-    episode once (naive, 26 undergraduates; 8 unable to see ordinary beta motion in the pretest were excluded from analysis).
+    episode once (naive undergraduates).
     <table>
       <tr><th>Parameter</th><th>Paper value</th><th>Page</th></tr>
       <tr><td>Array duration</td><td>150 ms (about; plotting took 1–3 ms)</td><td>p.131, 134</td></tr>
@@ -113,20 +112,21 @@
       <tr><td>Circle through the 6 elements (ep. 4–9)</td><td>about 60 mm; whole field about 7°40′</td><td>p.133</td></tr>
       <tr><td>Viewing distance</td><td>about 45 cm; dim booth lit enough to read/write</td><td>p.133</td></tr>
       <tr><td>Display</td><td>Tektronix oscilloscope, phosphor decay 0.9 ms; brightness enough for perfect recognition</td><td>p.133</td></tr>
-      <tr><td>Diamond (ep. 5, 8, 9)</td><td>about 3 times the average letter size</td><td>p.131–132</td></tr>
+      <tr><td>Diamond</td><td>ep. 5 and 9 (one diamond): about 3 times the average letter size; ep. 8 (five diamonds): letter-sized (Fig. 3)</td><td>p.131–132, Fig. 3</td></tr>
       <tr><td>Cha-cha-cha (ep. 4–6)</td><td>array 2 locations lie halfway (30°) between neighbouring array 1 locations on the circle</td><td>p.131</td></tr>
       <tr><td>Around the clock (ep. 7–9)</td><td>same 6 locations in every array; elements shifted one location per array (Fig. 3)</td><td>p.131–132</td></tr>
       <tr><td>Ferris wheel / roulette</td><td>elements upright / each erect with respect to the radius to the centre</td><td>p.132–133, Fig. 4</td></tr>
       <tr><td>Response</td><td>key press at the switch from first to second interpretation; afterwards verbal report (Erector-set Ferris wheel to demonstrate)</td><td>p.133–134</td></tr>
+      <tr><td>Timing as realised here (60 Hz)</td><td>150 ms = 9 frames; 30 ms = 2 frames (33.3 ms); 1-s beep = 60 frames; cap 642 frames (10.7 s); key-press latency reported in frames</td><td>assumption: 60 Hz</td></tr>
       <tr><td>Pretest</td><td>6 letter-recognition trials (150 ms, one upright English letter at one array-1 location of ep. 4; position unannounced in first 3, announced in last 3); then 150-ms array 1 of ep. 4 to be drawn; then beta demonstration (E between Z and H locations) and counterclockwise circular demonstration (T through the 6 locations)</td><td>p.134</td></tr>
       <tr><td>Design</td><td>9 episodes in 3 blocks (1–3, 4–6, 7–9); vocabulary x group by 3x3 Graeco-Latin square; one arrangement per subject. Not enforced here: pick any episode freely.</td><td>p.133</td></tr>
     </table>
-    <span class="a">Not specified in the paper (assumptions here):</span>
-    <span class="a">element positions for episodes 1–3 (corners of a square, set at ±3.0° from centre); diamond exact shape (square rotated 45°, 1.5° tall); the exact line-segment and Hebrew glyph shapes
-    (drawn from Fig. 2 as closely as possible; Hebrew uses nearest Unicode letters); letter font and stroke weight; display colour (white on black) and luminance;
-    fixation dot size (about 0.1°) and its position (centre); beep pitch (880 Hz); timing and repeat of the preliminary demonstrations (150 ms / 30 ms assumed, run until key or 10.7 s);
-    pretest letters and locations (random each time). The paper notes array 1 of the one-diamond around-the-clock episode had a slight plotting defect (bottom edge trimmed, drawn at the top); it is not reproduced.
-    Rendering is at the browser refresh rate (at 60 Hz, 150 ms is about 9 frames and 30 ms about 2).</span>
+    <span class="a">Not specified in the paper (assumptions here):
+    element positions for episodes 1–3 (corners of a square, set at ±3.0° from centre); diamond shape (rhombus 0.6 wide to 1 tall as in Fig. 2); Hebrew stroke shapes (my approximation of Fig. 2);
+    thin vector strokes (1.5 px) and letter width; display colour (white on black) and luminance; fixation dot size (about 0.1°) and position (centre); beep pitch (880 Hz);
+    timing and duration of the preliminary demonstrations (150/30 ms assumed, run until the experimenter stops them; the paper says until the subject could experience steady motion);
+    pretest letters (six different letters in random order, random location among the six array-1 locations of episode 4); true-size mode assumes 96 CSS px per inch.
+    The paper notes array 1 of the one-diamond around-the-clock episode had a slight plotting defect (bottom edge of the diamond trimmed and drawn at the top; p.132 footnote); it is not reproduced.</span>
   </div>
 
 <script>
@@ -137,13 +137,28 @@ const R = 3.83 * PX;                   // 60 mm circle at 45 cm = 7.67 deg diame
 const EL = 0.5 * PX;                   // element long side 0.5 deg
 const ARRAY_MS = 150, ISI_MS = 30, MAX_MS = 10700, BEEP_MS = 1000;
 
-const E = ['E','Z','M','T','L','H','D'];
-const GLYPH = {
-  english: {E:'E',Z:'Z',M:'M',T:'T',L:'L',H:'H'},
-  hebrew:  {E:'ש',Z:'ד',M:'ם',T:'ר',L:'ה',H:'ט'},
+// Stroke figures (Fig. 2), unit box x in [-.4,.4], y in [-.5,.5] (y up), scaled by element height EL.
+// English and line-segment shapes follow Fig. 2; Hebrew shapes are my approximation of the printed figures (assumption).
+const STROKES = {
+  english: {
+    E:[[[.3,.5],[-.3,.5],[-.3,-.5],[.3,-.5]],[[-.3,0],[.2,0]]],
+    Z:[[[-.3,.5],[.3,.5],[-.3,-.5],[.3,-.5]]],
+    M:[[[-.35,-.5],[-.35,.5],[0,0],[.35,.5],[.35,-.5]]],
+    T:[[[-.35,.5],[.35,.5]],[[0,.5],[0,-.5]]],
+    L:[[[-.3,.5],[-.3,-.5],[.3,-.5]]],
+    H:[[[-.3,.5],[-.3,-.5]],[[.3,.5],[.3,-.5]],[[-.3,0],[.3,0]]]
+  },
+  hebrew: {
+    E:[[[-.4,.5],[-.4,-.5],[.4,-.5],[.4,.5]],[[0,.5],[0,-.5]]],
+    Z:[[[-.3,.5],[.3,.5],[.3,-.5]],[[-.3,-.5],[-.1,-.5]]],
+    M:[[[-.3,.5],[.3,.5],[.3,-.5],[-.3,-.5],[-.3,.5]],[[-.3,.5],[-.3,.1]]],
+    T:[[[-.35,.5],[.35,.5],[.35,-.5]]],
+    L:[[[-.3,.5],[.3,.5],[.3,-.5]],[[-.3,.5],[-.3,-.1]],[[-.3,-.5],[-.3,-.35]]],
+    H:[[[-.3,.5],[-.3,-.5],[.3,-.5],[.3,.5]],[[0,.5],[0,0]]]
+  }
 };
-// line segments, as [angle of stroke in degrees from horizontal, length factor] (Fig. 2)
-const LINES = { E:[0,1], Z:[90,1], M:[-55,1], T:[55,1], L:[25,1], H:[-35,1] };
+// line segments: angle of stroke in degrees from horizontal (Fig. 2)
+const LINES = { E:0, Z:90, M:-30, T:65, L:25, H:-65 };
 
 const EPN = ['Crossing slides','Vertical seesaw','Horizontal seesaw','Cha-cha-cha: different elements','Cha-cha-cha: one diamond',
  'Cha-cha-cha: identical element','Around the clock: different elements','Around the clock: five diamonds','Around the clock: one diamond'];
@@ -176,7 +191,7 @@ function episodeArrays(n) {
         id = first[(j-k+12)%6];
         if (n===9 && id==='H') id = 'D';
       } else {
-        id = ((j-k+12)%6 === 2) ? 'E' : 'D';
+        id = ((j-k+12)%6 === 2) ? 'E' : 'd';
       }
       a.push(hexEl(id, slots[j]));
     }
@@ -191,17 +206,17 @@ function drawElement(el, vocab, roulette) {
   const x = CX + el.x*PX, y = CY - el.y*PX;
   const rot = (roulette && el.ang!==null) ? (el.ang-90)*Math.PI/180 : 0;
   ctx.save(); ctx.translate(x, y); ctx.rotate(-rot);
-  ctx.strokeStyle = FG; ctx.fillStyle = FG; ctx.lineWidth = 2; ctx.lineCap = 'butt';
-  if (el.id === 'D') {
-    const h = 3*EL/2;                      // 3x the letter size (assumption)
-    ctx.beginPath(); ctx.moveTo(0,-h); ctx.lineTo(h*0.62,0); ctx.lineTo(0,h); ctx.lineTo(-h*0.62,0); ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle = FG; ctx.lineWidth = 1.5; ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+  if (el.id === 'D' || el.id === 'd') {
+    const h = (el.id === 'D' ? 3 : 1) * EL / 2;   // D: 3x letter size (eps 5, 9); d: letter size (ep 8)
+    ctx.beginPath(); ctx.moveTo(0,-h); ctx.lineTo(h*0.6,0); ctx.lineTo(0,h); ctx.lineTo(-h*0.6,0); ctx.closePath(); ctx.stroke();
   } else if (vocab === 'lines') {
-    const [a,f] = LINES[el.id], t = a*Math.PI/180, l = EL*f/2;
+    const t = LINES[el.id]*Math.PI/180, l = EL/2;
     ctx.beginPath(); ctx.moveTo(-l*Math.cos(t), l*Math.sin(t)); ctx.lineTo(l*Math.cos(t), -l*Math.sin(t)); ctx.stroke();
   } else {
-    ctx.font = 'bold ' + Math.round(EL*1.28) + 'px Helvetica, Arial, "Noto Sans Hebrew", sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(GLYPH[vocab][el.id], 0, 1);
+    ctx.beginPath();
+    STROKES[vocab][el.id].forEach(p => p.forEach((q,k) => k ? ctx.lineTo(q[0]*EL, -q[1]*EL) : ctx.moveTo(q[0]*EL, -q[1]*EL)));
+    ctx.stroke();
   }
   ctx.restore();
 }
@@ -209,8 +224,12 @@ function drawDot() { ctx.fillStyle = '#d8d8d8'; ctx.beginPath(); ctx.arc(CX, CY,
 function clear() { ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H); }
 
 // ---- state ----
-const st = { stage:'test', ep:4, vocab:'english', arr:'ferris', demo:'pretest', cue:0 };
-let run = null, raf = 0, audio = null;
+// Timing is counted in display frames, assuming a 60 Hz display: 150 ms = 9 frames, 30 ms = 2 frames (33.3 ms),
+// 1-s beep = 60 frames, 10.7-s cap = 642 frames. Dropped frames are not detected.
+const F_ON = 9, F_OFF = 2, F_BEEP = 60, F_MAX = 642;
+const st = { stage:'test', ep:4, vocab:'english', arr:'ferris', demo:'pretest' };
+let run = null, raf = 0, audio = null, pretestN = 0, pretestOrder = [];
+const $ = id => document.getElementById(id);
 
 function beep() {
   try {
@@ -220,76 +239,80 @@ function beep() {
     o.start(); o.stop(audio.currentTime + BEEP_MS/1000);
   } catch(e) {}
 }
-
-function framesFor() {
-  const roulette = st.arr === 'roulette';
-  if (st.stage === 'test') {
-    const arrs = episodeArrays(st.ep);
-    return { arrays: arrs, vocab: st.vocab, roulette: roulette && st.ep>=4, label:'Episode ' + st.ep + ': ' + EPN[st.ep-1] };
-  }
-  const slots4 = episodeArrays(4)[0];
-  if (st.demo === 'beta') {
-    const Zp = slots4.find(e=>e.id==='Z'), Hp = slots4.find(e=>e.id==='H');
-    return { arrays: [[{id:'E',x:Zp.x,y:Zp.y,ang:null}], [{id:'E',x:Hp.x,y:Hp.y,ang:null}]], vocab:'english', roulette:false, label:'Beta demonstration' };
-  }
-  if (st.demo === 'circ') {
-    const ccw = [150,210,270,330,30,90];
-    return { arrays: ccw.map(a => [hexEl('T', a)]), vocab:'english', roulette: roulette, label:'Circular demonstration' };
-  }
-  return null;
-}
-
-function start() {
-  cancelAnimationFrame(raf);
-  document.getElementById('status').textContent = '';
-  if (st.stage === 'demo' && st.demo === 'pretest') {
-    const letters = ['E','Z','M','T','L','H'];
-    const ar = slotsFor4();
-    const slot = ar[Math.floor(Math.random()*6)];
-    const cue = st.cue === 1;
-    run = { kind:'pretest', t0: performance.now(), el: {id: letters[Math.floor(Math.random()*6)], x:slot.x, y:slot.y, ang:null}, slotName: slot.name, cue };
-    if (cue) document.getElementById('status').textContent = 'Position announced: ' + slot.name;
-  } else {
-    run = Object.assign({ kind:'ep', t0: performance.now() }, framesFor());
-  }
-  beep();
-  raf = requestAnimationFrame(tick);
-}
 function slotsFor4() {
   const names = {90:'top',30:'upper right',[-30]:'lower right',[-90]:'bottom',[-150]:'lower left',150:'upper left'};
   return [90,30,-30,-90,-150,150].map(a => Object.assign(hexEl('E',a), {name:names[a]}));
 }
+function framesFor() {
+  const roulette = st.arr === 'roulette';
+  if (st.stage === 'test')
+    return { arrays: episodeArrays(st.ep), vocab: st.vocab, roulette: roulette && st.ep>=4, cap:true };
+  const slots4 = episodeArrays(4)[0];
+  if (st.demo === 'beta') {
+    const Zp = slots4.find(e=>e.id==='Z'), Hp = slots4.find(e=>e.id==='H');
+    return { arrays: [[{id:'E',x:Zp.x,y:Zp.y,ang:null}], [{id:'E',x:Hp.x,y:Hp.y,ang:null}]], vocab:'english', roulette:false, cap:false };
+  }
+  const ccw = [150,210,270,330,30,90];   // counterclockwise through the array-1 locations of episode 4
+  return { arrays: ccw.map(a => [hexEl('T', a)]), vocab:'english', roulette: roulette, cap:false };
+}
 
-function tick(now) {
+function start() {
+  cancelAnimationFrame(raf);
+  $('status').textContent = '';
+  if (st.stage === 'demo' && (st.demo === 'pretest' || st.demo === 'draw')) {
+    let arrays, label = '';
+    if (st.demo === 'draw') {
+      arrays = [episodeArrays(4)[0]];
+    } else {
+      if (pretestN % 6 === 0) pretestOrder = ['E','Z','M','T','L','H'].sort(() => Math.random()-0.5);
+      const slot = slotsFor4()[Math.floor(Math.random()*6)];
+      const announced = (pretestN % 6) >= 3;
+      arrays = [[{id:pretestOrder[pretestN%6], x:slot.x, y:slot.y, ang:null}]];
+      label = 'Pretest trial ' + (pretestN%6+1) + ' of 6' + (announced ? ' - position announced: ' + slot.name : ' - position not announced');
+      pretestN++;
+    }
+    run = { kind:'flash', frame:0, arrays, vocab:'english', roulette:false };
+    $('status').textContent = label;
+  } else {
+    run = Object.assign({ kind:'seq', frame:0 }, framesFor());
+  }
+  beep();
+  raf = requestAnimationFrame(tick);
+}
+
+function tick() {
   if (!run) return;
-  const t = now - run.t0;
+  const f = run.frame++;
   clear();
-  if (t < BEEP_MS) { drawDot(); raf = requestAnimationFrame(tick); return; }
-  const te = t - BEEP_MS;
-  if (run.kind === 'pretest') {
-    if (te < ARRAY_MS) { drawElement(run.el, 'english', false); drawDot(); raf = requestAnimationFrame(tick); return; }
-    endTrial('Pretest flash over. (Observer then reported the letter.)');
+  if (f < F_BEEP) { drawDot(); raf = requestAnimationFrame(tick); return; }
+  const fe = f - F_BEEP;
+  if (run.kind === 'flash') {
+    if (fe < F_ON) { run.arrays[0].forEach(el => drawElement(el, run.vocab, false)); drawDot(); raf = requestAnimationFrame(tick); return; }
+    endTrial(st.demo === 'draw' ? 'Flash over. The observer draws schematically what was shown.' : 'Flash over. The observer names the letter.');
     return;
   }
-  if (te >= MAX_MS) { endTrial('Display terminated after 10.7 s with no key press.'); return; }
-  const period = ARRAY_MS + ISI_MS;
-  const idx = Math.floor(te / period) % run.arrays.length;
-  if ((te % period) < ARRAY_MS) run.arrays[idx].forEach(el => drawElement(el, run.vocab, run.roulette));
+  if (run.cap && fe >= F_MAX) { endTrial('Display ended automatically (642 frames = 10.7 s, no key press). The observer describes the interpretation(s).'); return; }
+  const per = F_ON + F_OFF;
+  if (fe % per < F_ON) run.arrays[Math.floor(fe/per) % run.arrays.length].forEach(el => drawElement(el, run.vocab, run.roulette));
   drawDot();
   raf = requestAnimationFrame(tick);
 }
 
 function endTrial(msg) {
   cancelAnimationFrame(raf); run = null; clear();
-  document.getElementById('status').textContent = msg + ' Describe what you saw (first interpretation, and second if any).';
+  $('status').textContent = msg;
 }
 function respond() {
-  if (run && run.kind === 'ep' && performance.now() - run.t0 > BEEP_MS)
-    endTrial('Key pressed: display terminated immediately.');
+  if (run && run.kind === 'seq' && run.cap && run.frame > F_BEEP) {
+    const fr = run.frame - F_BEEP;
+    endTrial('Key pressed after ' + fr + ' frames (' + (fr/60).toFixed(2) + ' s at 60 Hz): display terminated immediately. The observer describes the interpretation(s).');
+  }
 }
+function stop() { endTrial('Demonstration stopped by the experimenter.'); }
 
 document.getElementById('start').onclick = start;
 document.getElementById('resp').onclick = respond;
+document.getElementById('stop').onclick = stop;
 window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); respond(); } });
 
 // ---- controls ----
@@ -301,16 +324,21 @@ function seg(id, key, num) {
       document.getElementById('testCtl').style.display = st.stage==='test' ? 'flex' : 'none';
       document.getElementById('demoCtl').style.display = st.stage==='demo' ? 'flex' : 'none';
     }
-    if (id==='demo') document.getElementById('cueWrap').style.display = st.demo==='pretest' ? 'flex' : 'none';
     cancelAnimationFrame(raf); run = null; clear(); document.getElementById('status').textContent = '';
   });
 }
 const epBox = document.getElementById('ep');
 for (let i=1; i<=9; i++) {
-  const b = document.createElement('button'); b.dataset.v = i; b.textContent = i; b.title = EPN[i-1];
+  const b = document.createElement('button'); b.dataset.v = i; b.textContent = i;
   if (i===4) b.classList.add('on'); epBox.appendChild(b);
 }
-['stage','ep','vocab','arr','demo','cue'].forEach(id => seg(id, id==='ep'?'ep':id==='stage'?'stage':id==='vocab'?'vocab':id==='arr'?'arr':id==='demo'?'demo':'cue', id==='ep'||id==='cue'));
+['stage','ep','vocab','arr','demo'].forEach(id => seg(id, id, id==='ep'));
+let trueSize = false;
+$('calib').onclick = () => {
+  trueSize = !trueSize; $('calib').classList.toggle('on', trueSize);
+  // 60 mm circle (diameter 2R canvas px) at true size, assuming 96 CSS px per inch
+  c.style.width = trueSize ? Math.round(W * (60/25.4*96) / (2*R)) + 'px' : ''; c.style.maxWidth = trueSize ? 'none' : '';
+};
 clear(); drawDot();
 </script>
 </body>

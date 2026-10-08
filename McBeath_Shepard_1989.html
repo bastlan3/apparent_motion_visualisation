@@ -2,322 +2,231 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>McBeath &amp; Shepard (1989) — Window technique (experiment)</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
          display:flex; flex-direction:column; align-items:center; padding:18px 12px 40px; }
+  a.back { align-self:flex-start; font-size:12px; color:#8a93b8; text-decoration:none; margin-bottom:10px; }
+  a.back:hover { text-decoration:underline; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; margin-bottom:2px; }
-  .sub { font-size:11px; color:#777; margin-bottom:14px; }
-  canvas { background:#000; display:block; border-radius:3px; outline:none; cursor:ns-resize; }
-
-  .participant { margin-top:12px; width:700px; max-width:96vw; }
-  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
-  .rate { margin-top:10px; display:flex; gap:10px; align-items:center; justify-content:center; font-size:12px; }
-  .rate button { min-width:120px; }
-
-  .panel { margin-top:22px; width:700px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:16px; }
-  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:12px; }
-  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px 28px; }
-  .ctrl { display:flex; flex-direction:column; gap:6px; }
-  .ctrl .label { font-size:12px; color:#9a9a9a; }
-  .seg { display:flex; gap:6px; flex-wrap:wrap; }
-  .seg button { flex:0 0 auto; }
-  input[type=range] { width:100%; accent-color:#8a93b8; }
-
+  .sub { font-size:11px; color:#777; margin-bottom:14px; text-align:center; }
+  canvas { background:#000; display:block; border-radius:3px; outline:none; max-width:100%; height:auto; }
+  .wrap { width:700px; max-width:96vw; }
+  .instr { margin-top:12px; font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
+  .row { margin-top:10px; display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; font-size:12px; }
   button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:6px 12px;
-           border-radius:4px; cursor:pointer; font-size:12px; transition:.12s; }
+           border-radius:4px; cursor:pointer; font-size:12px; }
   button:hover { background:#26262e; border-color:#4a4a56; }
+  button:disabled { opacity:.4; cursor:default; }
   button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
-
-  .readouts { margin-top:16px; display:flex; gap:26px; flex-wrap:wrap; font-size:12px; color:#888; }
-  .readouts b { color:#cfcfcf; font-weight:600; }
-  .log { margin-top:16px; font-size:11px; color:#777; }
-  .log .row { display:flex; gap:18px; }
-  .meta { margin-top:22px; width:700px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+  .panel { margin-top:20px; border-top:1px solid #2a2a30; padding-top:14px; font-size:11.5px; color:#8a8a92; line-height:1.55; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  table { border-collapse:collapse; width:100%; margin-top:6px; }
+  td { padding:4px 8px 4px 0; border-bottom:1px solid #1e1e24; vertical-align:top; }
+  td:first-child { color:#aaa; width:30%; }
+  .asm { color:#c9a86a; }
+  .seg { display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 8px; }
+  details summary { cursor:pointer; color:#777; font-size:11px; }
 </style>
 </head>
 <body>
-  <h1>McBeath &amp; Shepard (1989) — Window technique for path curvature</h1>
-  <div class="sub">A shape is flashed on the two sides of a partition; the observer adjusts the window so the shape seems to pass smoothly through it.</div>
+<div class="wrap">
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>McBeath &amp; Shepard (1989) — Window technique</h1>
+  <div class="sub" id="sub">A shape alternates on the two sides of a partition. 180 trials in random order.</div>
 
   <canvas id="c" width="700" height="520" tabindex="0"></canvas>
 
-  <div class="participant">
-    <div class="instr">
-      Move the <b>window</b> with <b>↑ / ↓</b> (or drag vertically) until the shape seems to pass
-      <b>most smoothly</b> back and forth through it.<br>
-      Try for a placement <b>at or above</b> the straight line joining the two flashed shapes, then rate your confidence:
-    </div>
-    <div class="rate">
-      <span style="color:#777">Confidence&nbsp;&amp;&nbsp;log&nbsp;trial:</span>
-      <button data-conf="1">1 — low / unclear path</button>
-      <button data-conf="2">2 — medium</button>
-      <button data-conf="3">3 — high / clear path</button>
-    </div>
+  <div class="instr">
+    Adjust the height of the <b>window</b> (↑ / ↓ keys, or hold the buttons) to obtain the strongest illusion of smooth motion of the object
+    back and forth through it. Try for a placement <b>at or above</b> the straight line between the two positions of the shape.
+    Then rate your confidence in the placement: 3 = high confidence, well-defined path; 1 = low confidence, poorly defined path; 2 = intermediate.
+  </div>
+  <div class="row">
+    <button id="start">Start experiment (180 trials)</button>
+    <button id="up" disabled>▲ window up</button>
+    <button id="down" disabled>▼ window down</button>
+  </div>
+  <div class="row">
+    <span style="color:#777">Confidence (1–3):</span>
+    <button class="conf" data-conf="1" disabled>1 — low</button>
+    <button class="conf" data-conf="2" disabled>2 — intermediate</button>
+    <button class="conf" data-conf="3" disabled>3 — high</button>
+  </div>
+  <div class="row" style="color:#666">Trial <span id="tn">–</span> / 180 &nbsp;·&nbsp; <button id="export" style="padding:3px 9px">Export CSV</button></div>
+
+  <div class="panel">
+    <details>
+      <summary>Experimenter: run a single chosen condition instead of the randomised sequence</summary>
+      <div style="margin-top:8px">Shape
+        <div class="seg" id="segShape"><button data-v="narrow" class="on">Narrow</button><button data-v="medium">Medium</button><button data-v="wide">Wide (Pac Man)</button></div>
+        Separation of centres
+        <div class="seg" id="segSep"><button data-v="3">3°</button><button data-v="6" class="on">6°</button><button data-v="9">9°</button></div>
+        Orientation difference
+        <div class="seg" id="segAng"><button data-v="90" class="on">90°</button><button data-v="180">180°</button></div>
+        ISI
+        <div class="seg" id="segIsi"><button data-v="0">0 ms</button><button data-v="50">50</button><button data-v="100" class="on">100</button><button data-v="150">150</button><button data-v="200">200</button></div>
+        <button id="single">Run this condition</button>
+      </div>
+    </details>
   </div>
 
   <div class="panel">
-    <h2>Experimenter parameters</h2>
-    <div class="grid">
-      <div class="ctrl">
-        <span class="label">Stimulus shape</span>
-        <div class="seg" id="segShape">
-          <button data-shape="narrow" class="on">Narrow</button>
-          <button data-shape="medium">Medium</button>
-          <button data-shape="wide">Wide (Pac-Man)</button>
-        </div>
-      </div>
-      <div class="ctrl">
-        <span class="label">Distance of separation (between centers)</span>
-        <div class="seg" id="segSep">
-          <button data-sep="3">3°</button>
-          <button data-sep="6" class="on">6°</button>
-          <button data-sep="9">9°</button>
-        </div>
-      </div>
-      <div class="ctrl">
-        <span class="label">Difference in orientation</span>
-        <div class="seg" id="segAng">
-          <button data-ang="90" class="on">90°</button>
-          <button data-ang="180">180°</button>
-        </div>
-      </div>
-      <div class="ctrl">
-        <span class="label">Interstimulus interval (ISI): <b id="isiLbl" style="color:#cfcfcf">100</b> ms &nbsp;
-          <span style="color:#666">(duration fixed 550 ms · SOA <span id="soaLbl">650</span> ms)</span></span>
-        <input type="range" id="isi" min="0" max="200" step="1" value="100">
-      </div>
-    </div>
-
-    <div class="readouts">
-      <div>Window set: <b id="devLbl">0.00°</b> above straight line</div>
-      <div>Kinematic prediction (Euler): <b id="predLbl">0.00°</b></div>
-      <div><button id="pause">Pause</button> <button id="reset">Reset window</button></div>
-    </div>
-
-    <div class="log">
-      <div class="row"><span>Trials logged: <b id="nLog" style="color:#cfcfcf">0</b></span>
-        <button id="export" style="padding:3px 9px">Export CSV</button></div>
-      <div id="last" style="margin-top:6px;color:#666"></div>
-    </div>
+    <h2>Methods (McBeath &amp; Shepard, 1989, Perception &amp; Psychophysics 46(4), 333–337)</h2>
+    <table>
+      <tr><td>Display</td><td>IBM XT, low-resolution graphics (p. 334). Resolution, luminance, colours, polarity not given. <span class="asm">Assumed: light shapes on black, mid-grey wall, anti-aliased canvas.</span></td></tr>
+      <tr><td>Viewing distance / size</td><td>≈ 80 cm; maximum diameter of each shape ≈ 1.5° (p. 334). Rendered at 32 px/° (shape ≈ 48 px). <span class="asm">Physical size depends on your monitor; not calibrated.</span></td></tr>
+      <tr><td>Layout</td><td>Vertical partition in the middle; shape alternates left and right of it; a gap (window) in the partition just large enough to admit the rigid passage of the shape (Fig. 1b). Both shapes placed closer to the bottom of the screen. <span class="asm">Wall width (10 px), wall height (full field), field size, absence of fixation mark: assumptions/unspecified. Window height = twice the shape's largest radius from its centre, so any orientation fits.</span></td></tr>
+      <tr><td>Shapes</td><td>Narrow (line drawing after Farrell, 1983), Medium (silhouette resembling Farrell &amp; Shepard, 1981 polygons), Wide (Pac Man: circle with pie segment removed) — Fig. 1a. <span class="asm">Outlines here are redrawn by eye from Fig. 1a; exact vertices and mouth angle (80° total) unspecified.</span></td></tr>
+      <tr><td>Orientation</td><td>Orientation difference 90° or 180°. Narrow and medium shapes oriented with their axis of elongation through the centre of rotation specified by kinematic geometry for the pair; for 90° trials the centre lies below the line joining the two positions (upward-curving pairs). Pac Man never symmetric about a vertical axis. <span class="asm">Pac Man: left mouth at 45° up-right, right = left + difference (assumption). Which of the pair is on the left, and the direction of rotation, unspecified.</span></td></tr>
+      <tr><td>Separation</td><td>Centre-to-centre 3°, 6°, 9°.</td></tr>
+      <tr><td>Timing</td><td>Each shape on for 550 ms; ISI 0, 50, 100, 150, 200 ms (SOA 550–750 ms). Here counted in display frames at the measured refresh rate (<span id="hz">…</span>); at 60 Hz: 33 frames = 550 ms, ISI = 0/3/6/9/12 frames = 0/50/100/150/200 ms. <span class="asm">Shapes alternate continuously until the rating is given; first frame of a trial shows the left shape immediately (unspecified).</span></td></tr>
+      <tr><td>Response</td><td>Joystick adjusts window height; confidence rating 3-point scale after the final placement. <span class="asm">Here: arrow keys / buttons at a constant rate (≈ 1.9°/s); allowed range 1.5° below to 7° above the line; start height random in that range (all unspecified).</span></td></tr>
+      <tr><td>Design</td><td>3 shapes × 3 separations × 2 orientation differences × 5 ISIs × 2 replications = 180 trials per observer, random order (≈ 45 min). 10 observers. Observers were not told the experimenters' ideas about path curvature.</td></tr>
+    </table>
   </div>
-
-  <div class="meta">
-    Faithful reconstruction of the stimulus/apparatus in McBeath &amp; Shepard (1989), <i>Perception &amp; Psychophysics</i>, 46(4), 333–337.
-    Viewing distance ≈ 80 cm; each shape subtends ≈ 1.5° (rendered here at 32 px/°). Shapes are flashed near the bottom of the field
-    to prime the upward-curved interpretation. Narrow/medium shapes are oriented so their axis of elongation passes through the
-    kinematic centre of rotation; the Pac-Man is kept asymmetric about the vertical. The curved path itself is the observer's
-    percept and is deliberately <i>not</i> drawn — only the real two-flash stimulus and the adjustable window are shown.
-  </div>
+</div>
 
 <script>
-const c = document.getElementById('c');
-const ctx = c.getContext('2d');
+const c = document.getElementById('c'), ctx = c.getContext('2d');
 const W = c.width, H = c.height;
+const PPD = 32, SHAPE_R = 0.75*PPD, CX = W/2, CHORD_Y = 430, WALL_HW = 5;
+const WIN_MIN = CHORD_Y - 7*PPD, WIN_MAX = CHORD_Y + 1.5*PPD;
+const DUR_MS = 550;
 
-// ---- fixed display geometry ----
-const PX_PER_DEG = 32;            // 1.5° shape -> 48 px; 9° sep -> 288 px
-const SHAPE_R    = 0.75 * PX_PER_DEG;   // ~24 px radius (1.5° diameter)
-const CX         = W / 2;         // partition / vertical midline
-const CHORD_Y    = 430;           // baseline of the two flashed shapes (near bottom)
-const WALL_HW    = 5;             // partition half-width
-const GAP_H      = 2 * SHAPE_R + 8;     // window just admits the shape
-
-// ---- experiment parameters (experimenter-controlled) ----
-const params = { shape:'narrow', sepDeg:6, angDeg:90, isiMs:100, durMs:550 };
-
-// ---- participant-controlled window position ----
-let windowY = CHORD_Y;            // canvas-y of window centre (starts on the straight line)
-const WIN_MIN = CHORD_Y - 185;    // highest the window may go
-const WIN_MAX = CHORD_Y + 30;     // slightly below straight line
-
-let running = true, t0 = performance.now();
-
-// ---------- kinematic geometry (Euler's theorem) ----------
-// d = separation (px), th = angular difference (rad).
-// Centre of rotation lies on the midline, offset below the chord by (d/2)/tan(th/2);
-// correct window height above chord h = (d/2)*tan(th/4).
-function geometry() {
-  const d  = params.sepDeg * PX_PER_DEG;
-  const th = params.angDeg * Math.PI / 180;
-  const offset = (params.angDeg === 180) ? 0 : (d/2) / Math.tan(th/2); // C below chord (canvas +y)
-  const Ccanvas = { x: CX, y: CHORD_Y + offset };
-  const predPx  = (d/2) * Math.tan(th/4);   // kinematically-correct apex height
-  const pL = { x: CX - d/2, y: CHORD_Y };
-  const pR = { x: CX + d/2, y: CHORD_Y };
-  let angL, angR;
-  if (params.shape === 'wide') {
-    // Pac-Man: the paper fixes only "not symmetric about a vertical axis", so we anchor the
-    // left flash to a fixed diagonal (mouth up-right) and rotate the right flash rigidly by Δθ.
-    // This keeps the mouths diagonal (one up, one down) in BOTH the 90° and 180° conditions,
-    // and never vertical (which would be the symmetric case the paper avoided).
-    angL = -Math.PI / 4;
-    angR = angL + th;
-  } else {
-    // Narrow / medium: axis of elongation points through the kinematic centre of rotation.
-    angL = Math.atan2(Ccanvas.y - pL.y, Ccanvas.x - pL.x);
-    angR = Math.atan2(Ccanvas.y - pR.y, Ccanvas.x - pR.x);
-  }
-  return { d, pL, pR, angL, angR, predPx };
+// shapes in local frame, long axis = +x (approximations of Fig. 1a)
+const MED = [[-24,0],[-6,-14],[4,-6],[20,-12],[10,0],[22,12],[2,8],[-8,14]];
+const NAR = [[-24,2],[-16,-14],[22,16]];
+const MOUTH = 0.7; // half-angle rad (~40deg)
+function shapeRadius(s){
+  if (s==='wide') return SHAPE_R;
+  const p = s==='medium'?MED:NAR; return Math.max(...p.map(q=>Math.hypot(q[0],q[1])));
 }
-
-// ---------- shape rendering (local frame, long axis = +x) ----------
-function drawShape(type, x, y, ang) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(ang);
-  ctx.fillStyle   = '#e9e9e9';
-  ctx.strokeStyle = '#e9e9e9';
-  if (type === 'wide') {                       // Pac-Man: circle minus a wedge (mouth opens +x)
-    const mouth = 0.62;                        // half-angle of the mouth (~35°)
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, SHAPE_R, mouth, 2*Math.PI - mouth);
-    ctx.closePath();
-    ctx.fill();
-  } else if (type === 'medium') {              // irregular polygon silhouette
-    const pts = [[24,2],[8,-15],[-10,-12],[-22,-2],[-13,9],[6,14]];
-    ctx.beginPath();
-    pts.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
-    ctx.closePath();
-    ctx.fill();
-  } else {                                     // narrow: thin asymmetric line drawing
-    ctx.lineWidth = 3;
-    ctx.lineJoin = ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(-24, 9); ctx.lineTo(-3, -12); ctx.lineTo(24, 3);
-    ctx.stroke();
+function drawShape(type,x,y,ang){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(ang);
+  ctx.fillStyle = ctx.strokeStyle = '#e9e9e9';
+  if (type==='wide'){
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,SHAPE_R,MOUTH,2*Math.PI-MOUTH); ctx.closePath(); ctx.fill();
+  } else if (type==='medium'){
+    ctx.beginPath(); MED.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath(); ctx.fill();
+  } else {
+    ctx.lineWidth=2.5; ctx.lineJoin=ctx.lineCap='round';
+    ctx.beginPath(); NAR.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
   }
   ctx.restore();
 }
-
-// ---------- partition + window ----------
-function drawWall() {
-  const gT = windowY - GAP_H/2, gB = windowY + GAP_H/2;
-  ctx.fillStyle = '#3c3c44';
-  ctx.fillRect(CX - WALL_HW, 0, 2*WALL_HW, gT);          // upper segment
-  ctx.fillRect(CX - WALL_HW, gB, 2*WALL_HW, H - gB);      // lower segment
-  // subtle edges so the window reads as a gap
-  ctx.strokeStyle = '#6a6a78';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(CX - WALL_HW, gT); ctx.lineTo(CX + WALL_HW, gT);
-  ctx.moveTo(CX - WALL_HW, gB); ctx.lineTo(CX + WALL_HW, gB);
-  ctx.stroke();
+function geometry(t){
+  const d=t.sep*PPD, th=t.ang*Math.PI/180;
+  const off = t.ang===180 ? 0 : (d/2)/Math.tan(th/2);
+  const C={x:CX,y:CHORD_Y+off};
+  const pL={x:CX-d/2,y:CHORD_Y}, pR={x:CX+d/2,y:CHORD_Y};
+  let aL,aR;
+  if (t.shape==='wide'){ aL=-Math.PI/4; aR=aL+th; }
+  else { aL=Math.atan2(C.y-pL.y,C.x-pL.x); aR=Math.atan2(C.y-pR.y,C.x-pR.x); }
+  return {pL,pR,aL,aR};
 }
 
-// ---------- which flash is showing now ----------
-function currentPhase() {
-  const dur = params.durMs, isi = params.isiMs;
-  const cycle = 2*dur + 2*isi;
-  let t = (performance.now() - t0) % cycle;
-  if (t < dur) return 'left';
-  t -= dur;
-  if (t < isi) return 'blank';
-  t -= isi;
-  if (t < dur) return 'right';
-  return 'blank';
+// ---- state ----
+let trial=null, queue=[], idx=0, winY=CHORD_Y, active=false, log=[];
+let hz=60, frames=0, held=0;
+const exp = {shape:'narrow',sep:6,ang:90,isi:100};
+
+function frameCounts(t){
+  const dur=Math.round(DUR_MS*hz/1000), isi=Math.round(t.isi*hz/1000);
+  return {dur,isi,cycle:2*(dur+isi)};
 }
-
-// ---------- main loop ----------
-function frame() {
-  const g = geometry();
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, W, H);
-
-  drawWall();
-
-  if (running) {
-    const ph = currentPhase();
-    if (ph === 'left')  drawShape(params.shape, g.pL.x, g.pL.y, g.angL);
-    if (ph === 'right') drawShape(params.shape, g.pR.x, g.pR.y, g.angR);
-  } else {
-    // when paused, show both positions faintly so orientations are visible
-    ctx.globalAlpha = 0.5; drawShape(params.shape, g.pL.x, g.pL.y, g.angL);
-    drawShape(params.shape, g.pR.x, g.pR.y, g.angR); ctx.globalAlpha = 1;
-  }
-
-  // readouts
-  document.getElementById('devLbl').textContent  = ((CHORD_Y - windowY)/PX_PER_DEG).toFixed(2) + '°';
-  document.getElementById('predLbl').textContent = (g.predPx/PX_PER_DEG).toFixed(2) + '°';
-  requestAnimationFrame(frame);
+function phase(t){
+  const f=frameCounts(t); let k=frames%f.cycle;
+  if(k<f.dur) return 'L'; k-=f.dur;
+  if(k<f.isi) return 'B'; k-=f.isi;
+  if(k<f.dur) return 'R'; return 'B';
 }
-requestAnimationFrame(frame);
-
-// ---------- window adjustment (the "joystick") ----------
-function clampWin() { windowY = Math.max(WIN_MIN, Math.min(WIN_MAX, windowY)); }
-window.addEventListener('keydown', e => {
-  if (e.key === 'ArrowUp')   { windowY -= 2; clampWin(); e.preventDefault(); }
-  if (e.key === 'ArrowDown') { windowY += 2; clampWin(); e.preventDefault(); }
-});
-let dragging = false;
-c.addEventListener('mousedown', e => { dragging = true; setWinFromMouse(e); });
-window.addEventListener('mousemove', e => { if (dragging) setWinFromMouse(e); });
-window.addEventListener('mouseup', () => dragging = false);
-function setWinFromMouse(e) {
-  const r = c.getBoundingClientRect();
-  windowY = (e.clientY - r.top) * (H / r.height);
-  clampWin();
+function render(){
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  const gh = trial ? 2*shapeRadius(trial.shape)+4 : 54;
+  const gT=winY-gh/2, gB=winY+gh/2;
+  ctx.fillStyle='#4a4a54';
+  ctx.fillRect(CX-WALL_HW,0,2*WALL_HW,gT);
+  ctx.fillRect(CX-WALL_HW,gB,2*WALL_HW,H-gB);
+  if(!trial||!active) return;
+  const g=geometry(trial), ph=phase(trial);
+  if(ph==='L') drawShape(trial.shape,g.pL.x,g.pL.y,g.aL);
+  if(ph==='R') drawShape(trial.shape,g.pR.x,g.pR.y,g.aR);
 }
-
-// ---------- parameter controls ----------
-function wireSeg(id, key, cast) {
-  document.querySelectorAll('#' + id + ' button').forEach(b => {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.remove('on'));
-      b.classList.add('on');
-      params[key] = cast(b.dataset[Object.keys(b.dataset)[0]]);
-    });
-  });
+function loop(){
+  frames++;
+  if(active&&held){ winY+= held*1.9*PPD/hz; winY=Math.max(WIN_MIN,Math.min(WIN_MAX,winY)); }
+  render(); requestAnimationFrame(loop);
 }
-wireSeg('segShape', 'shape', v => v);
-wireSeg('segSep',   'sepDeg', Number);
-wireSeg('segAng',   'angDeg', Number);
+// estimate refresh rate
+(function(){
+  let n=0,t0=null;
+  function m(t){ if(t0===null)t0=t; n++; if(n<40) requestAnimationFrame(m);
+    else { hz=Math.round(1000*(n-1)/(t-t0)/5)*5||60; if(hz<30||hz>240)hz=60;
+      document.getElementById('hz').textContent=hz+' Hz measured → '+Math.round(DUR_MS*hz/1000)+' frames/shape, realised '+(Math.round(DUR_MS*hz/1000)*1000/hz).toFixed(1)+' ms';
+      requestAnimationFrame(loop);} }
+  requestAnimationFrame(m);
+})();
 
-const isiEl = document.getElementById('isi');
-isiEl.addEventListener('input', e => {
-  params.isiMs = Number(e.target.value);
-  document.getElementById('isiLbl').textContent = params.isiMs;
-  document.getElementById('soaLbl').textContent = params.durMs + params.isiMs;
-  t0 = performance.now();
+function setUI(on){
+  document.querySelectorAll('.conf,#up,#down').forEach(b=>b.disabled=!on);
+}
+function beginTrial(t){
+  trial=t; active=true; frames=0;
+  winY = WIN_MIN + Math.random()*(WIN_MAX-WIN_MIN);
+  setUI(true); c.focus();
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+document.getElementById('start').addEventListener('click',()=>{
+  queue=[];
+  for(const shape of ['narrow','medium','wide']) for(const sep of [3,6,9]) for(const ang of [90,180])
+    for(const isi of [0,50,100,150,200]) for(let r=0;r<2;r++) queue.push({shape,sep,ang,isi});
+  shuffle(queue); idx=0; log=[]; next();
 });
-
-document.getElementById('pause').addEventListener('click', e => {
-  running = !running; e.target.textContent = running ? 'Pause' : 'Play';
-  if (running) t0 = performance.now();
+function next(){
+  if(idx>=queue.length){ active=false; trial=null; setUI(false); document.getElementById('tn').textContent='done'; return; }
+  document.getElementById('tn').textContent=idx+1+(queue.length===1?' (single)':'')+'';
+  if(queue.length!==1) document.getElementById('tn').textContent=idx+1;
+  beginTrial(queue[idx]);
+}
+document.getElementById('single').addEventListener('click',()=>{
+  queue=[{shape:exp.shape,sep:exp.sep,ang:exp.ang,isi:exp.isi}]; idx=0; document.getElementById('tn').textContent='single'; beginTrial(queue[0]);
 });
-document.getElementById('reset').addEventListener('click', () => { windowY = CHORD_Y; });
-
-// ---------- confidence rating + trial logging ----------
-const log = [];
-document.querySelectorAll('.rate button').forEach(b => {
-  b.addEventListener('click', () => {
-    const dev = (CHORD_Y - windowY) / PX_PER_DEG;
-    const g = geometry();
-    log.push({ shape:params.shape, sepDeg:params.sepDeg, angDeg:params.angDeg,
-               isiMs:params.isiMs, soaMs:params.durMs+params.isiMs,
-               windowDeg:+dev.toFixed(3), predDeg:+(g.predPx/PX_PER_DEG).toFixed(3),
-               confidence:Number(b.dataset.conf) });
-    document.getElementById('nLog').textContent = log.length;
-    const r = log[log.length-1];
-    document.getElementById('last').textContent =
-      `last: ${r.shape}, sep ${r.sepDeg}°, Δ ${r.angDeg}°, ISI ${r.isiMs}ms → window ${r.windowDeg}° (conf ${r.confidence})`;
-    windowY = CHORD_Y;            // reset for next trial
-  });
+function rate(n){
+  if(!active) return;
+  log.push({trial:log.length+1,shape:trial.shape,sepDeg:trial.sep,angDeg:trial.ang,isiMs:trial.isi,
+            windowDeg:+((CHORD_Y-winY)/PPD).toFixed(3),confidence:n});
+  idx++; if(queue.length===1){ active=false; trial=null; setUI(false);} else next();
+}
+document.querySelectorAll('.conf').forEach(b=>b.addEventListener('click',()=>rate(Number(b.dataset.conf))));
+window.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'){held=-1;e.preventDefault();}
+  else if(e.key==='ArrowDown'){held=1;e.preventDefault();}
+  else if(['1','2','3'].includes(e.key)) rate(Number(e.key));
 });
-document.getElementById('export').addEventListener('click', () => {
-  if (!log.length) return;
-  const cols = Object.keys(log[0]);
-  const csv = [cols.join(',')].concat(log.map(r => cols.map(k => r[k]).join(','))).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-  a.download = 'mcbeath_shepard_window.csv';
-  a.click();
+window.addEventListener('keyup',e=>{ if(e.key==='ArrowUp'||e.key==='ArrowDown') held=0; });
+[['up',-1],['down',1]].forEach(([id,v])=>{
+  const b=document.getElementById(id);
+  b.addEventListener('pointerdown',()=>held=v);
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>held=0));
 });
-
-c.focus();
+function wire(id,key,cast){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); exp[key]=cast(b.dataset.v);
+  }));
+}
+wire('segShape','shape',v=>v); wire('segSep','sep',Number); wire('segAng','ang',Number); wire('segIsi','isi',Number);
+document.getElementById('export').addEventListener('click',()=>{
+  if(!log.length) return;
+  const cols=Object.keys(log[0]);
+  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='mcbeath_shepard_window.csv'; a.click();
+});
+render();
 </script>
 </body>
 </html>

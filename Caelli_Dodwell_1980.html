@@ -58,15 +58,14 @@
       <button id="no">No (N)</button>
     </div>
     <div class="prow hidden" id="resp2">
-      <div class="ctrl">Probe vertical position: <span class="v" id="ppLbl"></span>
-        <input type="range" id="pp" min="-9" max="9" step="0.05" value="0"></div>
-      <div class="ctrl">Probe orientation: <span class="v" id="paLbl"></span>
+      <div class="ctrl">Probe position along the path (↑ / ↓ keys also)
+        <input type="range" id="pp" min="-5.4" max="5.4" step="0.05" value="0"></div>
+      <div class="ctrl">Probe orientation (← / → keys also)
         <input type="range" id="pa" min="-90" max="90" step="1" value="0"></div>
     </div>
     <div class="prow hidden" id="resp3">
-      <div class="ctrl">Right diagonal: vertical position <span class="v" id="pdLbl"></span>
+      <div class="ctrl">Vertical position of the right diagonal (↑ / ↓ keys also)
         <input type="range" id="pd" min="-9" max="9" step="0.02" value="0"></div>
-      <span style="font-size:11px;color:#777">keys ↑ / ↓ also adjust</span>
     </div>
     <div class="prow"><button class="go" id="run">Present trial</button><span id="status" style="font-size:11px;color:#777"></span></div>
   </div>
@@ -74,9 +73,11 @@
   <div class="panel">
     <h2>Experimenter parameters</h2>
     <div class="grid" id="par1">
-      <div class="ctrl">Spatial separation: <span class="v" id="sepLbl"></span>
-        <input type="range" id="sep" min="0" max="8" step="0.5" value="3"></div>
-      <div class="ctrl">SOA: <span class="v" id="soaLbl"></span>
+      <div class="ctrl">Trial selection
+        <div class="seg" id="rmode"><button data-r="rand" class="on">random cell of the grid (hidden)</button><button data-r="set">set manually</button></div></div>
+      <div class="ctrl" id="manual1">Spatial separation: <span class="v" id="sepLbl"></span>
+        <input type="range" id="sep" min="0" max="9" step="1" value="3"></div>
+      <div class="ctrl" id="manual2">SOA: <span class="v" id="soaLbl"></span>
         <input type="range" id="soa" min="40" max="400" step="40" value="120"></div>
       <div class="ctrl">Disk exposure: 40 ms (fixed)</div>
     </div>
@@ -90,8 +91,8 @@
         <div class="seg" id="mode"><button data-m="seq" class="on">1-2-3-4 sequential</button><button data-m="pair">left pair, then right pair</button></div></div>
       <div class="ctrl">Exposure / ISI
         <div class="seg" id="expo"><button data-x="150" class="on">150 / 50 ms</button><button data-x="300">300 / 50 ms</button></div></div>
-      <div class="ctrl">Probe shown
-        <div class="seg" id="pvis"><button data-p="after" class="on">after the trial</button><button data-p="during">during trial too</button></div></div>
+      <div class="ctrl">Probe visible
+        <div class="seg" id="pvis"><button data-p="after" class="on">after the trial only</button><button data-p="during">during the trial and after</button><button data-p="long">1 s before, during, after</button></div></div>
     </div>
     <div class="grid hidden" id="par3">
       <div class="ctrl">Presentation
@@ -106,11 +107,13 @@
   <div class="meta">
     <h2 style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b75;margin-bottom:6px">Methods note</h2>
     <p>Everything below is from Caelli &amp; Dodwell (1980). <span class="as">Amber</span> = not given in the paper (assumption made here).
-       The page shows the display and the response task only; no paths, predictions or data are drawn.</p>
+       The page shows the display and the response task only.</p>
     <table id="tbl"></table>
     <p>Scale on this page: <span class="as">40 canvas px = 1° (assumed; the paper gives no viewing distance, screen size or pixel scale)</span>.
-       Display: bright disks/lines on a dark ground (the paper used a Hewlett-Packard P15 phosphor scope, disk luminance 3.14 foot-Lamberts, p. 30; the
-       screen in a browser cannot reproduce that luminance or the scope's phosphor decay). Timings are limited by the browser's display refresh.</p>
+       Display: bright disks/lines on a dark ground (the paper used a Hewlett-Packard P15 phosphor scope, disk luminance 3.14 foot-Lamberts, p. 30; a
+       browser screen cannot reproduce that luminance or the scope's phosphor decay). Durations are counted in display frames (1 frame = 1/60 s = 16.7 ms), so they are
+       rounded to whole frames: 40 ms = 2 frames (33.3 ms); 20 ms = 1 frame (16.7 ms); 50 ms = 3 frames (50 ms); 150 ms = 9 frames (150 ms); 200 ms = 12 frames (200 ms);
+       300 ms = 18 frames (300 ms); SOA 40 to 400 ms in 40 ms steps = 2 to 24 frames (33.3 to 400 ms, nominal 40 ms = 2 frames). The realised values assume a 60 Hz display.</p>
   </div>
 
 <script>
@@ -120,41 +123,43 @@ var cv = document.getElementById('c'), ctx = cv.getContext('2d');
 var W = cv.width, H = cv.height, PPD = 40; // px per degree (assumed)
 var $ = function(id){ return document.getElementById(id); };
 var exp = 1;
-var S = { sep:3, soa:120, cfg:1, mode:'seq', expo:150, pvis:'after', pg:'static' };
-var stim = [];        // items currently on screen: {k:'disk',x,y,r} | {k:'line',...}
-var running = false, timers = [];
+var S = { sepI:3, soa:120, rmode:'rand', cfg:1, mode:'seq', expo:150, pvis:'after', pg:'static' };
+var SEP_MAX = 8 + 10/60;              // 8 deg 10 arcmin
+var SEP_STEP = SEP_MAX/9;             // 10 equally spaced levels, 0 .. 8.17 deg (assumed)
+var stim = [];
+var running = false, token = 0;
 var probeOn = false;
 
 function setText(id, t){ $(id).textContent = t; }
+function fr(ms){ return Math.max(1, Math.round(ms/16.667)); }
 
-// ---------- Exp 2 geometry (read off Fig. 6, PJR panel, in figure px; scale assumed 0.04 deg per figure px) ----------
-var K2 = 0.04 * PPD;                 // canvas px per figure px
+// ---------- Exp 2 geometry (read off Fig. 6; scale assumed 0.04 deg per figure px) ----------
+var K2 = 0.04 * PPD;
 // positions relative to disk 1, y up positive
 var CFG = {
   1: { n:3, d:[[0,0],[46,89],[138,137]], pair:null },
-  2: { n:3, d:[[0,0],[46,89],[138,102]], pair:null },
+  2: { n:3, d:[[0,0],[46,89],[138,89]],  pair:null },
   3: { n:3, d:[[0,0],[46,89],[138,47]],  pair:null },
-  4: { n:4, d:[[0,0],[2,-14],[112,100],[127,118]], pair:[[0,1],[2,3]] },
-  5: { n:4, d:[[0,0],[2,-14],[127,53],[149,50]],   pair:[[0,1],[2,3]] },
-  6: { n:4, d:[[0,0],[2,-14],[103,0],[127,-14]],   pair:[[0,1],[2,3]] }
+  4: { n:4, d:[[0,0],[-9,-20],[112,100],[127,118]], pair:[[0,1],[2,3]] },
+  5: { n:4, d:[[0,0],[-9,-20],[127,53],[149,50]],   pair:[[0,1],[2,3]] },
+  6: { n:4, d:[[0,0],[-9,-20],[103,0],[127,-14]],   pair:[[0,1],[2,3]] }
 };
-function cfgOrigin(c){ // centre the configuration on the canvas
+function cfgOrigin(c){
   var d = CFG[c].d, minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
   d.forEach(function(p){ minx=Math.min(minx,p[0]); maxx=Math.max(maxx,p[0]); miny=Math.min(miny,p[1]); maxy=Math.max(maxy,p[1]); });
   return { ox: W/2 - K2*(minx+maxx)/2, oy: H/2 + K2*(miny+maxy)/2 };
 }
 function cfgPt(c,i){ var o=cfgOrigin(c), p=CFG[c].d[i]; return [o.ox + K2*p[0], o.oy - K2*p[1]]; }
-function probeX(){ var c=S.cfg; var a=cfgPt(c,CFG[c].n===3?1:1), b=cfgPt(c,CFG[c].n-1);
-  var xs = CFG[c].d.map(function(_,i){return cfgPt(c,i)[0];}); var mn=Math.min.apply(null,xs), mx=Math.max.apply(null,xs);
+function probeX(){
+  var c=S.cfg, xs = CFG[c].d.map(function(_,i){return cfgPt(c,i)[0];}); var mn=Math.min.apply(null,xs), mx=Math.max.apply(null,xs);
   return (mn+mx)/2 + (mx-mn)*0.12; }
 var probe = { y:0, a:0 };
 
 // ---------- Exp 3 geometry (read off Fig. 8A; scale assumed) ----------
 var K3 = 0.04 * PPD;
-// figure px coordinates, y down as in image; converted to canvas
-var P3 = { vlx:757, vrx:842, vy0:120, vy1:372, ldA:[680,368], ldB:[755,298], rdA:[842,205], rdB:[905,142] };
+var P3 = { vlx:757, vrx:842, vy0:120, vy1:372, ldA:[680,368], ldB:[755,293], rdA:[842,205], rdB:[905,142] };
 function p3(x,y,dy){ return [W/2 + K3*(x-800), H/2 + K3*(y-246) + (dy||0)]; }
-var rdOff = 0; // right-diagonal vertical offset in deg (positive = up)
+var rdBase = 0, rdAdj = 0; // hidden random start offset (deg) + observer adjustment (deg)
 
 // ---------- drawing ----------
 function draw(){
@@ -165,7 +170,7 @@ function draw(){
   }
   if (exp===2){
     ctx.strokeStyle='#2a2a32'; ctx.lineWidth=1; var px=probeX();
-    ctx.beginPath(); ctx.moveTo(px,H/2-190); ctx.lineTo(px,H/2+190); ctx.stroke(); // vertical path along which probe is moved
+    ctx.beginPath(); ctx.moveTo(px,H/2-120); ctx.lineTo(px,H/2+120); ctx.stroke();
     if (probeOn) drawProbe();
   }
   stim.forEach(function(it){
@@ -180,57 +185,73 @@ function drawProbe(){
   ctx.beginPath(); ctx.moveTo(px-L*Math.cos(a),py+L*Math.sin(a)); ctx.lineTo(px+L*Math.cos(a),py-L*Math.sin(a)); ctx.stroke();
 }
 
-// ---------- timeline player ----------
-function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
-function play(steps, done){ // steps: [{dur, items}] consecutive; items shown for dur ms (blank gaps are explicit steps with items=[])
-  clearTimers(); running = true;
-  var t0 = performance.now(), idx = 0;
-  function tick(){
-    if (!running) return;
-    var now = performance.now() - t0, acc = 0, cur = null;
-    for (var i=0;i<steps.length;i++){ if (now < acc+steps[i].dur){ cur = steps[i]; break; } acc += steps[i].dur; }
-    if (!cur){ stim = []; running=false; draw(); if (done) done(); return; }
-    stim = cur.items; draw(); requestAnimationFrame(tick);
+// ---------- frame-counted timeline player ----------
+// steps: [{f: frames, items, probe: bool|undefined}]
+function play(steps, done){
+  running = true; var my = ++token;
+  var si = 0, left = steps[0].f, last = -1e9, started = false;
+  function apply(){ stim = steps[si].items; if (steps[si].probe!==undefined) probeOn = steps[si].probe; draw(); }
+  function tick(t){
+    if (my!==token || !running) return;
+    if (t - last >= 15){            // one logical 60 Hz frame
+      last = t;
+      if (started){ left--; if (left<=0){ si++; if (si>=steps.length){ stim=[]; running=false; draw(); if(done) done(); return; } left=steps[si].f; apply(); } }
+      else { started=true; apply(); }
+    }
+    requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
 }
+
+function rand(a,b){ return a+Math.random()*(b-a); }
+function newProbeStart(){ // random start above or below the display region, within the canvas
+  probe.y = (Math.random()<0.5?1:-1)*rand(3.5,5.0); probe.a = Math.round(rand(-90,90));
+  $('pp').value=probe.y; $('pa').value=probe.a;
+}
+function newRdStart(){ rdBase = rand(-3,3); rdAdj = 0; $('pd').value = 0; }
 
 function run(){
   if (running) return;
   $('run').disabled = true; setText('status','');
   var steps=[];
   if (exp===1){
-    var r = 0.87/2*PPD, sep=S.sep*PPD, y=H/2;
+    var si = S.sepI, soa = S.soa;
+    if (S.rmode==='rand'){ si = Math.floor(Math.random()*10); soa = 40*(1+Math.floor(Math.random()*10)); }
+    var r = 0.87/2*PPD, sep=si*SEP_STEP*PPD, y=H/2;
     var a={k:'disk',x:W/2-sep/2,y:y,r:r}, b={k:'disk',x:W/2+sep/2,y:y,r:r};
-    var gap = Math.max(S.soa-40,0);
-    steps=[{dur:300,items:[]},{dur:40,items:[a]}];
-    if (gap>0) steps.push({dur:gap,items:[]});
-    steps.push({dur:40,items:[b]});
-    steps.push({dur:50,items:[]});
+    var gap = Math.max(fr(soa)-fr(40),0);
+    steps=[{f:18,items:[]},{f:fr(40),items:[a]}];
+    if (gap>0) steps.push({f:gap,items:[]});
+    steps.push({f:fr(40),items:[b]});
+    steps.push({f:3,items:[]});
     play(steps,function(){ $('run').disabled=false; setText('status','Respond: Y = smooth continuous motion, N = not.'); });
   } else if (exp===2){
-    var c=S.cfg, E=S.expo, disks=[];
-    var r2 = 0.4*PPD;
+    var c=S.cfg, E=fr(S.expo), disks=[], r2 = 0.87/2*PPD;
+    newProbeStart();
     for (var i=0;i<CFG[c].n;i++){ var p=cfgPt(c,i); disks.push({k:'disk',x:p[0],y:p[1],r:r2}); }
     var groups = [];
-    if (CFG[c].n===3 || S.mode==='seq') disks.forEach(function(d){ groups.push([d]); });
-    else CFG[c].pair.forEach(function(pr){ groups.push(pr.map(function(i){return disks[i];})); });
-    probeOn = (S.pvis==='during');
-    steps.push({dur:300,items:[]});
-    groups.forEach(function(g,gi){ steps.push({dur:E,items:g}); if (gi<groups.length-1) steps.push({dur:50,items:[]}); });
-    steps.push({dur:50,items:[]});
-    play(steps,function(){ probeOn=true; draw(); $('run').disabled=false; setText('status','Adjust the probe so it lies on the perceived contour, at the orientation of the contour there.'); });
+    if (CFG[c].n===3) disks.forEach(function(d){ groups.push([d]); });
+    else if (S.mode==='seq'){ // leftmost first within each pair (Fig. 6 caption: left to right)
+      CFG[c].pair.forEach(function(pr){ pr.slice().sort(function(i,j){return disks[i].x-disks[j].x;}).forEach(function(i){ groups.push([disks[i]]); }); });
+    } else CFG[c].pair.forEach(function(pr){ groups.push(pr.map(function(i){return disks[i];})); });
+    var pOn = (S.pvis!=='after');
+    if (S.pvis==='long') steps.push({f:60,items:[],probe:true});
+    steps.push({f:18,items:[],probe:pOn});
+    groups.forEach(function(g,gi){ steps.push({f:E,items:g,probe:pOn}); if (gi<groups.length-1) steps.push({f:fr(50),items:[],probe:pOn}); });
+    steps.push({f:S.pvis==='long'?60:3,items:[],probe:pOn});
+    probeOn = false; draw();
+    play(steps,function(){ probeOn=true; draw(); $('run').disabled=false; setText('status','Adjust the probe: first its position, then its orientation.'); });
   } else {
-    var items=[], Lv={k:'line'}, a1=p3(P3.vlx,P3.vy0), a2=p3(P3.vlx,P3.vy1), b1=p3(P3.vrx,P3.vy0), b2=p3(P3.vrx,P3.vy1);
-    var dy = -rdOff*PPD;
+    var Lv, a1=p3(P3.vlx,P3.vy0), a2=p3(P3.vlx,P3.vy1), b1=p3(P3.vrx,P3.vy0), b2=p3(P3.vrx,P3.vy1);
+    var dy = -(rdBase+rdAdj)*PPD;
     var ld=p3(P3.ldA[0],P3.ldA[1]), ld2=p3(P3.ldB[0],P3.ldB[1]);
     var rd=p3(P3.rdA[0],P3.rdA[1],dy), rd2=p3(P3.rdB[0],P3.rdB[1],dy);
-    function ln(p,q){ return {k:'line',x0:p[0],y0:p[1],x1:q[0],y1:q[1]}; }
+    var ln=function(p,q){ return {k:'line',x0:p[0],y0:p[1],x1:q[0],y1:q[1]}; };
     var left=[ln(a1,a2),ln(ld,ld2)], right=[ln(b1,b2),ln(rd,rd2)];
-    if (S.pg==='static') steps=[{dur:300,items:[]},{dur:4000,items:left.concat(right)}];
-    else { var e=+S.pg; steps=[{dur:300,items:[]},{dur:e,items:left},{dur:20,items:[]},{dur:e,items:right}]; }
-    steps.push({dur:50,items:[]});
-    play(steps,function(){ $('run').disabled=false; setText('status','Adjust the right diagonal until it looks collinear with the left one, then present again to check.'); });
+    if (S.pg==='static') steps=[{f:18,items:[]},{f:240,items:left.concat(right)}];
+    else { var e=fr(+S.pg); steps=[{f:18,items:[]},{f:e,items:left},{f:fr(20),items:[]},{f:e,items:right}]; }
+    steps.push({f:3,items:[]});
+    play(steps,function(){ $('run').disabled=false; setText('status','Adjust the right diagonal, then present again.'); });
   }
 }
 
@@ -243,79 +264,76 @@ function seg(id, attr, cb){
   });
 }
 function updLbl(){
-  setText('sepLbl', S.sep.toFixed(1)+'°'); setText('soaLbl', S.soa+' ms');
-  setText('ppLbl', probe.y.toFixed(2)+'°'); setText('paLbl', probe.a+'°'); setText('pdLbl', rdOff.toFixed(2)+'°');
+  setText('sepLbl', (S.sepI*SEP_STEP).toFixed(2)+'°'); setText('soaLbl', S.soa+' ms');
+  $('manual1').classList.toggle('hidden', S.rmode==='rand'); $('manual2').classList.toggle('hidden', S.rmode==='rand');
 }
 function setExp(n){
-  exp=n; stim=[]; probeOn=false; running=false; clearTimers(); $('run').disabled=false; setText('status','');
+  exp=n; stim=[]; probeOn=false; running=false; token++; $('run').disabled=false; setText('status','');
   [1,2,3].forEach(function(i){ $('par'+i).classList.toggle('hidden',i!==n); $('resp'+i).classList.toggle('hidden',i!==n); });
   var T = {
     1:'Two disks flash one after the other (disk 1 then disk 2). Keep fixating the screen centre. After each trial say whether you saw smooth continuous motion from one disk to the other (yes/no).',
-    2:'Disks flash in sequence. Adjust the small probe line along the vertical path so that it lies on the contour you perceive between the disks, then rotate it to the direction of that contour at that point.',
+    2:'Disks flash in sequence. Adjust the small probe line along the vertical path so that its position and orientation correspond to the contour you perceive, first position, then orientation.',
     3:'The left two segments (vertical + diagonal) and right two segments appear, statically or one half after the other. Adjust the vertical position of the right diagonal until it looks collinear with the left diagonal.'
   };
   setText('instr', T[n]);
-  if (n===2) { randomProbe(); probeOn=true; }
-  if (n===3) { rdOff = (Math.random()*2-1)*3; $('pd').value = rdOff; }
+  if (n===2) newProbeStart();
+  if (n===3) newRdStart();
   buildTable(); updLbl(); draw();
-}
-function randomProbe(){ // random start above or below the displayed region
-  probe.y = (Math.random()<0.5?1:-1)*(5+Math.random()*2); probe.a = Math.round((Math.random()*180-90));
-  $('pp').value=probe.y; $('pa').value=probe.a;
 }
 Array.prototype.forEach.call($('expSel').children,function(b){ b.addEventListener('click',function(){
   Array.prototype.forEach.call($('expSel').children,function(x){x.classList.remove('on');}); b.classList.add('on'); setExp(+b.dataset.e); }); });
-$('sep').oninput=function(){ S.sep=+this.value; updLbl(); };
+$('sep').oninput=function(){ S.sepI=+this.value; updLbl(); };
 $('soa').oninput=function(){ S.soa=+this.value; updLbl(); };
-seg('cfg','data-c',function(v){ S.cfg=+v; $('mode').style.opacity = (+v>3)?1:0.35; stim=[]; draw(); });
+seg('rmode','data-r',function(v){ S.rmode=v; updLbl(); });
+seg('cfg','data-c',function(v){ S.cfg=+v; $('mode').style.opacity = (+v>3)?1:0.35; stim=[]; newProbeStart(); probeOn=false; draw(); });
 seg('mode','data-m',function(v){ S.mode=v; });
 seg('expo','data-x',function(v){ S.expo=+v; });
 seg('pvis','data-p',function(v){ S.pvis=v; });
 seg('pg','data-g',function(v){ S.pg=v; });
-$('pp').oninput=function(){ probe.y=+this.value; updLbl(); draw(); };
-$('pa').oninput=function(){ probe.a=+this.value; updLbl(); draw(); };
-$('pd').oninput=function(){ rdOff=+this.value; updLbl(); };
+$('pp').oninput=function(){ probe.y=+this.value; draw(); };
+$('pa').oninput=function(){ probe.a=+this.value; draw(); };
+$('pd').oninput=function(){ rdAdj=+this.value; };
 $('run').onclick=run;
-$('yes').onclick=function(){ setText('status','Response: yes'); };
-$('no').onclick=function(){ setText('status','Response: no'); };
+$('yes').onclick=function(){ setText('status','Response recorded: yes'); };
+$('no').onclick=function(){ setText('status','Response recorded: no'); };
 document.addEventListener('keydown',function(e){
   var k=e.key;
   if (exp===1 && (k==='y'||k==='Y')) $('yes').click();
   if (exp===1 && (k==='n'||k==='N')) $('no').click();
-  if (exp===3 && (k==='ArrowUp'||k==='ArrowDown')){ rdOff += (k==='ArrowUp'?0.02:-0.02); rdOff=Math.max(-9,Math.min(9,rdOff)); $('pd').value=rdOff; updLbl(); e.preventDefault(); }
-  if (exp===2 && (k==='ArrowUp'||k==='ArrowDown')){ probe.y += (k==='ArrowUp'?0.05:-0.05); $('pp').value=probe.y; updLbl(); draw(); e.preventDefault(); }
-  if (exp===2 && (k==='ArrowLeft'||k==='ArrowRight')){ probe.a += (k==='ArrowRight'?-1:1); probe.a=Math.max(-90,Math.min(90,probe.a)); $('pa').value=probe.a; updLbl(); draw(); e.preventDefault(); }
+  if (exp===3 && (k==='ArrowUp'||k==='ArrowDown')){ rdAdj += (k==='ArrowUp'?0.02:-0.02); rdAdj=Math.max(-9,Math.min(9,rdAdj)); $('pd').value=rdAdj; e.preventDefault(); }
+  if (exp===2 && (k==='ArrowUp'||k==='ArrowDown')){ probe.y += (k==='ArrowUp'?0.05:-0.05); probe.y=Math.max(-5.4,Math.min(5.4,probe.y)); $('pp').value=probe.y; draw(); e.preventDefault(); }
+  if (exp===2 && (k==='ArrowLeft'||k==='ArrowRight')){ probe.a += (k==='ArrowRight'?-1:1); probe.a=Math.max(-90,Math.min(90,probe.a)); $('pa').value=probe.a; draw(); e.preventDefault(); }
 });
 
 function A(t){ return '<span class="as">'+t+'</span>'; }
 function buildTable(){
   var rows = {
   1:[['Display','HP P15 phosphor scope, two disk flashes (p. 30)'],['Disk luminance','3.14 foot-Lamberts (p. 30)'],
-     ['Disk size','0.87 (printed "0.87′"; unit symbol garbled in the scan, read here as degrees of visual angle) (p. 30)'],
-     ['Exposure per disk','40 ms (p. 30)'],['SOA','40 to 400 ms, orthogonal with separation (p. 30); '+A('10 levels in steps of 40 ms assumed from 2000 trials / 20 repeats')],
-     ['Separation','0 to ~8 deg (printed "8.~′", partly illegible) (p. 30); '+A('step 0.5 deg assumed')],
-     ['Repetitions','Each spatial and temporal value presented 20 times (p. 30); order random'],
+     ['Disk size','Printed "0.87′" (p. 30). The paper uses the same prime for arcminutes in "8°10′", so the literal reading is 0.87 arcmin; '+A('0.87 deg drawn here; unresolved')],
+     ['Exposure per disk','40 ms (p. 30)'],['SOA','40 to 400 ms, orthogonal with separation (p. 30); '+A('10 levels in steps of 40 ms assumed (2000 trials / 20 repeats = 100 cells)')],
+     ['Separation','0 to 8°10′ (= 8.17 deg) (p. 30); '+A('10 equally spaced levels (step 0.91 deg) assumed')],
+     ['Repetitions','Each spatial and temporal value presented 20 times (p. 30); randomly assigned spatial and temporal intervals. Page: random cell of the grid on each trial (parameters hidden), or manual setting.'],
      ['Task','After each trial, yes/no judgement of smooth continuous motion from one disk to the other (p. 30)'],
-     ['Fixation','Fixate screen centre at all times (p. 30)'],
-     ['Subjects','2 (TMC, PJR), briefly trained (p. 30)'],
-     ['Unspecified',A('Disk orientation of the pair (horizontal assumed), position relative to fixation (symmetric about centre assumed), background, viewing distance, inter-trial interval, response device')]],
+     ['Fixation','Fixate the screen centre at all times (p. 30); '+A('grey fixation cross drawn here is an assumption')],
+     ['Subjects','2 (TMC, PJR), briefly trained; over 2000 and 400 trials respectively (p. 30)'],
+     ['Unspecified',A('Orientation of the pair (horizontal assumed), position relative to fixation (symmetric about centre assumed), background, viewing distance, inter-trial interval, response device')]],
   2:[['Display','Disks on the scope, configurations of Fig. 6 (3-disk: 1, 2, 3; 4-disk: 4, 5, 6) (p. 31)'],
-     ['Disk coordinates',A('Read off the small Fig. 6 diagram by eye; no coordinates or scale given. 40 px per deg and 0.04 deg per figure px assumed. Disk diameter 0.8 deg assumed (not stated for Exp 2).')],
-     ['Order','3-disk: 1-2-3. 4-disk: either sequential 1-2-3-4, or left two simultaneously then right two simultaneously (p. 31)'],
-     ['Exposure, ISI','(150, 50) or (300, 50) ms (exposure, ISI) (p. 31)'],
-     ['Task','Adjust a small oriented line (probe) along a vertical path to lie on the perceived contour, then rotate it to the contour direction there (p. 31)'],
-     ['Probe starts','Random starting positions above and below the observed regions; 8 adjustments per condition (p. 31)'],
-     ['Probe length/appearance',A('0.5 deg half-length, amber line assumed; faint vertical guide line shown for the path (drawn in Fig. 6 only)')],
-     ['Probe timing',A('Main-experiment timing not specified; shown after the trial by default. Controls in Exp 3 section (p. 33): probe present only during trial, or for 1 s before, during and 1 s after.')],
+     ['Disk coordinates',A('Read off the small Fig. 6 diagram by eye; no coordinates or scale given. 40 px per deg and 0.04 deg per figure px assumed. Disk diameter 0.87 deg assumed (same as Exp 1; not stated for Exp 2).')],
+     ['Order','3-disk: 1-2-3. 4-disk: either sequential 1-2-3-4 ("from left to right", Fig. 6 caption), or left two simultaneously then right two simultaneously (p. 31). '+A('Order within a pair not given: leftmost first assumed.')],
+     ['Exposure, ISI','(150, 50) or (300, 50) ms (exposure, ISI) (p. 31); results were pooled over the two'],
+     ['Task','Adjust a small oriented line (probe) along a vertical path to the perceived position, then rotate it to the contour direction there (p. 31)'],
+     ['Probe starts','Random starting positions above and below the observed regions; 8 adjustments per condition (p. 31); '+A('new random start (3.5 to 5 deg from centre) on each presentation')],
+     ['Probe appearance',A('0.5 deg half-length amber line, no numeric readout; faint vertical guide line for the path is drawn in Fig. 6 only and is an assumption')],
+     ['Probe timing',A('Main-experiment timing not specified; hidden during the trial, shown afterwards by default.')+' Control conditions (Discussion, pp. 33-34): probe present only during the trial, or for 1 s before, during and 1 s after each trial; also 3-disk configurations with only points 2 and 3.'],
      ['Subjects','3 (TMC, PJR, PCD), trained on the probe technique (p. 31)'],
-     ['Unspecified',A('Disk size, luminance, viewing distance, fixation, order within a simultaneous pair, trials per subject')]],
-  3:[['Figure','Poggendorff: two verticals with a diagonal on each side (Fig. 8A, p. 32); '+A('geometry read off the small figure, 0.04 deg per figure px assumed')],
+     ['Unspecified',A('Luminance, viewing distance, fixation, trials per subject, probe length')]],
+  3:[['Figure','Poggendorff: two verticals with a diagonal on each side (Fig. 8A, p. 32); '+A('geometry read off the small figure (both diagonals 45 deg), 0.04 deg per figure px assumed')],
      ['Conditions','(1) static, 4 s; (2) 50 ms exposure per half, ISI 20 ms; (3) 200 ms exposure per half, ISI 20 ms (p. 33)'],
      ['Sequential order','Left two segments (vertical + diagonal) first, then right two (p. 32)'],
-     ['Task','Adjust vertical position (intercept) of the right diagonal until collinear with left diagonal; random starting positions (p. 33)'],
+     ['Task','Adjust vertical position (intercept) of the right diagonal until collinear with left diagonal; random starting positions (p. 33). Subjects not instructed to attend to the area between the verticals.'],
      ['Repetitions','10 trials per condition after practice (p. 33)'],
      ['Subjects','Same 3 (TMC, PJR, PCD) (p. 33)'],
-     ['Unspecified',A('Line width, luminance, viewing distance, how the static 4 s trial and adjustment interleave (here: adjust, then re-present), start offset range (±3 deg assumed)')]]
+     ['Unspecified',A('Line width, luminance, viewing distance, how the adjustment is made and how the static 4 s trial and adjustment interleave (here: adjust blind, then present again), start offset range (±3 deg assumed), no numeric readout')]]
   };
   $('tbl').innerHTML = rows[exp].map(function(r){ return '<tr><th>'+r[0]+'</th><td>'+r[1]+'</td></tr>'; }).join('');
 }
