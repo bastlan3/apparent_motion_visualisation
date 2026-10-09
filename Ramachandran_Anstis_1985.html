@@ -52,6 +52,19 @@
   </div>
 
   <div class="panel">
+    <h2>Display setup</h2>
+    <div class="grid">
+      <div class="ctrl">Resize the bar to the width of a credit card (8.56 cm)
+        <div id="card" style="height:14px;background:#8a93b8;border-radius:2px;width:323px"></div>
+        <input type="range" id="cardW" min="150" max="700" step="1" value="323" style="width:300px"></div>
+      <div class="ctrl">Screen pixels per cm <input type="number" id="pxcm" min="10" max="200" step="0.1" value="37.8" style="width:80px"></div>
+      <div class="ctrl">Viewing distance (cm) <input type="number" id="dist" min="15" max="400" step="1" value="100" style="width:80px"></div>
+      <div class="ctrl">&nbsp;<button id="dreset">Reset (37.8 px/cm, 100 cm)</button></div>
+    </div>
+    <div class="note" id="dnote"></div>
+  </div>
+
+  <div class="panel">
     <h2>Experimenter parameters</h2>
     <div class="grid" id="ctl"></div>
     <div class="note" id="real"></div>
@@ -60,38 +73,83 @@
   <div class="meta">
     <b>Reconstruction of Ramachandran, V. S. &amp; Anstis, S. M. (1985), <i>Perception</i> 14, 135–143.</b>
     Only the physical dot flashes are drawn; nothing is recorded, scored or displayed about what is perceived.
-    Original: P-4 phosphor CRT, Apple II, viewed at 1 m. Here the stimulus is drawn on a 60 Hz frame counter (every duration is a whole number of frames, 16.7 ms each) and 1° = 64 px by default (1° square = 64 px, 3′ dot ≈ 3.2 px); the geometry equals the paper's only if the page is viewed at the matching distance, so a scale control (px per degree) is provided. The canvas is a fixed pixel size (scroll horizontally on narrow screens) so the scale is never silently changed. Light dots on dark.
+    Original: P-4 phosphor CRT, Apple II, viewed at 1 m. Here the stimulus is drawn in degrees: pixels per degree follow from the Display setup (screen px/cm and viewing distance; default distance 100 cm = the paper's 1 m, 37.8 px/cm is an assumption until calibrated). The display refresh rate is measured at load; every duration is converted to a whole number of frames at that rate and scheduled by counting frames, and the realised durations are printed under the controls. Light dots on dark. A warning appears if part of a display falls outside the canvas at the current setup.
     <table>
       <tr><th>Parameter</th><th>Paper value (page)</th></tr>
       <tr><td>Square side / dot diameter / distance</td><td>1° / 3′ of arc / 1 m (p.136, Method)</td></tr>
       <tr><td>Cycle</td><td>Two diagonal dots on, then switched off and replaced by the other two; repeated continuously (p.136). Only two dots visible at any instant.</td></tr>
       <tr><td>SOA</td><td>Hand-held potentiometer, continuous 25–500 ms; SOA rather than ISI varied (p.136). Earlier experiments 100–200 ms (p.141); Exp 1 "3–4 frames/s" (p.137); Exp 5b: 200 ms within pairs, 300 ms between row A and row B (p.140); Exp 6: starts above 350 ms and is gradually lowered (p.141).</td></tr>
-      <tr><td>Exp 1 (p.136–138)</td><td>Several squares simultaneously, side 1°, distance between squares 1.5°, 3–4 frames/s; regular arrays (Fig 3a, 3 rows × 5 columns) and random positions (Fig 3b); 12 naive students. 3.1.1: two clusters of figures like Fig 3a, ~2° apart, one rotated exactly 45°, one per hemifield, 3 subjects. 3.1.2: dichoptic (crossed polaroids; upper two rows to one eye, third row to the other, binocular fixation cross between rows 2 and 3) — not reproducible here.</td></tr>
+      <tr><td>Exp 1 (p.136–138)</td><td>Several squares simultaneously, side 1°, distance between squares 1.5° (centre-to-centre or edge-to-edge not stated; both offered, plus the pitch measured from Fig 3a), 3–4 frames/s; regular arrays (Fig 3a, 3 rows × 5 columns) and random positions (Fig 3b); 12 naive students. 3.1.1: two 3 × 5 clusters like Fig 3a, ~2° apart, one rotated exactly 45°, one per hemifield, 3 subjects. 3.1.2: dichoptic (crossed polaroids; upper two rows to one eye, third row to the other, binocular fixation cross between rows 2 and 3) — not reproducible here.</td></tr>
       <tr><td>Exp 2 (p.138)</td><td>Familiarised with drawings "percept 1/percept 2"; shown square; reports axis (vertical/horizontal); display on 30 s, switched off automatically, reappears after various random intervals; fixation cross on screen; told the axis might or might not have changed; 6 naive subjects. Realised: 30 s = 1800 frames.</td></tr>
       <tr><td>Exp 3 (p.138–139)</td><td>Square "random walk": after every 3–4 cycles switched off and reappears at a random screen location after about 500 ms (30 frames = 500 ms); fixation on a central cross; 6 naive subjects. (The head-tilt variant, eyes closed and head rotated 90° between presentations, 4 subjects × 10 trials, cannot be done on a page.)</td></tr>
-      <tr><td>Exp 4 (p.139, Fig 5)</td><td>Single ambiguous square in the centre of an array of single dot pairs, 3 columns × 5 rows of positions with the square in the middle one; each pair flashes at one end then the other (horizontal excursions).</td></tr>
+      <tr><td>Exp 4 (p.139, Fig 5)</td><td>Single ambiguous square in the centre of an array of single dot pairs, left and right columns of 5 dot pairs, middle column with pairs in rows 1, 4, 5 and the square in rows 2–3; row pitch ≈ 1° and pair separation ≈ 1° (measured from Fig 5); every pair flashes left dot then right dot (horizontal excursions).</td></tr>
       <tr><td>Exp 5a (p.139, Fig 6)</td><td>3 cycles, then square replaced by a slightly rotated one, 3 more cycles, repeated in 20°–30° steps until a full 90° change; fixation cross in the middle of the square.</td></tr>
       <tr><td>Exp 5b (p.140, Fig 7)</td><td>Square embedded in a rectangular matrix of squares; column A switched off after a few cycles and replaced by horizontal row B; SOA 200 ms within pairs, 300 ms between A and B.</td></tr>
       <tr><td>Exp 6 (p.140–141)</td><td>Same four-dot display; 3 subjects asked to "will" clockwise/anticlockwise rotation, starting at SOA above 350 ms, while the SOA was gradually lowered.</td></tr>
     </table>
     <span class="asm"><b>Assumptions / unspecified in the paper:</b></span>
-    default SOA in Exp 2, 3, 4, 5a and basic display (200 ms); ISI taken as 0 (each frame lasts one SOA; real dots on a P-4 CRT were presumably brief flashes; flash duration, luminance, colour, background and screen size are not given); the small central mark drawn in Fig 2b/3a is not reproduced; SOAs are rounded to whole 60 Hz frames (25 ms becomes 2 frames = 33 ms); square spacing 1.5° read as centre-to-centre by default, edge-to-edge (2.5° pitch) offered; number of squares in the random layout (15), their region and minimum spacing; cluster size (3 × 3 here so that both clusters fit; the paper says "like Fig 3a"), clusters placed so the nearest dots are 2° apart, fixation cross at the midpoint between them (not mentioned in the paper); Exp 2 off-interval distribution (uniform 1–60 s here), fixation cross at the screen centre over the square, the report prompts, and that nothing is stored; Exp 3 screen region for random positions (uniform; positions within 1° of the cross are excluded); Exp 4 pair separation (1°, as in Fig 5), pitch (2°), pair timing (all pairs and the square flip together at the same SOA); Exp 5a SOA, direction of rotation (clockwise), equal steps of 30° or 22.5° (the latter just outside the paper's range, needed to sum to exactly 90°); Exp 5b cycles per row (3), row length and matrix size (10 × 2 lattice dots, pitch 1°), dots lit as one checkerboard half of the lattice per frame, a single A→B switch with replay, no fixation mark; Exp 6 start SOA (500 ms) and rate of lowering (the paper says "gradually"; 60 s from 500 to 100 ms here). Fig 8 (static dot array) is not an experiment and is omitted.
+    default SOA in Exp 2, 3, 4, 5a and basic display (200 ms); ISI taken as 0 (each frame lasts one SOA; flash duration, luminance, colour, background and screen size are not given); the small central mark drawn in Fig 2b/3a is not reproduced; SOAs are rounded to whole frames at the measured refresh rate (25 ms is not a whole number of frames at 60 Hz); square spacing in Exp 1: default is the pitch measured from Fig 3a (≈1.9° horizontally, gap 0.9°; ≈2.6° vertically, gap 1.5° as in the text), with 1.5° edge-to-edge (2.5° pitch) and 1.5° centre-to-centre also offered; random layout (Fig 3b) has 10 squares (50 dots at 5 per square) in a region of about 8 × 6° and a minimum centre distance of 1.5° (assumed); clusters are 3 × 5 as in Fig 3a, nearest dots 2° apart, fixation cross at the midpoint (not mentioned in the paper); the occlusion manipulation of 3.1.1 is not offered; Exp 2 off-interval distribution (uniform 1–60 s here), fixation cross at the screen centre over the square, the report prompts, and that responses are held internally only; Exp 3 screen region for random positions (uniform over the canvas; positions within 1° of the cross excluded); Exp 4 column spacing (centre of left pair 1.5° and right pair 2.05° from the square centre, as measured from Fig 5), SOA, and phase (pair left dot together with the square's bottom-left and top-right dots, following the numbering in Fig 5); Exp 5a SOA, direction of rotation (clockwise), equal steps of 30° or 22.5° (both inside the paper's 20–30° range; 22.5° gives exactly 4 steps to 90°); Exp 5b cycles per row (3), lattice pitch (1°), dots lit as one checkerboard half of the lattice per frame, a single A→B switch with replay, no fixation mark; Exp 6 start SOA (500 ms), end SOA (100 ms) and rate of lowering (the paper says "gradually"; 60 s here); in the paper Exp 6 reports were verbal, so no response control is provided. Fig 8 (static dot array) is not an experiment and is omitted.
   </div>
 
 <script>
 const c = document.getElementById('c');
 const ctx = c.getContext('2d');
-const W = 900, H = 560;
+const W = Math.max(320, Math.min(1400, Math.floor(window.innerWidth - 24)));
+let H = 620;
 const dpr = window.devicePixelRatio || 1;
-c.width = W*dpr; c.height = H*dpr; c.style.width = W+'px'; c.style.height = H+'px';
-let PX = 64;                      // px per degree (1 m viewing: paper geometry)
-const CX = W/2, CY = H/2;
+const CX = W/2; let CY = H/2;
+function sizeCanvas(){ c.width = W*dpr; c.height = H*dpr; c.style.width = W+'px'; c.style.height = H+'px'; CY = H/2; }
+sizeCanvas();
 const rad = d => d*Math.PI/180;
-const FR = 1000/60;               // one display frame at 60 Hz (ms)
+let FR = 1000/60;                 // measured frame duration (ms), set at load
+let refreshOK = false;
 
+// ---------------- display setup (shared calibration, key "am_display") ----------------
+const PAPER_DIST = 100;           // paper: 1 m
+let pxcm = 37.8, dist = PAPER_DIST, PX = 64;
+try { const o = JSON.parse(localStorage.getItem('am_display') || 'null');
+      if (o && +o.pxPerCm > 5 && +o.pxPerCm < 300) pxcm = +o.pxPerCm; } catch(e) {}
+function saveDisp(){
+  try { let o = {}; try { o = JSON.parse(localStorage.getItem('am_display') || '{}') || {}; } catch(e) {}
+        o.pxPerCm = pxcm; o.distCm = dist; localStorage.setItem('am_display', JSON.stringify(o)); } catch(e) {}
+}
+function computePX(){ PX = pxcm * 2 * dist * Math.tan(Math.PI/360);
+  let hdeg = 11.5;   // canvas height (deg) scales with px/deg; for the 3.1.1 layout it follows the actual extent of the selected clusters
+  try { if (E1.cl && E1.layout === 'clusters') hdeg = Math.max(hdeg, E1.cl.hdeg + 0.5); } catch(e) {}
+  const nh = Math.max(620, Math.ceil(hdeg*PX));
+  if (nh !== H) { H = nh; sizeCanvas(); } }
+function updateDispUI(){
+  document.getElementById('pxcm').value = (+pxcm.toFixed(2));
+  document.getElementById('dist').value = dist;
+  const w = pxcm*8.56; document.getElementById('card').style.width = w+'px'; document.getElementById('cardW').value = Math.round(w);
+  document.getElementById('dnote').textContent =
+    `${PX.toFixed(1)} px per degree (1° square side = ${PX.toFixed(1)} px, 3′ dot = ${(0.05*PX).toFixed(1)} px). Canvas ${W} × ${H} px = ${(W/PX).toFixed(1)}° × ${(H/PX).toFixed(1)}°. `
+    + (dist === PAPER_DIST ? 'Viewing distance = the paper\'s 1 m.' : 'Viewing distance differs from the paper (1 m).')
+    + fitNote();
+}
+function fitNote(){   // width check for the 3.1.1 clusters (both clusters centred as a pair)
+  try { if (!E1.cl || E1.layout !== 'clusters') return ''; } catch(e) { return ''; }
+  const needPx = E1.cl.wdeg*PX + 4;
+  if (needPx <= W) return '';
+  const dmin = Math.ceil(W/((E1.cl.wdeg + 0.06)*pxcm*2*Math.tan(Math.PI/360)));
+  return ` The two 3×5 clusters (3.1.1) span ${E1.cl.wdeg.toFixed(1)}° = ${Math.round(E1.cl.wdeg*PX)} px but the canvas is ${W} px wide: enlarge the browser window to at least ${Math.round(E1.cl.wdeg*PX+28)} px (the canvas is capped at 1400 px), or set the viewing distance to about ${dmin} cm or more (this shrinks the stimulus in px, the angular sizes stay those of the display geometry at that distance).`;
+}
+function onScale(){
+  computePX(); updateDispUI(); saveDisp();
+  if (typeof E1 !== 'undefined') { E1.rand = genRandom(); buildClusters(); }
+}
+document.getElementById('cardW').oninput = ev => { pxcm = +ev.target.value/8.56; onScale(); };
+document.getElementById('pxcm').onchange = ev => { const v = +ev.target.value; if (v > 5) { pxcm = v; onScale(); } };
+document.getElementById('dist').onchange = ev => { const v = +ev.target.value; if (v > 10) { dist = v; onScale(); } };
+document.getElementById('dreset').onclick = () => { pxcm = 37.8; dist = PAPER_DIST; onScale(); };
+computePX();
+
+let clipNow = false;   // true while any dot of the current frame lies outside the canvas
 function dot(x, y) {              // x,y in degrees, y up, origin screen centre
+  const px = CX + x*PX, py = CY - y*PX;
+  if (px < 0 || px > W || py < 0 || py > H) clipNow = true;
   ctx.fillStyle = '#f2f2f2';
-  ctx.beginPath(); ctx.arc(CX + x*PX, CY - y*PX, Math.max(0.025*PX, 1.4), 0, 6.2832); ctx.fill();
+  ctx.beginPath(); ctx.arc(px, py, Math.max(0.025*PX, 1.2), 0, 6.2832); ctx.fill();
 }
 function cross(x, y, s) {
   s = (s || 0.25)*PX;
@@ -108,12 +166,14 @@ function sqPts(x, y, ang, phase, side) {
 }
 function squareDots(x, y, ang, phase) { for (const p of sqPts(x,y,ang,phase)) dot(p[0], p[1]); }
 
-// ---------------- frame-counted clock ----------------
+// ---------------- frame-counted clock (one tick per measured display frame) ----------------
 const S = { exp:'basic', soa:200 };
-const soaF = () => Math.max(1, Math.round(S.soa/FR));
+const nF = ms => Math.max(1, Math.round(ms/FR));
+const soaF = () => nF(S.soa);
 const newOsc = () => ({ph:0, cnt:0});
 function stepOsc(o){ if (o.cnt >= soaF()) { o.cnt = 0; o.ph ^= 1; } o.cnt++; }   // each phase lasts exactly soaF() frames
 const rnd = (a,b) => a + Math.random()*(b-a);
+const extX = () => W/2/PX - 0.6, extY = () => H/2/PX - 0.6;
 let status = '';
 function setStatus(s){ if (s !== status) { status = s; document.getElementById('msg').textContent = s; } }
 
@@ -129,61 +189,67 @@ EXPS.basic = {
 };
 
 // ---- Exp 1
-const E1 = { layout:'regular', rows:3, cols:5, pitch:1.5, rand:[], o:newOsc(), cl:null };
-function clusterDots(ang, n){   // dot positions of an n x n cluster rotated about its centre (both phases)
-  const a = rad(ang), P = E1.pitch, out = [];
-  for (let i=0;i<n;i++) for (let j=0;j<n;j++) {
-    const lx = (i-(n-1)/2)*P, ly = (j-(n-1)/2)*P;
+const E1 = { layout:'regular', rows:3, cols:5, px:2.5, py:2.5, rand:[], o:newOsc(), cl:null };
+function clusterDots(ang){   // dot positions of a 3 row x 5 column cluster (Fig 3a) rotated about its centre
+  const a = rad(ang), out = [];
+  for (let i=0;i<5;i++) for (let j=0;j<3;j++) {
+    const lx = (i-2)*E1.px, ly = (j-1)*E1.py;
     out.push([lx*Math.cos(a) - ly*Math.sin(a), lx*Math.sin(a) + ly*Math.cos(a)]);
   }
   return out;
 }
 function buildClusters(){      // centres chosen so that the nearest dots of the two clusters are 2 deg apart
-  const n = 3, sq = (ang) => { let mn=1e9, mx=-1e9;
-    for (const q of clusterDots(ang,n)) for (const d of [sqPts(q[0],q[1],ang,0)[0], sqPts(q[0],q[1],ang,0)[1], sqPts(q[0],q[1],ang,1)[0], sqPts(q[0],q[1],ang,1)[1]]) { mn=Math.min(mn,d[0]); mx=Math.max(mx,d[0]); }
+  const ext = ang => { let mn=1e9, mx=-1e9;
+    for (const q of clusterDots(ang)) for (const ph of [0,1]) for (const d of sqPts(q[0],q[1],ang,ph)) { mn=Math.min(mn,d[0]); mx=Math.max(mx,d[0]); }
     return [mn,mx]; };
-  const l = sq(0), r = sq(45);
-  E1.cl = { xl: -1 - l[1], xr: 1 - r[0], n };
+  const l = ext(0), r = ext(45);
+  let xl = -1 - l[1], xr = 1 - r[0], left = xl + l[0], right = xr + r[1];
+  const sx = -(left + right)/2;     // centre the bounding box of the pair on the canvas; the cross stays at the gap centre (x = sx)
+  let ym = 0;
+  for (const [ang, ox] of [[0, xl],[45, xr]]) for (const q of clusterDots(ang)) for (const ph of [0,1]) for (const d of sqPts(ox+q[0], q[1], ang, ph)) ym = Math.max(ym, Math.abs(d[1]));
+  E1.cl = { xl: xl+sx, xr: xr+sx, cx: sx, wdeg: right-left, hdeg: 2*ym };
+  computePX(); updateDispUI();
 }
 function genRandom() {
   const pts = []; let guard = 0;
-  while (pts.length < 15 && guard++ < 5000) {
-    const p = [rnd(-6.5,6.5), rnd(-3.9,3.9)];
-    if (pts.every(q => Math.hypot(q[0]-p[0], q[1]-p[1]) >= E1.pitch)) pts.push(p);
+  const ex = 4 - 0.5, ey = 3 - 0.5;   // region about 8 x 6 deg (Fig 3b), squares fully inside
+  while (pts.length < 10 && guard++ < 8000) {
+    const p = [rnd(-ex,ex), rnd(-ey,ey)];
+    if (pts.every(q => Math.hypot(q[0]-p[0], q[1]-p[1]) >= 1.5)) pts.push(p);
   }
   return pts;
 }
 EXPS.e1 = {
   label:'Exp 1: multiple squares',
-  instr:'Several identical squares (side 1°, 1.5° apart) run the same two-frame cycle at the same time; 3–4 frames per second.',
+  instr:'Several identical squares (side 1°; distance between squares 1.5°, see spacing option) run the same two-frame cycle at the same time; 3–4 frames per second.',
   ctl:[ {type:'range', label:'SOA (ms)', min:25, max:500, step:5, value:300, soa:true},
-        {type:'seg', label:'Layout', value:'regular', set:v=>{E1.layout=v;},
-          opts:[['regular','Regular array (Fig 3a)'],['random','Random positions (Fig 3b)'],['clusters','Two clusters, one rotated 45° (3.1.1)']]},
-        {type:'seg', label:'Square spacing', value:'c2c', set:v=>{E1.pitch = v==='c2c'?1.5:2.5; E1.rand=genRandom(); buildClusters();},
-          opts:[['c2c','1.5° centre-to-centre'],['e2e','1.5° edge-to-edge (2.5° pitch)']]},
+        {type:'seg', label:'Layout', value:'regular', set:v=>{E1.layout=v; computePX(); updateDispUI();},
+          opts:[['regular','Regular array (Fig 3a)'],['random','Random positions (Fig 3b)'],['clusters','Two 3×5 clusters, one rotated 45° (3.1.1)']]},
+        {type:'seg', label:'Square spacing', value:'fig', set:v=>{ if (v==='c2c'){E1.px=1.5;E1.py=1.5;} else if (v==='fig'){E1.px=1.9;E1.py=2.6;} else {E1.px=2.5;E1.py=2.5;} E1.rand=genRandom(); buildClusters();},
+          opts:[['fig','Pitch measured from Fig 3a (1.9° × 2.6°)'],['e2e','1.5° edge-to-edge (2.5° pitch)'],['c2c','1.5° centre-to-centre']]},
         {type:'range', label:'Rows (regular)', min:1, max:5, step:1, value:3, set:v=>{E1.rows=v;}},
         {type:'range', label:'Columns (regular)', min:1, max:7, step:1, value:5, set:v=>{E1.cols=v;}},
         {type:'button', label:'New random layout', fn:()=>{ E1.rand = genRandom(); }} ],
-  init(){ E1.pitch=1.5; E1.rand = genRandom(); buildClusters(); E1.o=newOsc(); },
+  init(){ E1.px=1.9; E1.py=2.6; E1.rand = genRandom(); buildClusters(); E1.o=newOsc(); },
   update(){ stepOsc(E1.o); },
   draw(){
-    const ph = E1.o.ph, P = E1.pitch;
+    const ph = E1.o.ph;
     if (E1.layout === 'regular') {
       for (let i=0;i<E1.cols;i++) for (let j=0;j<E1.rows;j++)
-        squareDots((i-(E1.cols-1)/2)*P, (j-(E1.rows-1)/2)*P, 0, ph);
+        squareDots((i-(E1.cols-1)/2)*E1.px, (j-(E1.rows-1)/2)*E1.py, 0, ph);
     } else if (E1.layout === 'random') {
       for (const p of E1.rand) squareDots(p[0], p[1], 0, ph);
     } else {
       const cl = E1.cl;
       for (const [ang, ox] of [[0, cl.xl],[45, cl.xr]])
-        for (const q of clusterDots(ang, cl.n)) squareDots(ox+q[0], q[1], ang, ph);
-      cross(0, 0, 0.25);
+        for (const q of clusterDots(ang)) squareDots(ox+q[0], q[1], ang, ph);
+      cross(cl.cx, 0, 0.25);
     }
   }
 };
 
 // ---- Exp 2
-const E2 = { stage:'ready', n:0, offF:0, minOff:1, maxOff:60, o:newOsc() };
+const E2 = { stage:'ready', n:0, offF:0, minOff:1, maxOff:60, r1:false, log:[], o:newOsc() };
 EXPS.e2 = {
   label:'Exp 2: persistence (30 s on / off / on)',
   instr:'Fixate the cross. Report whether the dots oscillate vertically or horizontally. After 30 s the display goes off for a random interval and then reappears; report the axis again.',
@@ -191,25 +257,23 @@ EXPS.e2 = {
         {type:'range', label:'Off interval min (s)', min:1, max:120, step:1, value:1, set:v=>{E2.minOff=v;}},
         {type:'range', label:'Off interval max (s)', min:1, max:120, step:1, value:60, set:v=>{E2.maxOff=v;}},
         {type:'button', label:'Show familiarisation drawings', fn:()=>{ E2.stage='learn'; }},
-        {type:'button', label:'Start trial', fn:()=>{ E2.stage='view'; E2.n=0; E2.o=newOsc(); }} ],
+        {type:'button', label:'Start trial', fn:()=>{ E2.stage='view'; E2.n=0; E2.r1=false; E2.o=newOsc(); }} ],
   resp:[['v','Vertical (V)'],['h','Horizontal (H)']],
-  init(){ E2.stage='ready'; E2.minOff=1; E2.maxOff=60; E2.o=newOsc(); },
-  onResp(k){
-    if (E2.stage==='view') setStatus('Report received (initial report). Keep fixating.');
-    else if (E2.stage==='on2') { setStatus('Report received (after the gap). Trial finished — nothing is stored.'); E2.stage='ready'; }
-    else if (E2.stage==='ready' || E2.stage==='learn') setStatus('Press "Start trial" first.');
+  init(){ E2.stage='ready'; E2.minOff=1; E2.maxOff=60; E2.r1=false; E2.o=newOsc(); },
+  onResp(k){       // responses are held internally only
+    if (E2.stage==='view' && !E2.r1) { E2.r1=true; E2.log.push({t:1,k}); }
+    else if (E2.stage==='on2') { E2.log.push({t:2,k}); E2.stage='done'; }
   },
   update(){
     if (E2.stage==='view') {
-      if (E2.n >= 1800) { E2.stage='off'; E2.n=0; E2.offF = Math.round(rnd(Math.min(E2.minOff,E2.maxOff), Math.max(E2.minOff,E2.maxOff))*60); }
+      if (E2.n >= nF(30000)) { E2.stage='off'; E2.n=0; E2.offF = nF(rnd(Math.min(E2.minOff,E2.maxOff), Math.max(E2.minOff,E2.maxOff))*1000); }
       else { stepOsc(E2.o); E2.n++; }
     } else if (E2.stage==='off') {
       E2.n++; if (E2.n >= E2.offF) { E2.stage='on2'; E2.o=newOsc(); }
     } else if (E2.stage==='on2') stepOsc(E2.o);
-    const st = {view:'Display on (30 s): report the axis (V / H).', off:'Display off — keep fixating the cross. The axis may or may not have changed.',
-                on2:'Display back on: report the axis again (V / H).', learn:'Familiarisation drawings.', ready:'Ready.'}[E2.stage];
-    if (!(status.startsWith('Report received') && (E2.stage==='view' || E2.stage==='ready'))) setStatus(st);
-    else if (E2.stage==='off' || E2.stage==='on2') setStatus(st);
+    setStatus({view: E2.r1 ? 'Display on: report noted. Keep fixating the cross.' : 'Display on: report the axis (V / H).',
+      off:'Display off. Keep fixating the cross. The axis may or may not have changed.',
+      on2:'Display back on: report the axis again (V / H).', done:'Trial finished. Press "Start trial" for another.', learn:'Familiarisation drawings.', ready:'Press "Start trial".'}[E2.stage]);
   },
   draw(){
     if (E2.stage==='learn') { drawLearn(); return; }
@@ -235,7 +299,8 @@ function drawLearn() {         // static drawings labelled percept 1 / percept 2
 // ---- Exp 3
 const E3 = { x:0, y:0, cyc:3, n:0, on:true, gap:500, o:newOsc() };
 function e3show(){
-  do { E3.x=rnd(-6.5,6.5); E3.y=rnd(-3.9,3.9); } while (Math.hypot(E3.x,E3.y) < 1.0);
+  const ex = extX(), ey = extY();
+  do { E3.x=rnd(-ex,ex); E3.y=rnd(-ey,ey); } while (Math.hypot(E3.x,E3.y) < 1.0);
   E3.cyc = Math.random()<0.5?3:4; E3.on=true; E3.n=1; E3.o={ph:0,cnt:1};
 }
 EXPS.e3 = {
@@ -248,37 +313,42 @@ EXPS.e3 = {
     if (E3.on) {
       if (E3.n >= E3.cyc*2*soaF()) { E3.on=false; E3.n=0; }
       else { stepOsc(E3.o); E3.n++; }
-    } else { E3.n++; if (E3.n >= Math.round(E3.gap/FR)) e3show(); }
+    } else { E3.n++; if (E3.n >= nF(E3.gap)) e3show(); }
   },
   draw(){ cross(0,0,0.25); if (E3.on) squareDots(E3.x, E3.y, 0, E3.o.ph); }
 };
 
-// ---- Exp 4 (Fig 5): 3 columns x 5 rows of positions, square in the middle one, single dot pairs elsewhere
+// ---- Exp 4 (Fig 5, geometry measured from the figure)
+// Rows at 1 deg pitch (y = 1.5 ... -2.5); the square occupies rows 2-3 of the middle column (centre y = 0).
+// Left/right columns: pairs in all 5 rows; middle column: pairs in rows 1, 4, 5 only. Pair separation 1 deg.
 const E4 = { o:newOsc() };
 EXPS.e4 = {
   label:'Exp 4: unambiguous surround',
-  instr:'A single ambiguous square is in the centre; the surrounding dots are pairs, each flashing at one end then the other.',
+  instr:'A single ambiguous square is in the middle column; the surrounding dots are pairs, each flashing at one end then the other.',
   ctl:[ {type:'range', label:'SOA (ms)', min:25, max:500, step:5, value:200, soa:true} ],
   init(){ E4.o=newOsc(); }, update(){ stepOsc(E4.o); },
   draw(){
-    const ph = E4.o.ph, P = 2.0;
-    for (let i=-1;i<=1;i++) for (let j=-2;j<=2;j++) {
-      if (i===0 && j===0) { squareDots(0,0,0,ph); continue; }
-      dot(i*P + (ph===0?-0.5:0.5), j*P);
+    const ph = E4.o.ph;
+    squareDots(0, 0, 0, ph);
+    for (const xc of [-1.5, 0, 2.05]) for (let k=0;k<5;k++) {
+      if (xc === 0 && (k===1 || k===2)) continue;      // square's rows
+      // pair left dot is shown with the square's bottom-left + top-right dots (phase 1), per the Fig 5 numbering
+      dot(xc + (ph===1 ? -0.5 : 0.5), 1.5 - k);
     }
   }
 };
 
 // ---- Exp 5a (Fig 6)
 const E5 = { stepDeg:30, cyc:3, k:0, n:0, o:newOsc() };
+const e5reset = () => { E5.k=0; E5.n=0; E5.o=newOsc(); };
 EXPS.e5a = {
   label:'Exp 5a: cogwheel rotation',
   instr:'Fixate the cross in the middle of the square. After 3 cycles the square is replaced by a slightly rotated copy; this repeats in steps until 90° is reached.',
   ctl:[ {type:'range', label:'SOA (ms)', min:25, max:500, step:5, value:200, soa:true},
-        {type:'seg', label:'Rotation step', value:'30', set:v=>{E5.stepDeg=+v;}, opts:[['30','30° (3 steps)'],['22.5','22.5° (4 steps)']]},
+        {type:'seg', label:'Rotation step', value:'30', set:v=>{E5.stepDeg=+v; e5reset();}, opts:[['30','30° (3 steps)'],['22.5','22.5° (4 steps)']]},
         {type:'range', label:'Cycles per step', min:1, max:6, step:1, value:3, set:v=>{E5.cyc=v;}},
-        {type:'button', label:'Restart sequence', fn:()=>{ E5.k=0; E5.n=0; E5.o=newOsc(); }} ],
-  init(){ E5.stepDeg=30; E5.cyc=3; E5.k=0; E5.n=0; E5.o=newOsc(); },
+        {type:'button', label:'Restart sequence', fn:e5reset} ],
+  init(){ E5.stepDeg=30; E5.cyc=3; e5reset(); },
   update(){
     const steps = Math.round(90/E5.stepDeg);
     if (E5.k < steps && E5.n >= E5.cyc*2*soaF()) { E5.k++; E5.n=0; E5.o=newOsc(); }
@@ -299,7 +369,7 @@ EXPS.e5b = {
   init(){ E5b.u=0; E5b.cyc=3; E5b.soaAB=300; },
   update(){ E5b.u++; },
   draw(){
-    const sf = soaF(), n = E5b.cyc*2, abF = Math.round(E5b.soaAB/FR);
+    const sf = soaF(), n = E5b.cyc*2, abF = nF(E5b.soaAB);
     const tB = (n-1)*sf + abF;                // onset of the first frame of B (onset-to-onset from last A onset)
     const isA = E5b.u < tB;
     const e = isA ? E5b.u : E5b.u - tB;
@@ -317,16 +387,18 @@ EXPS.e5b = {
 const E6 = { ramp:false, rf:0, durS:60, from:500, to:100, o:newOsc() };
 EXPS.e6 = {
   label:'Exp 6: SOA lowered gradually',
-  instr:'Same four-dot display. Starting at a long SOA, try to see continuous clockwise or anticlockwise motion while the SOA is gradually lowered.',
+  instr:'Same four-dot display. Starting at a long SOA, try to see continuous clockwise or anticlockwise motion while the SOA is gradually lowered. (Reports were verbal in the paper; no response control here.)',
   ctl:[ {type:'range', label:'SOA (ms)', min:25, max:500, step:5, value:500, soa:true},
+        {type:'range', label:'Ramp start SOA (ms) [assumed]', min:350, max:500, step:10, value:500, set:v=>{E6.from=v;}},
+        {type:'range', label:'Ramp end SOA (ms) [assumed]', min:25, max:300, step:5, value:100, set:v=>{E6.to=v;}},
         {type:'range', label:'Ramp duration (s) [assumed]', min:10, max:180, step:5, value:60, set:v=>{E6.durS=v;}},
-        {type:'button', label:'Start lowering SOA (500 → 100 ms)', fn:()=>{ E6.ramp=true; E6.rf=0; S.soa=500; syncSoa(); }},
+        {type:'button', label:'Start lowering SOA', fn:()=>{ E6.ramp=true; E6.rf=0; S.soa=E6.from; syncSoa(); }},
         {type:'button', label:'Stop ramp', fn:()=>{ E6.ramp=false; }} ],
   init(){ E6.ramp=false; E6.o=newOsc(); },
   update(){
     if (E6.ramp) {
       E6.rf++;
-      const f = Math.min(1, E6.rf/(E6.durS*60));
+      const f = Math.min(1, E6.rf/nF(E6.durS*1000));
       S.soa = E6.from + (E6.to-E6.from)*f; syncSoa();
       if (f>=1) E6.ramp=false;
     }
@@ -352,10 +424,9 @@ function build() {
   S.soa = 200; status=''; document.getElementById('msg').textContent='';
   E.init && E.init();
   const ctl = document.getElementById('ctl'); ctl.innerHTML='';
-  const defs = [{type:'range', label:'Display scale (px per degree)', min:30, max:110, step:1, value:PX, scale:true}].concat(E.ctl);
-  for (const d of defs) {
+  for (const d of E.ctl) {
     const w = document.createElement('div'); w.className='ctrl';
-    const id = d.soa ? 'soa' : (d.scale ? 'scale' : '');
+    const id = d.soa ? 'soa' : '';
     if (d.type==='range') {
       if (d.soa) S.soa = d.value;
       else if (d.set) d.set(d.value);
@@ -364,7 +435,7 @@ function build() {
       const lab = w.querySelector('.v');
       w.querySelector('input').oninput = ev => {
         const v = +ev.target.value; lab.textContent = v;
-        if (d.soa) S.soa = v; else if (d.scale) PX = v; else d.set(v);
+        if (d.soa) S.soa = v; else d.set(v);
       };
     } else if (d.type==='seg') {
       d.set(d.value);
@@ -390,20 +461,53 @@ document.addEventListener('keydown', ev => {
   const k = ev.key.toLowerCase(); if (k==='v' || k==='h') E.onResp(k);
 });
 
-let acc = 0, lastTs = 0;
+function realText(){
+  const hz = (1000/FR).toFixed(1);
+  const items = [['SOA', S.soa]];
+  if (S.exp==='e2') items.push(['display-on period', 30000]);
+  if (S.exp==='e3') items.push(['off time', E3.gap]);
+  if (S.exp==='e5b') items.push(['A→B onset interval', E5b.soaAB]);
+  const warn = [];
+  const parts = items.map(([n,ms]) => { const f = nF(ms), r = f*FR;
+    if (Math.abs(ms/FR - Math.round(ms/FR)) > 0.05 || ms/FR < 1) warn.push(`${n} ${Math.round(ms)} ms is not a whole number of frames at ${hz} Hz`);
+    return `${n} ${Math.round(ms)} ms → ${f} frame${f>1?'s':''} = ${r.toFixed(1)} ms`; });
+  return `Display: measured ${hz} Hz (frame ${FR.toFixed(2)} ms)${refreshOK?'':' [measurement unreliable, 60 Hz assumed]'}. ` + parts.join('; ') + '.'
+    + (warn.length ? ' Warning: ' + warn.join('; ') + ' (rounded).' : '')
+    + (clipNow ? ' Warning: part of the display lies outside the canvas at this setup (see Display setup).' + fitNote() : '');
+}
+let lastTs = null;
+document.addEventListener('visibilitychange', () => { lastTs = null; });
 function frame(ts) {
-  acc += lastTs ? Math.min(ts-lastTs, 100) : FR; lastTs = ts;
   const E = EXPS[S.exp];
-  while (acc >= FR - 0.5) { acc -= FR; E.update(); }     // one logic tick per 60 Hz display frame
+  // advance logic by the number of display frames elapsed (round(dt/FR)); paused while the tab is hidden
+  let ticks = 1;
+  if (ts !== undefined) {
+    if (lastTs === null || document.hidden) ticks = document.hidden ? 0 : 1;
+    else ticks = Math.min(Math.max(Math.round((ts - lastTs)/FR), 0), 6);
+    lastTs = ts;
+  }
+  for (let i=0;i<ticks;i++) E.update();
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  clipNow = false;
   E.draw();
-  const sf = soaF();
-  document.getElementById('real').textContent = `SOA ${Math.round(S.soa)} ms is shown as ${sf} frame${sf>1?'s':''} = ${(sf*FR).toFixed(1)} ms per phase at 60 Hz` + (S.exp==='e5b' ? `; A→B onset interval ${Math.round(E5b.soaAB/FR)} frames = ${(Math.round(E5b.soaAB/FR)*FR).toFixed(1)} ms` : '') + '.';
+  document.getElementById('real').textContent = realText();
   requestAnimationFrame(frame);
 }
+function measure(cb){
+  const t = [];
+  function f(ts){ t.push(ts); if (t.length < 62) requestAnimationFrame(f); else {
+    const d = []; for (let i=2;i<t.length;i++) d.push(t[i]-t[i-1]);
+    d.sort((a,b)=>a-b); const m = d[d.length>>1];
+    if (m > 3 && m < 50) { FR = m; refreshOK = true; }
+    cb(); } }
+  document.getElementById('real').textContent = 'Measuring display refresh rate...';
+  requestAnimationFrame(f);
+}
+updateDispUI();
 build();
-requestAnimationFrame(frame);
+measure(() => { E1.rand = genRandom(); lastTs = null; requestAnimationFrame(frame); });
 </script>
+
 </body>
 </html>

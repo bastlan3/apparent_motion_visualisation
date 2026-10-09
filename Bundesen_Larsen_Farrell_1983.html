@@ -12,8 +12,8 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
-  #wrap { max-width:100%; overflow-x:auto; }
-  canvas { display:block; border-radius:3px; }
+  #wrap { width:760px; max-width:100%; }
+  canvas { display:block; border-radius:3px; width:100%; height:520px; }
   input[type=number] { width:60px; background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; border-radius:4px; padding:3px 5px; font-size:12px; }
   .participant { margin-top:12px; width:720px; max-width:96vw; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
@@ -35,6 +35,12 @@
   .meta table { border-collapse:collapse; width:100%; margin:8px 0; }
   .meta td, .meta th { border-top:1px solid #222228; padding:3px 6px; text-align:left; vertical-align:top; }
   .meta th { color:#888; font-weight:600; }
+  body.focus .sub,body.focus .panel,body.focus .meta,body.focus .setup,body.focus .back,body.focus h1,body.focus .participant,body.focus .disp{display:none}
+  body.focus{background:#000}
+  .setup { margin-top:14px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:10px; font-size:12px; color:#9a9a9a; }
+  #bar { height:14px; background:#6b7bd6; border-radius:2px; margin:6px 0; width:323px; }
+  .disp { font-size:11px; color:#8a8a70; margin-top:6px; line-height:1.5; }
+  .warn { color:#d09a4a; }
   .meta .as { color:#b08a4a; }
 </style>
 </head>
@@ -44,7 +50,7 @@
   <div class="sub">Two views of the same character, differing in size and in rotation in the picture plane, alternate continuously with no blank
     interval. The observer speeds up the alternation until the impression of one shape-preserving moving object breaks down, then slows it again until it returns.</div>
 
-  <div id="wrap"><canvas id="c" width="640" height="480"></canvas></div>
+  <div id="wrap"><canvas id="c"></canvas></div>
 
   <div class="participant">
     <div class="instr">
@@ -57,12 +63,23 @@
       <button id="bL">◀ left key: slower (+1/10)</button>
       <button id="bC">centre key: register limit</button>
       <button id="bR">right key: faster (−1/11) ▶</button>
+    </div>
+    <div class="prow">
+      <button id="bSess">Start session (25 practice + 270 trials)</button>
       <button id="bNew">Restart this pair (SOA = 1000 ms)</button>
       <button id="bRand">Next pair from the design (random)</button>
+      <button id="bFocus">Hide controls (dark surround)</button>
     </div>
-    <label class="chk"><input type="checkbox" id="showSoa"> experimenter view: show current SOA (the observer was not shown it)</label>
-    <div class="readout" style="font-size:11px;color:#777">Display calibration: <input type="number" id="pxcm" value="50" min="10" max="60" step="1"> px per cm (canvas is 640 x 480; the largest format, 7.9 cm, must fit: max about 60). Viewing distance in the paper: 60 cm.</div>
-    <div class="readout" id="soaOut" style="display:none">SOA <b id="soaVal">1000</b></div>
+    <div class="disp" id="disp">display: measuring refresh rate...</div>
+  </div>
+
+  <div class="setup">
+    <b>Display setup.</b> Hold a credit card (8.56 cm wide) to the screen and resize the bar until it matches the card's width:
+    <div id="bar"></div>
+    <input type="range" id="barRange" min="150" max="900" step="1" value="323" style="width:100%">
+    <div style="margin-top:6px">Viewing distance <input type="number" id="dist" value="60" min="20" max="200" step="1"> cm (paper: 60 cm)
+      &nbsp; Screen: <b id="ppcmOut">37.8</b> px/cm, <b id="ppdOut"></b> px/deg. Largest format: <b id="angOut"></b>.
+      <span id="fitWarn" class="warn"></span></div>
   </div>
 
   <div class="panel">
@@ -80,9 +97,11 @@
         <div class="seg" id="fmt"></div></div>
       <div class="ctrl">Start orientation u (clockwise)
         <div class="seg" id="uu"></div></div>
+      <div class="ctrl">First view shown (assumption)
+        <div class="seg" id="ord"><button data-v="0" class="on">view at u first</button><button data-v="1">view at u+v first</button></div></div>
     </div>
     <div class="readout">Views: <b id="viewOut"></b></div>
-    <div class="readout" style="font-size:11px;color:#666">The random button draws u, v, s and format combination from the design of the paper for the chosen character/version (the paper used 270 pairs per observer in random order, three replications per cell, in 4-6 sessions after about 25 practice trials; this page does not run the full sequence). Pairs with v = 0° and s = 1 were not used (identical views).</div>
+    <div class="readout" style="font-size:11px;color:#666">Session: builds the paper's 270-pair list for the chosen character/version (v = 0/60/120/180°, s = 1/2/4/8, u = 0…300°, three replications per cell, v = 0° never with s = 1), presented in random order after 25 practice pairs (practice pairs drawn at random from the same design: assumption). The character and version are fixed during a session, as for each observer in the paper. Responses (SOA₁, SOA₂) are kept in memory only and never displayed. The random button draws one pair uniformly from the design.</div>
   </div>
 
   <div class="meta">
@@ -101,33 +120,159 @@
     </table>
     <b class="as">Assumptions / not specified in the paper:</b>
     <ul style="margin:4px 0 0 18px">
-    <li>Typeface and stroke weight: the paper used a point/vector character drawn on a CRT; here the glyph outline of a sans-serif font is drawn as a thin line (about 2 px).</li>
-    <li>Ink extent: each glyph is stretched non-uniformly so its ink bounding box (in its own upright frame, height × width) equals the format size: largest 7.9 × 5.3 cm (p. 553), smallest 1 × 0.67 cm (p. 553), middle format 2 × 1.3 cm (assumed from the 1:2:8 ratio, p. 552).</li>
-    <li>Which view comes first: the first-orientation (u) view is shown first, then the (u + v) view; the paper does not say.</li>
-    <li>Timing: alternation is counted in display frames and assumes a 60 Hz display (16.7 ms/frame). The SOA is kept as a continuous value (start 1000 ms, × 10/11 per right tap, × 1.1 per left tap) and realised as round(SOA / 16.7 ms) frames, minimum 1 frame (the paper's hardware had no such minimum). The realised duration is shown in the experimenter readout. Dropped frames are not detected. The 40 Hz raster intensification and P-31 persistence are not simulated.</li>
+    <li>Typeface and stroke weight: not given. Characters are drawn here as single-stroke polylines (this page's own simple stroke font for 3, 4, 7, J, P, R) with a constant 2 px line, stretched to the format box; line weight does not change with size or direction.</li>
+    <li>Extent: each character's stroke box (in its own upright frame, height × width) equals the format size: largest 7.9 × 5.3 cm (p. 553), smallest 1 × 0.67 cm (p. 553), middle format 2 × 1.3 cm (assumed from the 1:2:8 ratio, p. 552).</li>
+    <li>Size assignment in unequal-size pairs: the paper (p. 552-553) does not say which view carries the larger size. The page always puts the smaller format at u and the larger at u + v (fmt [0,1] for s = 2, [1,2] for s = 4, [0,2] for s = 8); a per-trial random assignment would be an alternative.</li>
+    <li>Which view comes first: the u view is shown first by default, then the (u + v) view; the paper does not say (a selector allows the other order).</li>
+    <li>Timing: the display refresh period is measured at load (median of about 60 rAF intervals); every duration is a whole number of frames at that rate and alternation is scheduled by counting frames; realised durations are shown in the display line, with a warning when 1000 ms is not a whole number of frames. The SOA is kept as a continuous value (start 1000 ms, × 10/11 per right tap, × 1.1 per left tap) and realised as round(SOA / frame) frames, minimum 1 frame (the paper's hardware had no such minimum). A key tap changes the SOA from the next switch on. Dropped frames are not detected. The 40 Hz raster intensification and P-31 persistence are not simulated.</li>
     <li>Colour and luminance: green on near-black as a proxy for the P-31 phosphor; not calibrated to 0.6 cd·µs·cm⁻¹ or 0.5 cd/m².</li>
-    <li>Scale: 1 cm = the px/cm setting at the canvas's nominal size (no CSS shrinking); visual angle is correct only if the screen is calibrated and viewed from 60 cm.</li>
-    <li>Keys: arrows and Space are this page's choice; the right key in phase 2 and the left key in phase 1 do nothing (the paper does not say). When the trial ends the screen goes blank; what happened after termination is not specified.</li>
-    <li>Each observer in the paper saw one pattern only; here character and version are free to change.</li>
+    <li>Scale: pixels per cm come from the credit-card calibration above (default 37.8 px/cm, assumption) and the viewing distance (default 60 cm, the paper's value); stimuli are drawn in degrees (the paper's cm sizes at 60 cm converted to visual angle). The calibration is stored in this browser under the key am_display.</li>
+    <li>Keys: arrows and Space are this page's choice; the right key in phase 2 and the left key in phase 1 do nothing (the paper does not say). When a trial ends the screen goes blank; in session mode the next pair starts after a blank interval of 1000 ms (assumed; the paper gives no inter-trial interval). Free-pair mode ends on a blank screen.</li>
+    <li>Each observer in the paper saw one pattern only; here character and version are free to change outside a session. Session count/breaks (4–6 sessions) are not reproduced; practice pairs are an assumption.</li>
     </ul>
   </div>
 
 <script>
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-const W = cv.width, H = cv.height;
-let PXCM = 50;
+let CW=760, CH=520, DPR=1;
+let PXCM = 37.8, DIST = 60, FRAME_MS = 1000/60, measured = false;
 const CHARS = ['3','4','7','J','P','R'];
 const FAC = [1,2,8];
 const BASE_H = 7.9/8, BASE_W = 5.3/8;   // cm, smallest format (height x width)
-const FRAME_MS = 1000/60;
-const st = { chr:'R', rev:0, v:120, s:2, fmt:null, u:0, soa:1000, stage:1, done:false, fcount:0 };
+const ITI_MS = 1000;
+const st = { chr:'R', rev:0, v:120, s:2, fmt:null, u:0, ord:0, soa:1000, stage:1, done:false,
+             view:0, left:0, iti:0, sess:null, running:false };
+const LOG = [];   // internal responses only, never displayed
 
+/* single-stroke characters, unit box: x right 0..1, y down 0..1 */
+function arc(cx,cy,rx,ry,a0,a1,n){ const o=[]; for(let i=0;i<=n;i++){ const a=(a0+(a1-a0)*i/n)*Math.PI/180; o.push([cx+rx*Math.cos(a), cy+ry*Math.sin(a)]); } return o; }
+const STROKES = {
+  '3':[ arc(.42,.25,.38,.25,200,450,16), arc(.45,.75,.42,.25,270,520,16) ],
+  '4':[ [[.72,1],[.72,0],[0,.7],[1,.7]] ],
+  '7':[ [[0,0],[1,0],[.35,1]] ],
+  'J':[ [[1,0]].concat(arc(.5,.7,.5,.3,0,180,12)).concat([[0,.58]]) ],
+  'P':[ [[0,1],[0,0],[.55,0]].concat(arc(.55,.26,.45,.26,270,450,12)).concat([[0,.52]]) ],
+  'R':[ [[0,1],[0,0],[.55,0]].concat(arc(.55,.26,.45,.26,270,450,12)).concat([[0,.52]]), [[.45,.52],[1,1]] ]
+};
+
+/* ---------- display setup ---------- */
+function ppd(){ return PXCM*2*DIST*Math.tan(Math.PI/360); }
+function cm2px(cm){ return 2*Math.atan(cm/(2*60))*180/Math.PI*ppd(); }  // paper size at 60 cm -> degrees -> px
+const PXK=['pxcm','pxPerCm','ppcm','ppc','pxcm_','pxPerCM'], DSK=['dist','distCm','viewDistCm','viewingCm','vd','viewDist','distance'];
+function saveDisp(){ try{ let o={}; try{ o=JSON.parse(localStorage.getItem('am_display')||'{}')||{}; }catch(e){} if(typeof o!=='object') o={};
+  PXK.forEach(k=>{ if(k in o) o[k]=PXCM; }); DSK.forEach(k=>{ if(k in o) o[k]=DIST; });
+  o.pxcm=PXCM; o.pxPerCm=PXCM; o.dist=DIST; o.distCm=DIST;
+  localStorage.setItem('am_display', JSON.stringify(o)); }catch(e){} }
+function loadDisp(){ try{ const d=JSON.parse(localStorage.getItem('am_display')||'null'); if(!d) return;
+  let p=null, q=null; for(const k of PXK){ if(+d[k]>5&&+d[k]<200){ p=+d[k]; break; } } for(const k of DSK){ if(+d[k]>=20&&+d[k]<=200){ q=+d[k]; break; } }
+  if(p) PXCM=p; if(q) DIST=q; }catch(e){} }
+function updSetup(){
+  document.getElementById('bar').style.width=(PXCM*8.56)+'px';
+  document.getElementById('barRange').value=PXCM*8.56;
+  document.getElementById('dist').value=DIST;
+  document.getElementById('ppcmOut').textContent=PXCM.toFixed(1);
+  document.getElementById('ppdOut').textContent=ppd().toFixed(1);
+  const hdeg=2*Math.atan(7.9/120)*180/Math.PI, wdeg=2*Math.atan(5.3/120)*180/Math.PI;
+  document.getElementById('angOut').textContent='7.9 × 5.3 cm at 60 cm = '+hdeg.toFixed(1)+'° × '+wdeg.toFixed(1)+'°';
+  const diag=Math.hypot(cm2px(7.9),cm2px(5.3));
+  document.getElementById('fitWarn').textContent = diag>Math.min(CH,CW)-6 ? ' Warning: the rotated largest format (' + diag.toFixed(0)+' px diagonal) does not fit in the canvas.' : '';
+  updDisp();
+}
+function resizeCanvas(){
+  DPR=window.devicePixelRatio||1;
+  const r=cv.getBoundingClientRect(); CW=Math.max(200,r.width); CH=r.height||520;
+  cv.width=Math.round(CW*DPR); cv.height=Math.round(CH*DPR);
+  updSetup();
+}
+
+/* ---------- frame timing ---------- */
+function nFrames(){ return Math.max(1, Math.round(st.soa/FRAME_MS)); }
+function updDisp(){
+  const el=document.getElementById('disp'); if(!el) return;
+  if(!measured){ el.textContent='display: measuring refresh rate (about 60 frames)...'; return; }
+  const n0=Math.round(1000/FRAME_MS), real0=n0*FRAME_MS;
+  let t='display: measured '+(1000/FRAME_MS).toFixed(1)+' Hz ('+FRAME_MS.toFixed(2)+' ms/frame). Initial SOA 1000 ms = '+n0+' frames = '+real0.toFixed(1)+' ms. SOA steps are rounded to whole frames; minimum 1 frame = '+FRAME_MS.toFixed(1)+' ms. Intertrial blank '+Math.round(ITI_MS/FRAME_MS)+' frames = '+(Math.round(ITI_MS/FRAME_MS)*FRAME_MS).toFixed(1)+' ms.';
+  if(Math.abs(1000/FRAME_MS-n0)>0.05) t+=' <span class="warn">Warning: 1000 ms is not a whole number of frames at this refresh rate.</span>';
+  if(Math.abs(FRAME_MS-1000/60)>1.5) t+=' <span class="warn">Refresh differs from the 60 Hz this page was designed for; durations are still counted in real frames.</span>';
+  el.innerHTML=t;
+}
+function measure(cb){
+  const ts=[]; let last=null;
+  function f(t){ if(last!==null) ts.push(t-last); last=t;
+    if(ts.length<60) requestAnimationFrame(f);
+    else { ts.sort((a,b)=>a-b); FRAME_MS=ts[Math.floor(ts.length/2)]; measured=true; updDisp(); cb(); } }
+  requestAnimationFrame(f);
+}
+
+/* ---------- stimulus ---------- */
+function drawView(k){
+  const kk = k ^ st.ord;
+  const f = FAC[st.fmt[kk]];
+  const ang = (st.u + (kk?st.v:0))*Math.PI/180;
+  const h = cm2px(BASE_H*f), w = cm2px(BASE_W*f);   // paper sizes in cm at 60 cm
+  const ca=Math.cos(ang), sa=Math.sin(ang);
+  ctx.strokeStyle='#b8ffc4'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.lineCap='round';
+  STROKES[st.chr].forEach(pl=>{
+    ctx.beginPath();
+    pl.forEach((p,i)=>{
+      let x=(p[0]-.5)*w, y=(p[1]-.5)*h;
+      if(st.rev) x=-x;
+      const X=CW/2+x*ca-y*sa, Y=CH/2+x*sa+y*ca;   // clockwise rotation (y down)
+      i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+    });
+    ctx.stroke();
+  });
+}
+function frame(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.fillStyle='#050805'; ctx.fillRect(0,0,CW,CH);
+  if (st.iti>0){ st.iti--; if(st.iti===0) nextTrial(); }
+  else if (!st.done && st.running){
+    if (st.left<=0){ st.view^=1; st.left=nFrames(); }
+    st.left--;
+    drawView(st.view);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- design / session ---------- */
 function fmtOptions(s){
   if (s===1) return [[0,0],[1,1],[2,2]];
   if (s===2) return [[0,1]];
   if (s===4) return [[1,2]];
   return [[0,2]];
 }
+function buildDesign(){
+  const L=[];
+  for(const u of [0,60,120,180,240,300]) for(const v of [0,60,120,180]) for(const s of [1,2,4,8]){
+    if(v===0&&s===1) continue;
+    if(s===1) fmtOptions(1).forEach(fm=>L.push({u,v,s,fmt:fm}));
+    else for(let r=0;r<3;r++) L.push({u,v,s,fmt:fmtOptions(s)[0]});
+  }
+  return L;
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function startSession(){
+  const D=buildDesign();   // 270 pairs
+  const prac=shuffle(buildDesign()).slice(0,25);
+  st.sess={ list:prac.concat(shuffle(D)), i:-1, np:25, total:295 };
+  nextTrial();
+}
+function nextTrial(){
+  const S=st.sess; if(!S) return;
+  S.i++;
+  if(S.i>=S.list.length){ st.sess=null; st.running=false; st.done=true; setState('Session finished.'); return; }
+  const t=S.list[S.i]; st.u=t.u; st.v=t.v; st.s=t.s; st.fmt=t.fmt;
+  syncControls(); beginTrial();
+}
+function beginTrial(){ st.soa=1000; st.stage=1; st.done=false; st.running=true; st.view=1; st.left=0; st.iti=0; setState(); }
+function syncControls(){
+  document.querySelectorAll('#vv button').forEach(b=>b.classList.toggle('on',+b.dataset.v===st.v));
+  document.querySelectorAll('#ss button').forEach(b=>b.classList.toggle('on',+b.dataset.v===st.s));
+  renderSegs();
+}
+
+/* ---------- controls ---------- */
 function mkSeg(id, items, key, cb){
   const el=document.getElementById(id); el.innerHTML='';
   items.forEach(([val,label])=>{
@@ -138,15 +283,15 @@ function mkSeg(id, items, key, cb){
   });
 }
 function bindStatic(id,key){
-  document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{ st[key]=+b.dataset.v; b.blur(); refresh(); });
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{ st[key]=+b.dataset.v; b.blur(); st.sess=null; refresh(); });
 }
-function refresh(){
+function renderSegs(){
   if (st.v===0 && st.s===1) st.s=2;
   const opts=fmtOptions(st.s);
   if (!st.fmt || !opts.some(o=>o.join()===st.fmt.join())) st.fmt=opts[0];
-  mkSeg('chr', CHARS.map(c=>[c,c]), 'chr', refresh);
+  mkSeg('chr', CHARS.map(c=>[c,c]), 'chr', ()=>{ st.sess=null; refresh(); });
   document.querySelectorAll('#rev button').forEach(b=>b.classList.toggle('on',+b.dataset.v===st.rev));
-  document.querySelectorAll('#vv button').forEach(b=>b.classList.toggle('on',+b.dataset.v===st.v));
+  document.querySelectorAll('#ord button').forEach(b=>b.classList.toggle('on',+b.dataset.v===st.ord));
   document.querySelectorAll('#ss button').forEach(b=>{
     const dis = (st.v===0 && +b.dataset.v===1);
     b.disabled=dis; b.style.opacity=dis?.3:1; b.classList.toggle('on',+b.dataset.v===st.s);
@@ -155,78 +300,58 @@ function refresh(){
   opts.forEach(o=>{
     const b=document.createElement('button'); b.textContent=FAC[o[0]]+':'+FAC[o[1]];
     if(o.join()===st.fmt.join()) b.className='on';
-    b.onclick=()=>{ st.fmt=o; b.blur(); refresh(); }; f.appendChild(b);
+    b.onclick=()=>{ st.fmt=o; b.blur(); st.sess=null; refresh(); }; f.appendChild(b);
   });
   const u=document.getElementById('uu'); u.innerHTML='';
   [0,60,120,180,240,300].forEach(x=>{
     const b=document.createElement('button'); b.textContent=x+'°'; if(x===st.u) b.className='on';
-    b.onclick=()=>{ st.u=x; b.blur(); refresh(); }; u.appendChild(b);
+    b.onclick=()=>{ st.u=x; b.blur(); st.sess=null; refresh(); }; u.appendChild(b);
   });
   document.getElementById('viewOut').textContent =
     `${st.chr}${st.rev?' (reversed)':''}: size ${FAC[st.fmt[0]]} at ${st.u}°  <->  size ${FAC[st.fmt[1]]} at ${(st.u+st.v)%360}°  (s = ${st.s}, v = ${st.v}°)`;
-  newTrial();
 }
+function refresh(){ renderSegs(); if(measured) beginTrial(); }
 function randomPair(){
   const pick=a=>a[Math.floor(Math.random()*a.length)];
-  st.u = pick([0,60,120,180,240,300]);
-  st.v = pick([0,60,120,180]);
-  st.s = pick(st.v===0 ? [2,4,8] : [1,2,4,8]);
-  st.fmt = pick(fmtOptions(st.s));
+  st.sess=null;
+  const t=pick(buildDesign()); st.u=t.u; st.v=t.v; st.s=t.s; st.fmt=t.fmt;
   refresh();
 }
-function nFrames(){ return Math.max(1, Math.round(st.soa/FRAME_MS)); }
-function drawView(k){
-  const f = FAC[st.fmt[k]];
-  const ang = (st.u + (k?st.v:0))*Math.PI/180;
-  const h = BASE_H*f*PXCM, w = BASE_W*f*PXCM;
-  ctx.save();
-  ctx.translate(W/2,H/2); ctx.rotate(ang);
-  if (st.rev) ctx.scale(-1,1);
-  ctx.strokeStyle='#b8ffc4'; ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.lineJoin='round';
-  ctx.font='bold 100px "Helvetica Neue",Arial,sans-serif';
-  const m = ctx.measureText(st.chr);
-  const L=m.actualBoundingBoxLeft, R=m.actualBoundingBoxRight, A=m.actualBoundingBoxAscent, D=m.actualBoundingBoxDescent;
-  const gw=L+R, gh=A+D;
-  ctx.scale(w/gw, h/gh);                   // ink box -> w x h (non-uniform)
-  ctx.lineWidth = 2 / Math.min(w/gw, h/gh);
-  ctx.strokeText(st.chr, -gw/2 + L, (A-D)/2);
-  ctx.restore();
-}
-function frame(){
-  ctx.fillStyle='#050805'; ctx.fillRect(0,0,W,H);
-  if (!st.done){
-    const n = nFrames();
-    drawView(Math.floor(st.fcount/n) & 1);
-    st.fcount++;
-  }
-  requestAnimationFrame(frame);
-}
-function setState(){
+function setState(msg){
   const el=document.getElementById('state');
-  el.textContent = st.done ? 'Trial ended. Choose another pair or restart.' :
-    (st.stage===1 ? 'Phase 1: tap right key until form-preserving movement disappears, then centre key.'
-                  : 'Phase 2: tap left key until form-preserving movement reappears, then centre key.');
-  const n=nFrames();
-  document.getElementById('soaVal').textContent=st.soa.toFixed(0)+' ms (realised: '+n+' frame'+(n>1?'s':'')+' = '+(n*FRAME_MS).toFixed(1)+' ms at 60 Hz)';
+  let pre='';
+  if(st.sess){ const S=st.sess; pre = S.i<S.np ? 'Practice '+(S.i+1)+' of '+S.np+'. ' : 'Trial '+(S.i-S.np+1)+' of '+(S.total-S.np)+'. '; }
+  el.textContent = msg || (st.done ? 'Trial ended. Choose another pair or restart.' :
+    pre + (st.stage===1 ? 'Phase 1: tap right key until form-preserving movement disappears, then centre key.'
+                  : 'Phase 2: tap left key until form-preserving movement reappears, then centre key.'));
 }
-function newTrial(){ st.soa=1000; st.stage=1; st.done=false; st.fcount=0; setState(); }
-function changeSoa(f){
-  if(st.done) return;
-  const k = Math.floor(st.fcount/nFrames()) & 1;   // keep the current view
-  st.soa*=f; st.fcount = k*nFrames(); setState();
+let rec={};
+function changeSoa(f){ if(st.done||!st.running) return; st.soa=Math.max(FRAME_MS, st.soa*f); setState(); }  // takes effect at the next switch
+function right(){ if(st.running&&!st.done && st.stage===1) changeSoa(1-1/11); }
+function left(){ if(st.running&&!st.done && st.stage===2) changeSoa(1.1); }
+function centre(){
+  if(st.done||!st.running) return;
+  if(st.stage===1){ rec.soa1=st.soa; st.stage=2; setState(); }
+  else {
+    rec.soa2=st.soa; st.done=true; st.running=false;
+    if(st.sess){ const S=st.sess, t=S.list[S.i];
+      LOG.push({idx:S.i, practice:S.i<S.np, chr:st.chr, rev:st.rev, u:t.u, v:t.v, s:t.s, fmt:t.fmt, soa1:rec.soa1, soa2:rec.soa2});
+      st.iti=Math.max(1,Math.round(ITI_MS/FRAME_MS)); setState('...'); }
+    else setState();
+    rec={};
+  }
 }
-function right(){ if(!st.done && st.stage===1) changeSoa(1-1/11); }
-function left(){ if(!st.done && st.stage===2) changeSoa(1.1); }
-function centre(){ if(st.done) return; if(st.stage===1) st.stage=2; else st.done=true; setState(); }
-document.getElementById('bR').onclick=e=>{right();e.target.blur();};
-document.getElementById('bL').onclick=e=>{left();e.target.blur();};
-document.getElementById('bC').onclick=e=>{centre();e.target.blur();};
-document.getElementById('bNew').onclick=e=>{newTrial();e.target.blur();};
-document.getElementById('bRand').onclick=e=>{randomPair();e.target.blur();};
-document.getElementById('pxcm').onchange=e=>{ PXCM=Math.max(10,Math.min(60,+e.target.value||50)); e.target.value=PXCM; };
-document.getElementById('showSoa').onchange=e=>{ document.getElementById('soaOut').style.display=e.target.checked?'block':'none'; };
+const kb=(id,fn)=>document.getElementById(id).onclick=e=>{fn();e.target.blur();};
+kb('bR',right); kb('bL',left); kb('bC',centre); kb('bSess',startSession); kb('bRand',randomPair);
+kb('bNew',()=>{ st.sess=null; if(measured) beginTrial(); });
+document.getElementById('bFocus').onclick=e=>{ document.body.classList.toggle('focus'); e.target.blur(); };
+document.getElementById('barRange').oninput=e=>{ PXCM=(+e.target.value)/8.56; updSetup(); saveDisp(); };
+document.getElementById('barRange').onchange=e=>e.target.blur();
+document.getElementById('dist').onchange=e=>{ DIST=Math.max(20,Math.min(200,+e.target.value||60)); updSetup(); saveDisp(); };
 document.addEventListener('keydown',e=>{
-  if (e.target && e.target.tagName==='INPUT') return;
+  const t=e.target;
+  if (t && t.tagName==='INPUT' && (t.type==='number'||t.type==='text'||t.type==='range')) return;
+  if (e.key==='Escape' && document.body.classList.contains('focus')) { document.body.classList.remove('focus'); return; }
   if (!['ArrowRight','ArrowLeft',' '].includes(e.key)) return;
   e.preventDefault();
   if (e.repeat) return;
@@ -234,8 +359,11 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowLeft') left();
   else centre();
 });
-bindStatic('rev','rev'); bindStatic('vv','v'); bindStatic('ss','s');
-refresh(); requestAnimationFrame(frame);
+bindStatic('rev','rev'); bindStatic('vv','v'); bindStatic('ss','s'); bindStatic('ord','ord');
+window.addEventListener('resize',resizeCanvas);
+loadDisp(); resizeCanvas(); renderSegs(); setState('Measuring display refresh rate...');
+requestAnimationFrame(frame);
+measure(()=>{ beginTrial(); });
 </script>
 </body>
 </html>

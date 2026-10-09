@@ -12,7 +12,11 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 12px; max-width:720px; text-align:center; line-height:1.5; }
-  canvas { background:#050505; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  canvas { background:#050505; display:block; border-radius:3px; }
+  .cvwrap { max-width:100%; overflow-x:auto; }
+  .disp { margin-top:6px; font-size:10.5px; color:#666; line-height:1.5; text-align:center; max-width:720px; }
+  .warn { color:#c9a14a; }
+  #calbar { height:10px; background:#5a64a8; border-radius:2px; margin:2px 0; }
   .wrap { width:720px; max-width:96vw; }
   .instr { margin-top:10px; font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
   .prow { margin-top:10px; display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
@@ -40,7 +44,8 @@
   <h1>Farrell, Larsen &amp; Bundesen (1982) — apparent rotational movement</h1>
   <div class="sub">Two views of one pattern alternate; the observer adjusts the stimulus-onset asynchrony with three keys. Methods reconstruction: Perception 11, 541–546.</div>
 
-  <canvas id="c" width="560" height="560"></canvas>
+  <div class="cvwrap"><canvas id="c" width="560" height="560"></canvas></div>
+  <div class="disp" id="dispLine"></div>
 
   <div class="wrap">
     <div class="instr" id="instr">
@@ -71,8 +76,14 @@
             <button data-v="preview">Preview one pair</button>
           </div>
         </div>
-        <div class="ctrl">Screen scale (px per mm)
-          <input type="number" id="pxmm" value="4" min="1" max="6" step="0.1">
+        <div class="ctrl">Display setup: screen px/cm <span id="ppcmv"></span>
+          <div id="calbar"></div>
+          <input type="range" id="calrange" min="150" max="700" value="323" style="width:300px">
+          <span style="font-size:10.5px;color:#666">Resize the bar to the width of a credit card (8.56 cm).</span>
+        </div>
+        <div class="ctrl">Viewing distance (cm)
+          <input type="number" id="dist" value="100" min="20" max="300" step="1">
+          <span style="font-size:10.5px;color:#666" id="distNote"></span>
         </div>
         <div class="ctrl"><button id="bExport">Export log (CSV)</button></div>
       </div>
@@ -96,68 +107,99 @@
       <h2>Methods (paper values)</h2>
       <table>
         <tr><th>Parameter</th><th>Value</th><th>Source</th></tr>
-        <tr><td>Pattern</td><td>Vertical bar 10 mm tall; a curved element at its top extends 4.4 mm to the left, an arc of a circle centred on the lower end of the bar (the "base")</td><td>Fig. 1, p. 542</td></tr>
+        <tr><td>Pattern</td><td>Vertical bar 10 mm tall; a curved element at its top, horizontal extent 4.4 mm to the left, an arc of a circle centred on the lower end of the bar (the "base"); the caption names two curved elements</td><td>Fig. 1, p. 542</td></tr>
         <tr><td>Size factor</td><td>1, 2, 3, 4 (geometric scaling); at 1 m subtends 0.57, 1.15, 1.72, 2.29°</td><td>2.1.2, p. 543</td></tr>
         <tr><td>Orientations</td><td>Picture-plane rotation about the base. Pair = (u, mod(u+v, 360°)); v = 30, 60, 90, 120°; u = 0, 30, …, 330° (12 per v)</td><td>2.1.2, p. 542</td></tr>
         <tr><td>Main trial set</td><td>4 sizes × 4 v × 12 = 192 pairs, random order; blocks of 32 (6 blocks), rest between blocks</td><td>2.1.2–2.1.3, pp. 542–543</td></tr>
+        <tr><td>Participants (main)</td><td>8 Copenhagen students plus the authors JEF and AL; normal or corrected vision</td><td>2.1.1, p. 542</td></tr>
+        <tr><td>Sessions (main)</td><td>3–4 sessions of 90 min to complete the set</td><td>2.1.3, p. 543</td></tr>
+        <tr><td>Participants and session (control)</td><td>3 new students plus AL; one 90 min session</td><td>2.2, p. 543</td></tr>
         <tr><td>Position</td><td>Base always at screen centre; free fixation (no fixation mark) in the main condition</td><td>2.1.2, p. 543</td></tr>
-        <tr><td>Viewing</td><td>Binocular, 1 m (main); 0.75 m (control)</td><td>pp. 543, 543</td></tr>
+        <tr><td>Viewing</td><td>Binocular, 1 m (main); 0.75 m (control)</td><td>2.1.2 and 2.2, p. 543</td></tr>
         <tr><td>Alternation</td><td>The two members alternate sequentially, ISI constant at 50 ms; no spatial overlap between members; SOA starts at 1050 ms</td><td>2.1.3, p. 543</td></tr>
         <tr><td>Keys</td><td>Right-hand key: SOA decreased by 1/11. Left-hand key: SOA increased by 1/10. Centre key registers SOA1, then (second press) SOA2 and ends the trial</td><td>2.1.3, p. 543</td></tr>
         <tr><td>Control trial set</td><td>Size 1 or 4 only; two identical upright patterns displaced horizontally by 26, 39, 52 mm (2, 3, 4° at 0.75 m); 15 replications of each of 6 cells = 90 pairs, random order; 3 blocks of 30. Steady fixation dot 13 mm (1°) below the midpoint of the line joining the two bases. Otherwise same procedure</td><td>2.2, p. 543</td></tr>
-        <tr><td>Apparatus</td><td>Tektronix 604 monitor, P31 phosphor, stimulus drawn by 40 Hz intensifications; background about 0.5 cd/m²</td><td>2.1.2, p. 543</td></tr>
+        <tr><td>Apparatus</td><td>Tektronix 604 monitor, P31 phosphor, stimulus drawn by periodic 40 Hz intensifications (luminous directional energy about 0.6 cd µs cm⁻¹; Sperling 1971); background about 0.5 cd/m²</td><td>2.1.2, p. 543</td></tr>
       </table>
       <div class="note" id="frames"></div>
       <table style="margin-top:12px">
         <tr><th>Assumed / not specified in the paper</th></tr>
         <tr><td class="a">The second curved element named in the Fig. 1 caption is not visible in the printed figure and is not drawn here.</td></tr>
         <tr><td class="a">Orientation 0 = upright; positive rotation = clockwise; first member of each pair = orientation u (paper gives neither).</td></tr>
-        <tr><td class="a">On-time of each member = SOA − 50 ms (implied by constant 50 ms ISI), rounded to whole display frames; ISI = 3 frames. The alternation runs until the trial is ended.</td></tr>
-        <tr><td class="a">No limits on SOA are imposed except that on-time is at least 1 frame. Stroke colour (green, P31-like), line width (2 px) and luminance are uncalibrated; 40 Hz intensification is not modelled. Screen scale defaults to 4 px/mm; set it to the real value of your screen to get true physical size.</td></tr>
+        <tr><td class="a">On-time of each member = SOA − 50 ms (implied by constant 50 ms ISI), rounded to whole display frames; ISI = 50 ms in whole frames. The alternation runs until the trial is ended.</td></tr>
+        <tr><td class="a">Control condition: the first member of each pair is the left pattern, and the control patterns are upright (orientation 0) with the curved element to the left (paper gives neither).</td></tr>
+        <tr><td class="a">Trial start: the first member appears immediately when the participant starts the trial (no blank or countdown). Between trials the screen is blank (main) or shows only the fixation dot (control). In the control condition the fixation dot (0.1 deg radius here) is drawn from the moment the control list is selected; its size is not given.</td></tr>
+        <tr><td class="a">Timing: new SOA values take effect at the start of the next on-period. The registered SOA is the nominal value (continuous, multiplied by 10/11 or 11/10 per press); the CSV also logs the realised SOA in frames and ms (computed as whole frames of on-time plus ISI for the nominal SOA at the moment of the key press, i.e. the frame count the next on-period would use, not the on-period already under way) and the measured refresh rate.</td></tr>
+        <tr><td class="a">Scale: stimuli are drawn so that a 10 mm pattern (size 1) subtends the paper's angle at the paper's distance (1 m main, 0.75 m control; 0.57/1.15/1.72/2.29 deg for sizes 1-4 at 1 m); control displacements are 2, 3, 4 deg and the dot is 1 deg below. Viewing distance defaults to the paper's value for the condition (stored calibration contributes only px/cm). Preview offers sizes 1 and 4 only for the control. Do not zoom or shrink the browser window; the canvas is sized from the calibrated px/cm so large patterns are not clipped, but is not otherwise rescaled.</td></tr>
+        <tr><td class="a">No limits on SOA are imposed except that on-time is at least 1 frame. Stroke colour (green, P31-like), line width (2 px) and luminance are uncalibrated; 40 Hz intensification is not modelled. Default screen scale 37.8 px/cm until calibrated.</td></tr>
         <tr><td class="a">Exact instruction wording, practice trials, the blank between trials (here: next trial starts when the participant presses Start/Enter) and the rest-break format are not given; the instruction text above is a paraphrase. The SOA value is not shown to the participant.</td></tr>
-        <tr><td class="a">Viewing distance cannot be enforced; the 1 m / 0.75 m sizes in degrees hold only if you view from that distance at the calibrated scale.</td></tr>
+        <tr><td class="a">Viewing distance cannot be enforced; angular sizes hold only if you view from the entered distance with the calibrated px/cm.</td></tr>
       </table>
     </div>
   </div>
 
 <script>
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-const W = cv.width, H = cv.height, CX = W/2, CY = H/2;
+let W = cv.width, H = cv.height, CX = W/2, CY = H/2;
 const $ = id => document.getElementById(id);
 const ISI_MS = 50, SOA0 = 1050;
-const st = { cond:'rot', mode:'trials', size:1, ang:60, u:0, disp:2, pxmm:4, hz:60,
-             soa:SOA0, running:false, trial:null, list:[], idx:0, soa1:null, phaseFrame:0, log:[], waiting:true };
+const st = { cond:'rot', mode:'trials', size:1, ang:60, u:0, disp:2, hz:60, medMs:1000/60,
+             soa:SOA0, running:false, trial:null, list:[], idx:0, soa1:null, stage:0, cnt:0, curOn:1, log:[], waiting:true };
 
-// ---- refresh-rate estimate (frames are counted, not timed) ----
+// ---- display setup (shared key am_display) ----
+const disp={ppcm:37.8, dist:null};
+try { const d=JSON.parse(localStorage.getItem('am_display')||'null'); if(d && d.ppcm>0) disp.ppcm=d.ppcm; } catch(e){}
+function saveDisp(){ try{ let o={}; try{ const p=JSON.parse(localStorage.getItem('am_display')||'null'); if(p&&typeof p==='object') o=p; }catch(e){}
+  o.ppcm=disp.ppcm; if(disp.dist>0) o.dist=disp.dist; localStorage.setItem('am_display',JSON.stringify(o)); }catch(e){} }
+const paperDist = ()=> st.cond==='rot' ? 100 : 75;
+const viewDist = ()=> disp.dist>0 ? disp.dist : paperDist();
+const pxPerDeg = ()=> viewDist()*Math.tan(Math.PI/180)*disp.ppcm;
+// px per mm of pattern: 10 mm subtends the paper's angle at the paper's distance
+const pxMM = ()=> 0.1*disp.ppcm*viewDist()/paperDist();
+function sizeCanvas(){
+  // half-extent: size-4 pattern reaches 40 mm from the base at centre; control adds half the displacement; dot 1 deg below
+  const half = Math.max(48*pxMM(), 4.5*pxPerDeg()*(st.cond==='trans'?1:0), 1.3*pxPerDeg(), 280);
+  const n = Math.ceil(half*2);
+  if(cv.width!==n || cv.height!==n){ cv.width=n; cv.height=n; W=n; H=n; CX=W/2; CY=H/2; st.dirty=true; }
+}
+function syncDisp(){
+  sizeCanvas();
+  $('dist').value=viewDist(); $('ppcmv').textContent=disp.ppcm.toFixed(1);
+  $('distNote').textContent = disp.dist>0 ? '(user value; paper: '+paperDist()+' cm)' : '(paper value for this condition)';
+  $('calrange').value=Math.round(8.56*disp.ppcm); $('calbar').style.width=(8.56*disp.ppcm)+'px';
+}
+$('calrange').oninput=e=>{ disp.ppcm=(+e.target.value)/8.56; syncDisp(); saveDisp(); st.dirty=true; };
+$('dist').onchange=e=>{ const v=+e.target.value; if(v>0) disp.dist=v; syncDisp(); saveDisp(); st.dirty=true; showFrames(); };
+
+// ---- refresh-rate estimate: median rAF interval over ~60 frames (frames are counted, not timed) ----
 function measureHz(cb){
-  let n=0, t0=0;
-  function f(ts){ if(!t0) t0=ts; n++; if(n<40) requestAnimationFrame(f);
-    else { const hz=1000*(n-1)/(ts-t0); const std=[60,75,90,120,144,165,240]; let b=60,bd=1e9;
-      for(const s of std){ const d=Math.abs(s-hz); if(d<bd){bd=d;b=s;} } cb(b, hz); } }
+  const iv=[]; let last=0;
+  function f(ts){ if(last) iv.push(ts-last); last=ts;
+    if(iv.length<60) requestAnimationFrame(f);
+    else { iv.sort((x,y)=>x-y); cb(iv[iv.length>>1]); } }
   requestAnimationFrame(f);
 }
 
 // ---- stimulus ----
 // local mm coords, base at origin, +y up. Rotation clockwise by rotDeg.
 function drawPattern(bx, by, rotDeg, size){
-  const s = st.pxmm*size, a = rotDeg*Math.PI/180, co=Math.cos(a), sn=Math.sin(a);
-  const T = (mx,my)=>{ const x=mx*s, y=my*s; return [bx + x*co + y*sn, by + x*sn - y*co]; };
+  const s = pxMM()*size, a = rotDeg*Math.PI/180, co=Math.cos(a), sn=Math.sin(a);
+  let q; const T = (mx,my)=>{ const x=mx*s, y=my*s; return [bx + x*co + y*sn, by + x*sn - y*co]; };
   ctx.strokeStyle='#9fe0a0'; ctx.lineWidth=2; ctx.lineCap='round';
   ctx.beginPath(); let p=T(0,0); ctx.moveTo(p[0],p[1]); p=T(0,10); ctx.lineTo(p[0],p[1]); ctx.stroke();
   // top curved element: arc of radius 10 mm about the base, from the bar top to the left; chord 4.4 mm
-  const span = 2*Math.asin(2.2/10);
+  const span = Math.asin(4.4/10);   // horizontal extent of the element = 4.4 mm
   ctx.beginPath();
   for(let k=0;k<=24;k++){ const th = Math.PI/2 + span*k/24; q=T(10*Math.cos(th), 10*Math.sin(th));
     k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); }
   ctx.stroke();
 }
-let q;
 function frameStimulus(which){   // which: 0 none, 1 first member, 2 second member
   ctx.fillStyle='#050505'; ctx.fillRect(0,0,W,H);
   const t = st.trial || previewTrial();
   if(t.cond==='trans'){
-    const dx = t.dispMM*st.pxmm;
-    ctx.fillStyle='#9fe0a0'; ctx.beginPath(); ctx.arc(CX, CY+13*st.pxmm, 2.5, 0, 6.2832); ctx.fill(); // steady fixation dot
+    const dx = t.dispDeg*pxPerDeg();
+    ctx.fillStyle='#9fe0a0'; ctx.beginPath(); ctx.arc(CX, CY+pxPerDeg(), Math.max(2,0.1*pxPerDeg()), 0, 6.2832); ctx.fill(); // steady fixation dot
     if(which===1) drawPattern(CX-dx/2, CY, 0, t.size);
     if(which===2) drawPattern(CX+dx/2, CY, 0, t.size);
   } else {
@@ -167,23 +209,22 @@ function frameStimulus(which){   // which: 0 none, 1 first member, 2 second memb
 }
 function previewTrial(){
   return st.cond==='rot' ? {cond:'rot', size:st.size, u:st.u, v:st.ang}
-                         : {cond:'trans', size:st.size, dispMM:[26,39,52][st.disp-2]*1};
+                         : {cond:'trans', size:st.size, dispDeg:st.disp};
 }
 
 // ---- frame-counted alternation: [on1][ISI][on2][ISI] ----
-const frames = ms => Math.max(0, Math.round(ms*st.hz/1000));
+const frames = ms => Math.max(0, Math.round(ms*1000/(st.medMs*1000)*1));
 function onFrames(){ return Math.max(1, frames(st.soa - ISI_MS)); }
 function isiFrames(){ return frames(ISI_MS); }
+function resetPhase(){ st.stage=0; st.curOn=onFrames(); st.cnt=st.curOn; }
 function tick(){
-  const on=onFrames(), isi=isiFrames(), cyc=2*(on+isi);
   const active = st.running || st.mode==='preview';
-  let w=0;
   if(active){
-    const f = st.phaseFrame % cyc;
-    if(f<on) w=1; else if(f>=on+isi && f<2*on+isi) w=2;
-    st.phaseFrame++;
-  }
-  if(active || st.dirty){ frameStimulus(w); st.dirty=false; }
+    const w = st.stage===0 ? 1 : st.stage===2 ? 2 : 0;
+    frameStimulus(w); st.dirty=false;
+    if(--st.cnt<=0){ st.stage=(st.stage+1)%4;
+      if(st.stage%2===0){ st.curOn=onFrames(); st.cnt=st.curOn; } else st.cnt=Math.max(1,isiFrames()); }
+  } else if(st.dirty){ frameStimulus(0); st.dirty=false; }
   requestAnimationFrame(tick);
 }
 
@@ -194,7 +235,7 @@ function buildList(){
   if(st.cond==='rot'){
     for(const size of [1,2,3,4]) for(const v of [30,60,90,120]) for(let u=0;u<360;u+=30) L.push({cond:'rot',size,v,u});
   } else {
-    for(const size of [1,4]) for(const d of [2,3,4]) for(let r=0;r<15;r++) L.push({cond:'trans',size,dispDeg:d,dispMM:[26,39,52][d-2]});
+    for(const size of [1,4]) for(const d of [2,3,4]) for(let r=0;r<15;r++) L.push({cond:'trans',size,dispDeg:d});
   }
   return shuffle(L);
 }
@@ -213,7 +254,7 @@ function nextTrialReady(){
   $('bStart').textContent='Start trial';
 }
 function beginTrial(){
-  st.trial = st.list[st.idx]; st.soa=SOA0; st.soa1=null; st.phaseFrame=0; st.running=true; st.waiting=false;
+  st.trial = st.list[st.idx]; st.soa=SOA0; st.soa1=null; resetPhase(); st.running=true; st.waiting=false;
   $('status').textContent='Trial '+(st.idx+1)+' of '+st.list.length;
 }
 $('bStart').addEventListener('click', ()=>{ if(st.mode!=='trials') return;
@@ -225,19 +266,23 @@ function slower(){ if(st.running||st.mode==='preview') st.soa*=11/10; }
 function centre(){
   if(st.mode==='preview'){ st.soa=SOA0; return; }
   if(!st.running) return;
-  if(st.soa1===null){ st.soa1=st.soa; return; }
+  if(st.soa1===null){ st.soa1=st.soa; st.soa1fr=onFrames()+isiFrames(); return; }
   const t=st.trial;
   st.log.push({trial:st.idx+1, block:Math.floor(st.idx/blockSize())+1, condition:t.cond, size:t.size, u:t.u??'', v:t.v??'', dispDeg:t.dispDeg??'',
-               SOA1_ms:st.soa1.toFixed(1), SOA2_ms:st.soa.toFixed(1)});
+               SOA1_ms:st.soa1.toFixed(1), SOA1_frames_realised:st.soa1fr, SOA1_ms_realised:(st.soa1fr*st.medMs).toFixed(1), SOA2_ms:st.soa.toFixed(1),
+               SOA2_frames_realised:(onFrames()+isiFrames()), SOA2_ms_realised:((onFrames()+isiFrames())*st.medMs).toFixed(1), refresh_hz:(1000/st.medMs).toFixed(2)});
   st.idx++; nextTrialReady();
 }
 $('bR').addEventListener('click',faster); $('bL').addEventListener('click',slower); $('bC').addEventListener('click',centre);
+addEventListener('keyup',e=>{ if(e.target.tagName==='BUTTON' && (e.key===' '||e.key==='Enter')) e.preventDefault(); });
+addEventListener('click',e=>{ if(e.target.tagName==='BUTTON') e.target.blur(); });
 addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.repeat && (e.key===' '||e.key==='Enter'||e.key==='ArrowLeft'||e.key==='ArrowRight')) { e.preventDefault(); return; }
   if(e.key==='ArrowRight'){ faster(); e.preventDefault(); }
   else if(e.key==='ArrowLeft'){ slower(); e.preventDefault(); }
   else if(e.key===' '||e.key==='ArrowDown'){ centre(); e.preventDefault(); }
-  else if(e.key==='Enter'){ if(st.mode==='trials'){ if(!st.list.length) startSession(); else if(st.waiting) beginTrial(); } }
+  else if(e.key==='Enter'){ e.preventDefault(); if(st.mode==='trials'){ if(!st.list.length) startSession(); else if(st.waiting) beginTrial(); } }
 });
 $('bExport').addEventListener('click',()=>{
   if(!st.log.length) return; const cols=Object.keys(st.log[0]);
@@ -251,25 +296,30 @@ function seg(id,fn){ document.querySelectorAll('#'+id+' button').forEach(b=>b.ad
 const uSel=$('uSel'); for(let u=0;u<360;u+=30){ const o=document.createElement('option'); o.value=u; o.textContent=u+'°'; uSel.appendChild(o); }
 uSel.addEventListener('change',()=>{ st.u=+uSel.value; st.dirty=true; });
 function applyUI(){
+  resetPhase();
   $('prevGrid').style.display = st.mode==='preview' ? 'flex':'none';
   $('ctlV').classList.toggle('dim',st.cond!=='rot'); $('ctlU').classList.toggle('dim',st.cond!=='rot');
   $('ctlD').classList.toggle('dim',st.cond!=='trans');
+  document.querySelectorAll('#size button').forEach(b=>{ b.disabled = st.cond==='trans' && (b.dataset.v==='2'||b.dataset.v==='3'); b.style.opacity=b.disabled?.35:1; });
   $('bStart').style.display = st.mode==='trials' ? '' : 'none';
-  if(st.mode==='preview'){ st.running=false; st.trial=null; st.soa=SOA0; st.phaseFrame=0; $('status').textContent='Preview: alternation runs continuously; centre key resets SOA to 1050 ms.'; }
+  if(st.mode==='preview'){ st.running=false; st.trial=null; st.soa=SOA0; resetPhase(); $('status').textContent='Preview: alternation runs continuously; centre key resets SOA to 1050 ms.'; }
   else { st.list=[]; $('bStart').textContent='Start session'; $('status').textContent='Press Start session (or Enter). '+(st.cond==='rot'?'192':'90')+' trials, blocks of '+blockSize()+'.'; st.dirty=true; }
 }
-seg('cond',v=>{ st.cond=v; if(v==='trans'&&![1,4].includes(st.size)) {} st.list=[]; st.running=false; applyUI(); });
-seg('mode',v=>{ st.mode=v; applyUI(); });
+seg('cond',v=>{ st.cond=v; if(v==='trans'&&![1,4].includes(st.size)){ st.size=1; document.querySelectorAll('#size button').forEach(x=>x.classList.toggle('on',x.dataset.v==='1')); } st.list=[]; st.running=false; st.trial=null; st.dirty=true; applyUI(); syncDisp(); showFrames(); });
+seg('mode',v=>{ if(v===st.mode) return; st.mode=v; st.running=false; st.trial=null; applyUI(); });
 seg('size',v=>st.size=+v); seg('ang',v=>st.ang=+v); seg('disp',v=>st.disp=+v);
-$('pxmm').addEventListener('change',()=>{ st.pxmm=Math.max(1,Math.min(6,+$('pxmm').value||4)); st.dirty=true; });
 
 function showFrames(){
-  const fr=1000/st.hz, on=Math.round(1000/fr), isi=Math.round(50/fr);
-  const on0=Math.round(1000*st.hz/1000);
-  $('frames').innerHTML='Realised timing on this display (detected '+st.hz+' Hz, '+fr.toFixed(2)+' ms/frame): ISI = '+isi+' frames = '+(isi*fr).toFixed(1)+' ms; at the starting SOA of 1050 ms each member is on for '+on0+' frames = '+(on0*fr).toFixed(1)+' ms, so SOA = '+((on0+isi)*fr).toFixed(1)+' ms. At 60 Hz: 3 frames = 50.0 ms ISI, 60 frames = 1000 ms on-time, SOA = 63 frames = 1050 ms. Each key press recomputes the on-time in whole frames, so realised SOAs are quantised to the frame duration.';
+  const fr=st.medMs, hz=1000/fr, isi=frames(ISI_MS), on0=frames(SOA0-ISI_MS);
+  const w=[];
+  const chk=(name,ms)=>{ const n=ms/fr; if(Math.abs(n-Math.round(n))*fr>1) w.push(name+' ('+ms+' ms) is not a whole number of frames at this rate'); };
+  chk('ISI',ISI_MS); chk('starting SOA',SOA0);
+  $('dispLine').innerHTML='Display: '+hz.toFixed(1)+' Hz (median of 60 frames), '+fr.toFixed(2)+' ms/frame. ISI = '+isi+' frames = '+(isi*fr).toFixed(1)+' ms; starting SOA 1050 ms = '+(on0+isi)+' frames = '+((on0+isi)*fr).toFixed(1)+' ms (each member on '+on0+' frames = '+(on0*fr).toFixed(1)+' ms). Pixels per degree at '+viewDist()+' cm: '+pxPerDeg().toFixed(1)+'.'
+    +(w.length?'<br><span class="warn">Warning: '+w.join('; ')+'; durations are rounded to the nearest frame.</span>':'');
+  $('frames').innerHTML='Realised timing on this display (measured '+hz.toFixed(1)+' Hz): see the display line under the canvas. At 60 Hz: 3 frames = 50.0 ms ISI, 60 frames = 1000 ms on-time, SOA = 63 frames = 1050 ms. Each SOA step is applied at the start of the next on-period and rounded to whole frames, so realised SOAs are quantised to the frame duration.';
 }
-applyUI(); showFrames(); st.dirty=true;
-measureHz((hz)=>{ st.hz=hz; showFrames(); });
+syncDisp(); applyUI(); showFrames(); st.dirty=true;
+measureHz((med)=>{ st.medMs=med; st.hz=1000/med; resetPhase(); showFrames(); });
 requestAnimationFrame(tick);
 </script>
 </body>

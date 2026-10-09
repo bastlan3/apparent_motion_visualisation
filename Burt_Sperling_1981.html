@@ -3,21 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Burt &amp; Sperling (1981) - Multiple-path motion stimulus</title>
+<title>Burt &amp; Sperling (1981) - Multiple-path motion</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#1a1a1a;color:#aaa;font-family:sans-serif;font-size:13px;display:flex;flex-direction:column;align-items:center;padding:14px 12px 30px}
+body{background:#0c0c0c;color:#aaa;font-family:sans-serif;font-size:13px;display:flex;flex-direction:column;align-items:center;padding:14px 12px 30px}
 a.back{align-self:flex-start;color:#888;text-decoration:none;font-size:12px;margin-bottom:10px}
 a.back:hover{color:#ccc}
 h1{font-size:15px;font-weight:600;color:#ccc;margin-bottom:10px;text-align:center}
-canvas{background:#000;display:block;max-width:100%;height:auto}
+#stagewrap{max-width:100%;overflow-x:auto}
+canvas{background:#000;display:block}
 .row{margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
 label{display:flex;gap:6px;align-items:center}
-select,input[type=number]{background:#2a2a2a;color:#ddd;border:1px solid #555;border-radius:4px;padding:3px 6px;font-size:13px}
+select,input[type=number],input[type=text]{background:#2a2a2a;color:#ddd;border:1px solid #555;border-radius:4px;padding:3px 6px;font-size:13px}
 button{background:#333;color:#ddd;border:1px solid #555;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:13px}
 button:disabled{opacity:.35;cursor:default}
 .hint{margin-top:10px;max-width:700px;text-align:center;line-height:1.5;color:#999}
 .status{margin-top:8px;min-height:18px;color:#8a8}
+.disp{margin-top:10px;max-width:700px;font-size:11px;line-height:1.5;color:#777;text-align:center}
+.warn{color:#c9a54b}
+details.setup{margin-top:14px;max-width:700px;width:100%;font-size:12px;color:#888;border:1px solid #2a2a2a;border-radius:4px;padding:6px 10px}
+details.setup summary{cursor:pointer;color:#aaa}
+#card{height:22px;background:#3a3a3a;border:1px solid #777;border-radius:3px;margin:8px 0 4px}
 .panel{margin-top:18px;max-width:700px;width:100%;font-size:12px;line-height:1.5;color:#888;border-top:1px solid #333;padding-top:10px}
 .panel h2{font-size:13px;color:#bbb;margin-bottom:6px}
 .panel table{border-collapse:collapse;width:100%}
@@ -29,7 +35,7 @@ button:disabled{opacity:.35;cursor:default}
 <body>
 <a class="back" href="index.html">&larr; back to experiments</a>
 <h1>Burt &amp; Sperling (1981) - multiple-path motion stimulus</h1>
-<canvas id="c" width="660" height="350"></canvas>
+<div id="stagewrap"><canvas id="c" width="460" height="260"></canvas></div>
 <div class="row">
   <label>Experiment
     <select id="exp">
@@ -37,164 +43,262 @@ button:disabled{opacity:.35;cursor:default}
       <option value="2">Exp 2 - right/left forced choice</option>
       <option value="3">Exp 3 - element types, right/left</option>
     </select></label>
-  <label>Direction <select id="dir"><option value="1">H positive (rows step right)</option><option value="-1">mirror image (rows step left)</option></select></label>
-</div>
-<div class="row" id="opts1">
-  <label>Rate motion on path <select id="judge"><option value="P1">P1 (control M1)</option><option value="P2">P2 (control M2)</option></select></label>
-  <label>t (ms) <select id="t1"></select></label>
 </div>
 <div class="row" id="opts2" style="display:none">
   <label>Configuration (Table 2) <select id="cfg"></select></label>
-  <label>t (ms) <input type="number" id="t2" min="8" max="40" step="1" value="20" style="width:64px"></label>
+  <label>Viewing condition <select id="dist2"><option value="200">2 m</option><option value="100">1 m</option></select></label>
 </div>
 <div class="row" id="opts3" style="display:none">
-  <label>Elements <select id="elem"><option value="dot">dots</option><option value="ring">rings</option><option value="alt">dots and rings alternated</option><option value="bar">orthogonal bars alternated</option></select></label>
-  <label>V (mm) <select id="v3"><option>1.84</option><option>2.45</option><option>3.06</option></select></label>
-  <label>t (ms) <input type="number" id="t3" min="8" max="40" step="1" value="20" style="width:64px"></label>
+  <label>Elements <select id="elem"><option value="dot">dots</option><option value="ring">rings</option><option value="alt">dots and rings alternated</option><option value="bar">orthogonal line elements alternated</option></select></label>
 </div>
-<div class="row"><button id="run">Run trial</button></div>
+<div class="row" id="optsT" style="display:none">
+  <label>t values (ms, 7) <input type="text" id="tlist" value="10, 13.5, 18, 24.5, 33, 44.5, 60" style="width:260px"></label>
+</div>
+<div class="row"><button id="run">Start block</button><button id="stop" disabled>Abort</button><button id="dl" disabled>Download log (CSV)</button><span id="prog"></span></div>
 <div class="hint" id="instr"></div>
+<div class="hint" id="cue" style="color:#ccc"></div>
 <div class="row" id="resp"></div>
 <div class="status" id="status"></div>
+<div class="disp" id="real"></div>
+
+<details class="setup" id="setup"><summary>Display setup</summary>
+<div style="margin-top:6px">Resize the bar until it matches the width of a credit card (8.56 cm), then set your eye-to-screen distance.</div>
+<div id="card"></div>
+<div class="row" style="justify-content:flex-start;margin-top:4px">
+  <label>Card width <input type="range" id="cardw" min="150" max="700" step="1"></label>
+  <span id="ppcmtxt"></span>
+  <label>Viewing distance (cm) <input type="number" id="vd" min="20" max="400" step="1" style="width:70px"></label>
+  <button id="calreset">Reset (37.8 px/cm, 200 cm)</button>
+  <button id="remeasure">Re-measure refresh</button>
+</div>
+<div id="geo" style="margin-top:6px"></div>
+</details>
 
 <div class="panel">
 <h2>Methods (Psychol. Rev. 88, 171-195)</h2>
 <table>
-<tr><td>Stimulus</td><td>One horizontal row of evenly spaced dots, flashed repeatedly; between presentations the row moves horizontally by H and downward by V; the stack of rows sweeps through a rectangular window (p. 173-174, Fig. 1a).</td></tr>
+<tr><td>Stimulus</td><td>One horizontal row of evenly spaced dots, flashed repeatedly; between presentations the row moves horizontally by H and downward by V; the stack of rows sweeps through a rectangular window (p. 173-174, Fig. 1a). Observers fixate a stationary point (p. 174).</td></tr>
 <tr><td>Dot separation D</td><td>17 mm (1.70 cm) = 29.3 arcmin at 2 m (p. 174)</td></tr>
 <tr><td>Row shift H, V (Exp 1)</td><td>H = +/-6.8 mm (11.7 arcmin), V = 1.8 mm (3.09 arcmin) (p. 174, Table 1)</td></tr>
-<tr><td>Interflash interval t</td><td>Exp 1: ten values, logarithmic steps, 12-56 ms (p. 175). Exp 2/3: seven values per configuration around the transition (about 8-40 ms in Table 2); the seven values are <span class="assume">not listed in the paper - free input here</span>.</td></tr>
-<tr><td>Flash</td><td>Each row presentation = 2 refreshes of a fast P4 phosphor, 3 ms apart (p. 175). <span class="assume">Here: one display frame per presentation.</span></td></tr>
+<tr><td>Interval t</td><td>Exp 1: ten values, logarithmic steps, 12-56 ms (p. 175). Exp 2/3: seven values per configuration (p. 179); <span class="assume">the seven values are not listed in the paper - editable list here, default 7 log steps 10-60 ms</span>.</td></tr>
+<tr><td>Flash</td><td>Each row presentation = 2 refreshes of a fast P4 phosphor, 3 ms apart (p. 175). <span class="assume">Here: the row is lit for one display frame per presentation and blank for the remaining frames of t; at one frame per t there is no blank gap (sustained). Double refresh and phosphor decay not emulated.</span></td></tr>
 <tr><td>Control stimuli (Exp 1)</td><td>M1: every other dot removed (dot separation 2D, same H, V, t). M2: every other row removed (H, V, t doubled, separation D). (Table 1)</td></tr>
-<tr><td>Exp 1 trial</td><td>Ambiguous M1,2 alternated with the control three times, beginning with M1 (P1 trials), 1 s pause between stimuli; mirror images on half the trials; rating 0-6 at the end (p. 175). <span class="assume">P2 trials: the paper does not state which stimulus comes first; control first assumed.</span> Authors as observers, 40 trials per session (4 motion types x 10 t).</td></tr>
-<tr><td>Exp 1 rating scale</td><td>0 = undetectable; 1 = 20% as strong as the reference; ... 5 = equal strength; 6 = stronger in M1,2 than in the control (p. 175).</td></tr>
-<tr><td>Window and fixation</td><td>Rows within a 22 cm x 6 cm area (6.3 x 1.72 deg at 2 m); bottom of area 4 cm (1.15 deg) above the fixation point; observers fixate carefully (p. 174-175).</td></tr>
-<tr><td>Viewing</td><td>2 m (Exp 1, 3), 1 m and 2 m (Exp 2); dark room, display surface 0.058 cd/m2; dot energy about 1.6e-6 cd-s per refresh (p. 175).</td></tr>
-<tr><td>Exp 2</td><td>18 configurations, D = 17 mm; H, V pairs of Table 2 (list in the menu). One sweep of the row through the window per trial (max 3 s); observer reports whether dominant motion was to the right or left; 7 t values, reflections interleaved (p. 177-181).</td></tr>
-<tr><td>Exp 3</td><td>Same as Exp 2 with dots, rings, alternating dots/rings, or alternating orthogonal bars; D = 17 mm, H = 6.8 mm, V = 1.84, 2.45, 3.06 mm, 2 m; P1-P2 geometry (p. 181-184).</td></tr>
-<tr><td class="assume">Assumptions</td><td class="assume">Dot diameter, ring and bar sizes (not given in text; drawn here as about 2 mm dot, 3.3 mm ring, 3.3 mm bar); on-screen scale 3 px/mm so the window is 660 x 180 px (physical size and viewing distance depend on your screen); equal brightness for all elements (paper gives different energies); 500 ms fixation before each stimulus; start of the sweep at the top of the window; one sweep = V-step count to the window bottom (Exp 1 length unspecified).</td></tr>
-<tr><td>Realised timing</td><td id="real"></td></tr>
+<tr><td>Exp 1 session</td><td>40 trials per session = 4 trial kinds (P1 right, P1 left, P2 right, P2 left) x 10 t, pseudorandom order, same t for ambiguous and control (p. 175). Each trial: M1,2 and the control alternated three times, 1 s pause between stimuli; P1 trials begin with M1. Rating 0-6 at the end of the trial: 0 = undetectable; 1 = 20% as strong as the reference; ... 5 = equal strength; 6 = stronger in M1,2 than in the control. <span class="assume">P2 trials: the paper does not state which stimulus comes first; control first assumed. Authors were the two observers.</span></td></tr>
+<tr><td>Window and fixation</td><td>Rows within a 22 cm x 6 cm area (6.3 x 1.72 deg at 2 m); bottom of area 4 cm (1.15 deg) above the fixation point (p. 175). Window is not drawn (dark room).</td></tr>
+<tr><td>Viewing</td><td>2 m (Exp 1, 3), 1 m and 2 m (Exp 2); binocular, dark room, display surface 0.058 cd/m2; dot energy about 1.6e-6 cd-s per refresh (p. 175). Here sizes are drawn in visual angle for the paper's distance and converted with your calibration.</td></tr>
+<tr><td>Exp 2</td><td>18 configurations, D = 17 mm; H, V pairs of Table 2 (menu), each viewed from 1 m and 2 m (distance scales all angular sizes). One sweep of the row through the window per trial (max 3 s); forced choice right/left (p. 177-181). Block here: 7 t x 8 trials (4 as defined, 4 mirror) = 56 trials, random order; the paper combined three determinations from separate sessions, balanced across transition types and distances (not implemented).</td></tr>
+<tr><td>Exp 3</td><td>As Exp 2 with dots, rings, alternating dots/rings, or alternating orthogonal line elements; D = 17 mm, H = 6.8 mm, V = 1.84, 2.45, 3.06 mm, 2 m (p. 181-184). Block: 2 repetitions x 3 V x 2 reflections x 7 t = 84 trials, random order; the paper ran four element blocks then the reverse order (not implemented).</td></tr>
+<tr><td>Elements (Fig. 4)</td><td><span class="assume">Sizes estimated from the Fig. 4c scale bar (uncertain): dot 1.5 mm diameter, octagonal ring 3.0 mm across, line element 5.9 mm long drawn at +45 and -45 deg alternately (Fig. 4a). The paper gives energies per refresh (dot 1.6e-6, ring 1.9e-6, line 10.3e-6 cd-s); all are drawn at the same white here (not emulated). Exp 1 dots use the same dot size (assumption).</span></td></tr>
+<tr><td class="assume">Other assumptions</td><td class="assume">Fixation mark = small dot; 500 ms fixation before each trial; 1 s between trials; sweep starts at the top of the window, horizontally centred; Exp 1 sweep length (to window bottom) is an assumption, the paper does not give it; default screen scale 37.8 px/cm, default viewing distance 200 cm (paper's 2 m). Responses are kept in memory only (CSV download of conditions and responses).</td></tr>
+<tr><td>Timing</td><td>Refresh rate measured at load (median rAF interval over 60 frames); every duration is a whole number of frames at that rate and scheduled by frame count. Realised values are in the line under the stage. A trial in which a frame interval exceeded 1.5 frames is flagged and repeated at the end of the block.</td></tr>
 </table>
 </div>
 
 <script>
 const c=document.getElementById('c'),ctx=c.getContext('2d');
 const $=id=>document.getElementById(id);
-const PX=3;                 // px per mm (assumption)
-const WX=0, WY=20, WW=220*PX, WH=60*PX;   // 22 x 6 cm window
-const FIX={x:WW/2, y:WY+WH+40*PX};
-const D=17;
-// Table 2: [type, H, V, label]
+const D=17;                       // mm
+const WMM=220, HMM=60, FIXMM=40;  // window 22 x 6 cm, fixation 4 cm below it
+const CARD_CM=8.56, MARG=20;
+let ppcm=37.8, vd=200, frameMs=1000/60, rate=60;
+// ---- persistence (shared key) ----
+function loadDisp(){try{const o=JSON.parse(localStorage.getItem('am_display')||'{}');if(o.pxPerCm>5&&o.pxPerCm<200)ppcm=o.pxPerCm;if(o.viewDistCm>=20&&o.viewDistCm<=400)vd=o.viewDistCm;}catch(e){}}
+function saveDisp(){try{let o={};try{o=JSON.parse(localStorage.getItem('am_display')||'{}')||{};}catch(e){}o.pxPerCm=ppcm;o.viewDistCm=vd;localStorage.setItem('am_display',JSON.stringify(o));}catch(e){}}
+loadDisp();
+
+// ---- config ----
 const CFG=[];
-[[ 'P1-P2',[6.81,7.23],[1.84,2.45,3.06] ],['P1-P3',[5.11,5.32],[.82,1.22,1.63]],['P1-P4',[3.83,4.04],[.41,.61,.82]]].forEach(([n,Hs,Vs])=>
-  Hs.forEach(h=>Vs.forEach(v=>CFG.push({H:h,V:v,label:n+'  H '+h+' mm, V '+v+' mm'}))));
-CFG.forEach((g,i)=>{const o=document.createElement('option');o.value=i;o.textContent=g.label;$('cfg').appendChild(o);});
+[['P1-P2',[6.81,7.23],[1.84,2.45,3.06]],['P1-P3',[5.11,5.32],[.82,1.22,1.63]],['P1-P4',[3.83,4.04],[.41,.61,.82]]].forEach(([n,Hs,Vs])=>
+  Hs.forEach(h=>Vs.forEach(v=>CFG.push({H:h,V:v}))));
+CFG.forEach((g,i)=>{const o=document.createElement('option');o.value=i;o.textContent='Row '+(i+1)+': H '+g.H+' mm, V '+g.V+' mm';$('cfg').appendChild(o);});
 const T1=[];for(let i=0;i<10;i++)T1.push(12*Math.pow(56/12,i/9));
-T1.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t.toFixed(1);$('t1').appendChild(o);});
 
-// refresh calibration: advance display one step per ~16.7 ms
-let step=1,rate=60;
-(function cal(){const ts=[];function f(n){ts.push(n);if(ts.length<40)requestAnimationFrame(f);else{const d=[];for(let i=1;i<ts.length;i++)d.push(ts[i]-ts[i-1]);d.sort((a,b)=>a-b);const m=d[d.length>>1];rate=1000/m;step=Math.max(1,Math.round(rate/60));upd();}}requestAnimationFrame(f);})();
-const FMS=1000/60;
+// ---- geometry: mm at the paper's distance -> degrees -> px at the participant's distance ----
+function paperDist(){const e=+$('exp').value;return e===2?+$('dist2').value:200;}
+function mm2deg(mm){return Math.atan(mm/10/paperDist())*180/Math.PI;}
+function pxPerDeg(){return ppcm*vd*Math.tan(Math.PI/180);}
+function mm2px(mm){return mm2deg(mm)*pxPerDeg();}
+function layout(){
+  const w=Math.round(mm2px(WMM)+2*MARG), h=Math.round(mm2px(HMM)+mm2px(FIXMM)+2*MARG);
+  c.width=w;c.height=h;
+  const d=mm2deg(D)*60;
+  $('geo').textContent='px/cm '+ppcm.toFixed(1)+', '+pxPerDeg().toFixed(1)+' px/deg at '+vd+' cm. At the paper distance ('+paperDist()/100+' m): D = '+d.toFixed(1)+' arcmin ('+mm2px(D).toFixed(1)+' px); window '+mm2deg(WMM).toFixed(1)+' x '+mm2deg(HMM).toFixed(2)+' deg.';
+  const sw=$('stagewrap');$('geo').textContent+=(w>sw.clientWidth?' Warning: the stimulus is '+w+' px wide, wider than the page area ('+sw.clientWidth+' px); it will be scrolled to centre at block start, but part of the sweep may be out of view. Reduce px/cm or viewing distance, or widen the browser window.':'');
+  $('card').style.width=(CARD_CM*ppcm)+'px';
+  $('ppcmtxt').textContent=ppcm.toFixed(1)+' px/cm';
+  render(null);
+}
+// ---- refresh measurement ----
+function measure(cb){const ts=[];function f(n){ts.push(n);if(ts.length<61)requestAnimationFrame(f);else{const d=[];for(let i=1;i<ts.length;i++)d.push(ts[i]-ts[i-1]);d.sort((a,b)=>a-b);frameMs=d[d.length>>1];rate=1000/frameMs;updReal();cb&&cb();}}requestAnimationFrame(f);}
+function tFrames(ms){return Math.max(1,Math.round(ms/frameMs));}
+function parseT(){return $('tlist').value.split(/[,\s]+/).map(Number).filter(x=>x>0&&isFinite(x));}
+function updReal(info){
+  const ex=+$('exp').value;
+  const ts=ex===1?T1:parseT();
+  const parts=[],warns=[];
+  ts.forEach(t=>{const k=tFrames(t);parts.push(t.toFixed(1)+'&rarr;'+k+'f='+(k*frameMs).toFixed(1));if(Math.abs(t-k*frameMs)>1)warns.push(t.toFixed(1));});
+  let s='Display: measured '+rate.toFixed(1)+' Hz (frame '+frameMs.toFixed(2)+' ms, median of 60). Requested t &rarr; frames = realised ms: '+parts.join('; ')+'. Row lit for 1 frame ('+frameMs.toFixed(1)+' ms) per presentation.';
+  const kmin=Math.min(...ts.map(tFrames));
+  if(warns.length)s+=' <span class="warn">Not a whole number of frames at this rate (&gt;1 ms off): '+warns.join(', ')+' ms.</span>';
+  if(ts.length&&kmin===1)s+=' <span class="warn">With 1 frame per t there is no blank interval (sustained display); a higher-refresh display realises these more faithfully.</span>';
+  if(info)s+='<br>This trial: '+info;
+  $('real').innerHTML=s;
+}
 
-function drawFix(){ctx.strokeStyle='#bbb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(FIX.x-6,FIX.y);ctx.lineTo(FIX.x+6,FIX.y);ctx.moveTo(FIX.x,FIX.y-6);ctx.lineTo(FIX.x,FIX.y+6);ctx.stroke();}
-function drawEl(x,y,kind){
-  ctx.fillStyle='#fff';ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
-  if(kind==='dot'){ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill();}
-  else if(kind==='ring'){ctx.beginPath();ctx.arc(x,y,5,0,7);ctx.stroke();}
-  else if(kind==='h'){ctx.fillRect(x-5,y-1,10,2);}
-  else if(kind==='v'){ctx.fillRect(x-1,y-5,2,10);}
+// ---- drawing ----
+function X(mm){return MARG+mm2px(mm);}
+function Y(mm){return MARG+mm2px(mm);}
+function drawFix(){ctx.fillStyle='#bbb';ctx.beginPath();ctx.arc(X(WMM/2),Y(HMM+FIXMM),2,0,7);ctx.fill();}
+function drawEl(xmm,ymm,kind){
+  const x=X(xmm),y=Y(ymm);
+  ctx.fillStyle='#fff';ctx.strokeStyle='#fff';
+  if(kind==='dot'){ctx.beginPath();ctx.arc(x,y,Math.max(1,mm2px(0.75)),0,7);ctx.fill();}
+  else if(kind==='ring'){const r=mm2px(1.5);ctx.lineWidth=Math.max(1,mm2px(0.2));ctx.beginPath();for(let i=0;i<8;i++){const a=Math.PI/8+i*Math.PI/4;const px=x+r*Math.cos(a),py=y+r*Math.sin(a);i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.stroke();}
+  else{const a=kind==='b45'?-Math.PI/4:Math.PI/4,h=mm2px(2.95);ctx.lineWidth=Math.max(1,mm2px(0.35));ctx.beginPath();ctx.moveTo(x-h*Math.cos(a),y-h*Math.sin(a));ctx.lineTo(x+h*Math.cos(a),y+h*Math.sin(a));ctx.stroke();}
 }
-// build element list for one presentation n of a stimulus
-function elementsFor(n,s){
-  const els=[];
-  const x0=n*s.H*s.dir*PX, y=WY+n*s.V*PX;
-  if(y>WY+WH)return null;
-  const Dx=s.D*PX, cx=WW/2;
-  const kmin=Math.floor((-WW-x0)/Dx)-2, kmax=Math.ceil((WW*2)/Dx)+2;
-  for(let k=kmin;k<=kmax;k++){
-    const x=cx+x0+k*Dx; if(x<WX||x>WX+WW)continue;
-    let kind='dot';
-    if(s.elem==='ring')kind='ring';
-    else if(s.elem==='alt')kind=(((k%2)+2)%2)?'ring':'dot';
-    else if(s.elem==='bar')kind=(((k%2)+2)%2)?'v':'h';
-    els.push([x,y,kind]);
-  }
-  return els;
-}
-// frames list for a stimulus: s={H,V,D,dir,k (frames per t),elem}
-function stimFrames(s){
-  const fr=[];const maxF=Math.round(3000/FMS);
-  for(let n=0;fr.length<maxF;n++){
-    const e=elementsFor(n,s); if(!e)break;
-    fr.push(e);for(let j=1;j<s.k;j++)fr.push(null);
-  }
-  return fr;
-}
-function tFrames(ms){return Math.max(1,Math.round(ms/FMS));}
-let frames=[],pos=0,tick=0,running=false,trialType=1;
-
-function build(){
-  const e=+$('exp').value,dir=+$('dir').value;
-  const fix=Math.round(500/FMS),pause=60;
-  const blank=n=>Array(n).fill(null);
-  let seq=[];let info='';
-  if(e===1){
-    const t=+$('t1').value,k=tFrames(t),judge=$('judge').value;
-    const amb={H:6.8,V:1.8,D:D,dir:dir,k:k,elem:'dot'};
-    let ctrl,nm;
-    if(judge==='P1'){ctrl={...amb,D:2*D};nm='M1';}
-    else{ctrl={H:13.6,V:3.6,D:D,dir:dir,k:2*k,elem:'dot'};nm='M2';}
-    const A=stimFrames(amb),C=stimFrames(ctrl);
-    seq=blank(fix);
-    for(let i=0;i<3;i++){seq=seq.concat(C,blank(pause),A);if(i<2)seq=seq.concat(blank(pause));}
-    info='t requested '+t.toFixed(1)+' ms; M1,2 t = '+k+' frame(s) = '+(k*FMS).toFixed(1)+' ms; '+nm+' t = '+(ctrl.k)+' frame(s) = '+(ctrl.k*FMS).toFixed(1)+' ms; sweep M1,2 = '+A.length+' frames ('+(A.length*FMS).toFixed(0)+' ms)';
-  }else{
-    let H,V,elem='dot',t;
-    if(e===2){const g=CFG[+$('cfg').value];H=g.H;V=g.V;t=+$('t2').value;}
-    else{H=6.8;V=+$('v3').value;elem=$('elem').value;t=+$('t3').value;}
-    const k=tFrames(t),s={H:H,V:V,D:D,dir:dir,k:k,elem:elem};
-    const A=stimFrames(s);
-    seq=blank(fix).concat(A);
-    info='t requested '+t+' ms; realised '+k+' frame(s) = '+(k*FMS).toFixed(1)+' ms; sweep '+A.length+' frames ('+(A.length*FMS).toFixed(0)+' ms'+(A.length>=Math.round(3000/FMS)?', cut at 3 s':'')+')';
-  }
-  $('real').textContent='Display frame = '+FMS.toFixed(2)+' ms (60 Hz; measured display about '+rate.toFixed(0)+' Hz, advancing every '+step+' refresh). Times are multiples of one frame, so t below 16.7 ms cannot be shown. This trial: '+info;
-  return seq;
-}
-function upd(){ $('real').textContent='Display frame = '+FMS.toFixed(2)+' ms (60 Hz; measured display about '+rate.toFixed(0)+' Hz, advancing every '+step+' refresh). Times are multiples of one frame; t below 16.7 ms cannot be shown. Run a trial to see its realised values.';}
-
 function render(f){
   ctx.fillStyle='#000';ctx.fillRect(0,0,c.width,c.height);
   if(f)for(const [x,y,k] of f)drawEl(x,y,k);
   drawFix();
 }
-function loop(){
-  if(!running)return;
-  tick++;
-  if(tick%step===0){
-    if(pos>=frames.length){running=false;render(null);$('status').textContent='Respond now.';enableResp(true);return;}
-    render(frames[pos++]);
+// ---- stimulus construction (mm, origin = window top-left) ----
+function elementsFor(n,s){
+  const els=[],x0=n*s.H*s.dir,y=n*s.V;
+  if(y>HMM)return null;
+  const Dx=s.D,cx=WMM/2;
+  const kmin=Math.floor((-WMM-x0)/Dx)-2,kmax=Math.ceil((2*WMM)/Dx)+2;
+  for(let k=kmin;k<=kmax;k++){
+    const x=cx+x0+k*Dx;if(x<0||x>WMM)continue;
+    const odd=((k%2)+2)%2;
+    let kind='dot';
+    if(s.elem==='ring')kind='ring';
+    else if(s.elem==='alt')kind=odd?'ring':'dot';
+    else if(s.elem==='bar')kind=odd?'b45':'b135';
+    els.push([x,y,kind]);
   }
-  requestAnimationFrame(loop);
+  return els;
 }
+function stimFrames(s,cap){
+  const fr=[],maxF=cap?Math.round(3000/frameMs):1e9;
+  for(let n=0;fr.length<maxF;n++){
+    const e=elementsFor(n,s);if(!e)break;
+    fr.push(e);for(let j=1;j<s.k;j++)fr.push(null);
+  }
+  return fr;
+}
+const blank=n=>Array(n).fill(null);
+function build(tr){
+  const fix=Math.round(500/frameMs),pause=Math.round(1000/frameMs);
+  let seq,info;
+  if(tr.exp===1){
+    const k=tFrames(tr.t);
+    const amb={H:6.8,V:1.8,D:D,dir:tr.dir,k:k,elem:'dot'};
+    const ctrl=tr.judge==='P1'?{...amb,D:2*D}:{H:13.6,V:3.6,D:D,dir:tr.dir,k:2*k,elem:'dot'};
+    const A=stimFrames(amb,false),C=stimFrames(ctrl,false);
+    seq=blank(fix);
+    for(let i=0;i<3;i++){seq=seq.concat(C,blank(pause),A);if(i<2)seq=seq.concat(blank(pause));}
+    info='t '+tr.t.toFixed(1)+' ms &rarr; M1,2: '+k+' frame(s) = '+(k*frameMs).toFixed(1)+' ms; control: '+ctrl.k+' frame(s) = '+(ctrl.k*frameMs).toFixed(1)+' ms; sweep M1,2 '+A.length+' frames ('+(A.length*frameMs).toFixed(0)+' ms)';
+  }else{
+    const k=tFrames(tr.t),s={H:tr.H,V:tr.V,D:D,dir:tr.dir,k:k,elem:tr.elem||'dot'};
+    const A=stimFrames(s,true);
+    seq=blank(fix).concat(A);
+    info='t '+tr.t.toFixed(1)+' ms &rarr; '+k+' frame(s) = '+(k*frameMs).toFixed(1)+' ms; sweep '+A.length+' frames ('+(A.length*frameMs).toFixed(0)+' ms'+(A.length>=Math.round(3000/frameMs)?', cut at 3 s':'')+')';
+  }
+  return {seq,info,k:tFrames(tr.t)};
+}
+// ---- block / trial lists ----
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function makeBlock(){
+  const e=+$('exp').value,L=[];
+  if(e===1){
+    T1.forEach(t=>['P1','P2'].forEach(j=>[1,-1].forEach(d=>L.push({exp:1,t:t,judge:j,dir:d}))));
+  }else if(e===2){
+    const g=CFG[+$('cfg').value],ts=parseT();
+    ts.forEach(t=>[1,-1].forEach(d=>{for(let r=0;r<4;r++)L.push({exp:2,H:g.H,V:g.V,t:t,dir:d,cfg:+$('cfg').value,paperDist:paperDist()});}));
+  }else{
+    const ts=parseT(),el=$('elem').value;
+    [1.84,2.45,3.06].forEach(v=>ts.forEach(t=>[1,-1].forEach(d=>{for(let r=0;r<2;r++)L.push({exp:3,H:6.8,V:v,t:t,dir:d,elem:el,paperDist:200});})));
+  }
+  return shuffle(L);
+}
+// ---- run state ----
+let trialTok=0,blockId=0,timer=null,retries=0,queue=[],done=0,total=0,log=[],cur=null,seq=[],pos=0,last=null,dropped=false,running=false,sessionOn=false,tShown=0,requeued=false;
 function setupUI(){
   const e=+$('exp').value;
-  $('opts1').style.display=e===1?'':'none';$('opts2').style.display=e===2?'':'none';$('opts3').style.display=e===3?'':'none';
+  $('opts2').style.display=e===2?'':'none';$('opts3').style.display=e===3?'':'none';$('optsT').style.display=e>1?'':'none';
   const R=$('resp');R.innerHTML='';
   if(e===1){
-    $('instr').textContent='Fixate the cross. M1,2 and the control are shown alternately three times. Rate the strength of motion on the selected path in M1,2 relative to the control: 0 = undetectable, 1 = 20% as strong, ... 5 = equal strength, 6 = stronger in M1,2.';
+    $('instr').textContent='Fixate the dot. M1,2 and a control stimulus are shown alternately three times. Rate the strength of motion on the cued path in M1,2 relative to the control: 0 = undetectable, 1 = 20% as strong, ... 5 = equal strength, 6 = stronger in M1,2. Keys 0-6 also respond (usability aid; the paper does not specify the response device).';
     for(let i=0;i<=6;i++){const b=document.createElement('button');b.textContent=i;b.onclick=()=>answer(i);R.appendChild(b);}
   }else{
-    $('instr').textContent='Fixate the cross. After the row has swept through the window, report whether the dominant motion was to the right or to the left.';
+    $('instr').textContent='Fixate the dot. After the row has swept through the window, report whether the dominant motion was to the right or to the left. Left/Right arrow keys also respond (usability aid; the paper does not specify the response device).';
     ['Left','Right'].forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>answer(n);R.appendChild(b);});
   }
-  enableResp(false);render(null);$('status').textContent='';
+  enableResp(false);layout();updReal();$('status').textContent='';$('cue').textContent='';
 }
 function enableResp(on){document.querySelectorAll('#resp button').forEach(b=>b.disabled=!on);}
-function answer(a){enableResp(false);$('status').textContent='Response recorded ('+a+'). Not scored.';}
-$('run').onclick=()=>{if(running)return;enableResp(false);frames=build();pos=0;tick=0;running=true;$('status').textContent='Running...';requestAnimationFrame(loop);};
-$('exp').onchange=setupUI;
-setupUI();
+function lock(on){['exp','cfg','dist2','elem','tlist','cardw','vd','calreset','remeasure'].forEach(i=>$(i).disabled=on);$('run').disabled=on;$('stop').disabled=!on;}
+function startBlock(){
+  if(sessionOn)return;
+  if(+$('exp').value>1&&parseT().length!==7){$('status').textContent='Enter 7 t values.';return;}
+  queue=makeBlock();total=queue.length;done=0;log=[];requeued=false;sessionOn=true;blockId++;clearTimeout(timer);const sw=$('stagewrap');sw.scrollLeft=(sw.scrollWidth-sw.clientWidth)/2;lock(true);$('dl').disabled=true;
+  nextTrial();
+}
+function nextTrial(){
+  if(!sessionOn)return;
+  if(!queue.length){endBlock();return;}
+  cur=queue.shift();
+  const b=build(cur);seq=b.seq;pos=0;last=null;dropped=false;running=true;
+  $('prog').textContent='Trial '+(done+1)+' / '+total;
+  $('status').textContent='';
+  $('cue').textContent=cur.exp===1?'Rate path '+cur.judge+' ('+((cur.judge==='P1')===(cur.dir>0)?'rightward':'leftward')+')':'';
+  updReal(b.info);
+  tShown=0;const id=blockId,tn=++trialTok;requestAnimationFrame(t=>loop(t,tn));
+}
+function loop(ts,tn){
+  if(!running||tn!==trialTok)return;
+  if(last!==null&&ts-last>1.5*frameMs)dropped=true;
+  last=ts;
+  if(pos>=seq.length){running=false;render(null);$('status').textContent='Respond now.';enableResp(true);tShown=performance.now();return;}
+  render(seq[pos++]);
+  requestAnimationFrame(t=>loop(t,tn));
+}
+document.addEventListener('keydown',e=>{
+  if(!sessionOn||running||$('resp').querySelector('button').disabled)return;
+  if(e.target&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=='button'&&e.target.type!=='range')return;
+  if(+$('exp').value===1){if(/^[0-6]$/.test(e.key)){e.preventDefault();answer(+e.key);}}
+  else if(e.key==='ArrowLeft'){e.preventDefault();answer('Left');}
+  else if(e.key==='ArrowRight'){e.preventDefault();answer('Right');}
+});
+function answer(a){
+  if(!sessionOn||running)return;
+  enableResp(false);
+  const rt=Math.round(performance.now()-tShown);
+  const rec={trial:done+1,exp:cur.exp,judge:cur.judge||'',H:cur.H||(cur.exp===1?6.8:''),V:cur.V||(cur.exp===1?1.8:''),elem:cur.elem||'dot',dir:cur.dir,t_ms:cur.t,paper_dist_cm:cur.paperDist||200,frame_ms:frameMs.toFixed(3),k_frames:cur.exp===1?'':tFrames(cur.t),seq_frames:seq.length,px_per_cm:ppcm.toFixed(2),view_dist_cm:vd,retries:cur.retry||0,response:a,rt_ms:rt,dropped_frame:dropped?1:0};
+  log.push(rec);
+  if(dropped&&(cur.retry||0)<3){cur.retry=(cur.retry||0)+1;queue.push(cur);total++;}
+  done++;
+  $('status').textContent='Response recorded.';
+  $('cue').textContent='';
+  clearTimeout(timer);timer=setTimeout(nextTrial,1000);   // 1 s between trials (assumption)
+}
+function endBlock(){sessionOn=false;running=false;lock(false);$('dl').disabled=!log.length;$('prog').textContent='';$('status').textContent='Block finished.';render(null);}
+function abortBlock(){clearTimeout(timer);blockId++;sessionOn=false;running=false;enableResp(false);lock(false);$('dl').disabled=!log.length;$('prog').textContent='';$('status').textContent='Aborted.';$('cue').textContent='';render(null);}
+function download(){
+  if(!log.length)return;
+  const keys=Object.keys(log[0]);
+  const csv=[keys.join(',')].concat(log.map(r=>keys.map(k=>r[k]).join(','))).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='burt_sperling_1981_log.csv';a.click();
+}
+// ---- wiring ----
+$('run').onclick=startBlock;$('stop').onclick=abortBlock;$('dl').onclick=download;
+$('exp').onchange=setupUI;$('dist2').onchange=layout;$('tlist').oninput=()=>updReal();
+$('cardw').value=Math.round(CARD_CM*ppcm);$('vd').value=vd;
+$('cardw').oninput=()=>{ppcm=(+$('cardw').value)/CARD_CM;saveDisp();layout();};
+$('vd').onchange=()=>{const v=+$('vd').value;if(v>=20&&v<=400){vd=v;saveDisp();layout();}};
+$('calreset').onclick=()=>{ppcm=37.8;vd=200;$('cardw').value=Math.round(CARD_CM*ppcm);$('vd').value=vd;saveDisp();layout();};
+$('remeasure').onclick=()=>{if(!running&&!sessionOn)measure();};
+setupUI();measure();
 </script>
 </body>
 </html>

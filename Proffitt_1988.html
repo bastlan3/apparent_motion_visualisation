@@ -12,9 +12,18 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 12px; max-width:760px; text-align:center; line-height:1.5; }
-  canvas { background:#808080; display:block; max-width:96vw; height:auto; border-radius:2px; }
+  canvas { background:#808080; display:block; border-radius:2px; }
+  .wrap { max-width:96vw; overflow:auto; }
+  details.setup { margin-top:10px; width:700px; max-width:96vw; font-size:12px; color:#9a9a9a; background:#131318; border:1px solid #2a2a30; border-radius:4px; padding:6px 10px; }
+  details.setup summary { cursor:pointer; color:#aaa; }
+  details.setup .row { margin:6px 0; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  #card { height:14px; width:323px; background:#8a8a92; border-radius:3px; }
+  input[type=number], input[type=text] { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:4px 6px; border-radius:4px; font-size:12px; width:80px; }
+  .warn { color:#d08a4a; }
   .bar { margin-top:10px; width:700px; max-width:96vw; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center; font-size:12px; color:#9a9a9a; }
-  .status { margin-top:8px; width:700px; max-width:96vw; text-align:center; font-size:12px; color:#bdbdbd; min-height:34px; line-height:1.5; }
+  .status { position:fixed; left:50%; transform:translateX(-50%); bottom:8px; z-index:20; background:rgba(12,12,16,.88); border:1px solid #2a2a30; border-radius:4px; padding:6px 12px; margin:0; box-sizing:border-box; width:700px; max-width:96vw; text-align:center; font-size:12px; color:#bdbdbd; line-height:1.5; }
+  #status:empty { display:none; }
+  #rest { bottom:64px; }
   select, button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 10px; border-radius:4px; font-size:12px; }
   button { cursor:pointer; } button:hover { background:#26262e; }
   button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
@@ -30,10 +39,21 @@
   <a class="back" href="index.html">← back to experiments</a>
   <h1>Proffitt, Gilden, Kaiser &amp; Whelan (1988) — configural orientation &amp; apparent-motion path</h1>
   <div class="sub">Two fixed rectangles (or disks) blink alternately in different places and orientations. The observer
-    turns on a blinking probe, moves it along a fixed line, and presses a key when done, then rates the goodness of the path.</div>
+    turns on a blinking probe, moves it along a fixed line, and presses a key when done. In Exp 2 and Exp 3 the observer then also rates the goodness of the path.</div>
 
-  <canvas id="c" width="700" height="600"></canvas>
+  <details class="setup" id="setup"><summary>Display setup (screen scale and viewing distance)</summary>
+    <div class="row">Resize the bar to the width of a credit card (8.56 cm):
+      <input type="range" id="cardRange" min="120" max="700" step="1" value="324"> <span id="ppcmTxt"></span></div>
+    <div class="row"><div id="card"></div></div>
+    <div class="row">Viewing distance (cm) <input type="number" id="dist" min="20" max="200" step="1" value="60">
+      <span id="distNote"></span></div>
+    <div class="row" id="scaleInfo"></div>
+  </details>
+  <div class="wrap"><canvas id="c" width="1323" height="1134"></canvas></div>
   <div class="status" id="status"></div>
+  <div class="status" id="rest" style="display:none">
+    <span id="dq"></span> <input type="number" id="dans" step="1"> (Enter)
+  </div>
 
   <div class="bar">
     <label>Session
@@ -61,103 +81,174 @@
   <div class="panel">
     <h2>Methods (paper values; <span class="as">amber</span> = unspecified, my assumption)</h2>
     <table>
-      <tr><td>Display</td><td>Tektronix 4129, screen 30 cm high x 35 cm wide (p. 467). Canvas = that screen at 20 px/cm (700x600). Viewing ~60 cm, so 1 cm ≈ 0.95°; the real visual angle depends on your screen and distance. <span class="as">Background: uniform gray (stated for Exp 3, p. 472; used for all); luminances and colours unspecified.</span></td></tr>
-      <tr><td>Test stimuli</td><td>Two fixed rectangles 4.1 x 0.8 (printed "mm", p. 467; <span class="as">drawn as cm, since mm would be implausibly small</span>), centres 13.3 cm apart (≈12.6°). Lines AB and CD (short ends) coloured red and blue. <span class="as">Outline, line widths and colours unspecified; red end on the +major-axis side.</span></td></tr>
-      <tr><td>Geometry</td><td>β = system-axis angle from horizontal (set {45, 135, 224, 315}°; printed 224, <span class="as">drawn as 224 as printed</span>; random, never equal on successive trials). θ = arm angle from system axis, α = major axis vs arm; same for both rectangles (orientation change 2θ). P is placed randomly within a 4-cm circle at screen centre each stimulus. <span class="as">Taken as radius 2 cm; P is placed at the midpoint of the two centres, because with P at the rotation origin the centres fall off the 35 x 30 cm screen for small θ. Test 1 on the +θ arm.</span></td></tr>
-      <tr><td>Probe</td><td>Same shape, orientation (β+α) and colouring as the test rectangles; moves continuously along the system axis only. At trial start it is OFF, at the left or right screen border; the observer must switch it on (p. 468).</td></tr>
-      <tr><td>Timing</td><td>Sequence test1, probe, test2, probe, repeat; each stimulus 70 ms, ISI 180 ms, the same whether the probe is on or off (probe slots stay blank). Frame-counted: at 60 Hz = 4 frames (66.7 ms) and 11 frames (183.3 ms). <span id="fps">Measuring refresh…</span> <span class="as">Loops until the observer finishes; no fixation mark (none mentioned).</span></td></tr>
-      <tr><td>Task</td><td>Get a good path first with the probe off, then turn the probe on and move it onto the path, then turn it off and on to check the path is unchanged (p. 468). A key signals no further adjustment; timing runs from the first probe-moving key to that key (observers not told). Then a goodness scale appears at the bottom of the screen, a marker is moved by a thumbscrew, with the display still blinking (p. 470). <span class="as">Keys: Space = probe on/off, ←/→ = move along the axis toward screen left/right (Shift = fine), Enter = done; scale endpoints labelled "poor"/"good", marker starts mid-scale, ←/→ stand in for the thumbscrew.</span></td></tr>
-      <tr><td>Exp 1 (p. 467-468)</td><td>α/θ = 0/20, 0/22, 0/24, 90/20. 4 test blocks x 4 stimuli; probe start side random for block 1, then opposite to the previous showing of that stimulus (L,R,L,R or reverse). <span class="as">Order within block random. The paper's 4 practice stimuli (the rest of Foster's 8) are not specified and are omitted. β set as in Exp 2.</span></td></tr>
-      <tr><td>Exp 2 (p. 469-470)</td><td>α = 0, -15, 30, -45, 60, -75, 90°; θ = 15, 30, 45, 60, 75, 90°; initial probe L/R; β random as above. <span class="as">One trial per cell (84), random order, repetitions unstated; rest at the halfway point (unrelated task, not implemented).</span></td></tr>
-      <tr><td>Exp 3 (p. 472)</td><td>Two disks 2 cm diameter (≈1.9°), magenta outline. Patterned: six equally spaced parallel lines, one semicircle red, the other blue, gray between; α = 0 or 90, θ = 30 only; start L/R. Unpatterned: outline only; L/R start only. Two blocks per group: exposed group = patterned blocks then unpatterned blocks; naive group = unpatterned only (one practice block, then two test blocks). <span class="as">Line direction: parallel to the rectangle's short ends. Unpatterned disk geometry: θ = 30, random β. Practice block and block counts of the exposed group as stated: 2 patterned + 2 unpatterned.</span></td></tr>
-      <tr><td>Participants</td><td>Exp 1: 12 (6 M, 6 F); Exp 2: gender between-subjects; Exp 3: 24 naive students in two groups of 12. Not applicable here.</td></tr>
+      <tr><td>Display</td><td>Tektronix 4129, screen 30 cm high x 35 cm wide, 4 lines/mm (p. 467). Viewing distance approximately 60 cm (p. 468): 13.3 cm separation = 12.6°. Drawn in degrees from your calibrated px/cm and viewing distance (see Display setup): sizes are the paper's cm at 60 cm converted to degrees, so the canvas is 35 x 30 cm at 60 cm (≈ 33 x 28°) whatever the distance. <span class="as">Default 37.8 px/cm (not calibrated); background uniform gray (stated for Exp 3, p. 472; used for all); luminances and colours unspecified. If the canvas does not fit your window the page scrolls: the stimulus is scrolled to the middle of the window at each trial start and to the goodness scale when it appears; instructions are shown as an overlay at the bottom of the window. The stimulus is never shrunk (zoom the browser out or sit further away if you want it all visible, then recalibrate).</span> <span id="fps">Measuring refresh…</span></td></tr>
+      <tr><td>Test stimuli</td><td>Two fixed rectangles 4.1 x 0.8 (printed "mm", p. 467; <span class="as">drawn as cm, since mm would be implausibly small</span>), centres 13.3 cm apart (12.6°). Lines AB and CD (short ends) red and blue. <span class="as">Outline (light 1.5 px), end-line width (4 px), red/blue values, and which end is red (the +major-axis side) are not stated.</span></td></tr>
+      <tr><td>Geometry</td><td>β = system-axis angle from horizontal (set {45, 135, 224, 315}°; printed 224, <span class="as">used as printed</span>; random, never equal on successive trials). Arms start at P and make angle θ with the system axis; each rectangle's major axis makes angle α with its arm; same α, θ for both rectangles (orientation change 2θ; p. 467, Fig. 3). P varies randomly within a 4-cm circle at screen centre for each stimulus (p. 468). <span class="as">Circle taken as radius 2 cm. With P as rotation origin the centres are R = 6.65/sin θ from P (25.7 cm at θ = 15°), which leaves the 35 x 30 cm screen for small θ. The page therefore places P itself in the circle when both rectangles fit on screen (up to 40 random tries), otherwise places the chord midpoint of the two centres in the circle; the rule used, P and the midpoint are logged per trial. Test 1 (flashes first) is on the +θ arm; α is added counter-clockwise to the arm angle (sign convention unstated).</span></td></tr>
+      <tr><td>Probe</td><td>Same shape, orientation (β+α) and colouring as the test rectangles; moves continuously along the system axis only. At trial start it is OFF, at the left or right border of the screen; the observer must switch it on (p. 468). <span class="as">All β are diagonals, so an axis through the centre may meet the top or bottom edge first; "left"/"right" here means the end of the axis with the smaller/larger screen x, which is then clipped to the screen edge.</span></td></tr>
+      <tr><td>Timing</td><td>Sequence test1, probe, test2, probe, repeat; each stimulus 70 ms, ISI 180 ms, the same whether the probe is on or off (probe slots stay blank) (p. 468). Frame-counted from the measured refresh (median of ~60 frames); the realised ms are given in the display line above. <span class="as">Loops until the observer finishes; no fixation mark (none mentioned). Late frames (interval over 1.5x nominal) are counted per trial and exported.</span></td></tr>
+      <tr><td>Task</td><td>Get a good path first with the probe off, then turn the probe on and move it onto the path, then turn it off and on to check the path is unchanged (p. 468). A key signals no further adjustment; timing runs from the first probe-moving key to that key (observers not told; p. 469). <b>Exp 1 (p. 467-468) describes probe placement only: no goodness scale and no timing in this session (the page skips the rating phase and records neither).</b> In Exp 2 and Exp 3 (p. 469-470) a goodness scale then appears at the bottom of the screen; observers rate confidence in the placement and clarity of the path with a thumbscrew-moved marker, with the display still blinking (p. 469-470). <span class="as">Keys: Space = probe on/off, ←/→ = move along the axis toward screen left/right (0.12 cm per frame at 60 Hz, Shift = 0.02), Enter = done (requires the probe to have been switched on and moved at least once); scale endpoints labelled "poor"/"good"; marker starts mid-scale and moves with ←/→ (0.008 per frame, Shift 0.002) in place of the thumbscrew.</span></td></tr>
+      <tr><td>Exp 1 (p. 467-468)</td><td>12 observers. α/θ = 0/20, 0/22, 0/24, 90/20. Practice: 4 further stimuli (the rest of Foster's 8) x 2 blocks, random order, probe side random in block 1 and opposite in block 2. Test: same, with 4 blocks; initial side random in block 1, then opposite to the previous showing of that stimulus (L,R,L,R or reverse). Rest halfway through, with an unrelated task. <span class="as">The practice values are not given: 0/18, 0/26, 90/22, 0/28 are invented neighbours. β set as in Exp 2 (not stated). Distractor task: five arithmetic sums (placeholder). Order within block random.</span></td></tr>
+      <tr><td>Exp 2 (p. 469-470)</td><td>12 naive observers (6 M, 6 F). α = 0, -15, 30, -45, 60, -75, 90°; θ = 15, 30, 45, 60, 75, 90°; initial probe L/R; β random as above. Procedure identical to Exp 1. <span class="as">One trial per cell (84), random order (repetitions unstated); practice as for Exp 1 (invented values); rest and distractor at the halfway point.</span></td></tr>
+      <tr><td>Exp 3 (p. 472)</td><td>24 naive students in two groups of 12. Two disks 2 cm diameter (1.9°), magenta outline. Patterned: six equally spaced parallel lines, one semicircle red, the other blue, gray between; α = 0 or 90, θ = 30 only; start L/R (patterned block = 4 trials). Unpatterned: outline only; L/R start only (block = 2 trials). Two blocks per observer, patterned first when both are viewed. Exposed group: practice with patterned disks, patterned block, rest with a distractor task, unpatterned block. Naive group: one practice block, then two test blocks, all unpatterned. <span class="as">Reading of "two blocks" as one patterned plus one unpatterned block for the exposed group is an interpretation. Practice block for the exposed group = one patterned block. Line direction: perpendicular to the major axis (parallel to the rectangle's short ends). Unpatterned disk geometry: θ = 30, β random as in Exp 2.</span></td></tr>
+      <tr><td>Participants</td><td>Exp 1: 12 (6 M, 6 F); Exp 2: 12 (gender between subjects); Exp 3: 24. Not applicable here.</td></tr>
     </table>
   </div>
 
 <script>
 const c = document.getElementById('c'), ctx = c.getContext('2d');
-const W = c.width, H = c.height, PXCM = 20;           // 35 x 30 cm screen
+const SCR_W = 35, SCR_H = 30, PAPER_DIST = 60;          // cm
 const SEP = 13.3, RW = 4.1, RH = 0.8, DISK_D = 2.0, JIT_R = 2.0;
 const RED = '#e03030', BLUE = '#3050ff', MAG = '#d030d0';
 const BETAS = [45,135,224,315];
 const ALPHAS2 = [0,-15,30,-45,60,-75,90], THETAS2 = [15,30,45,60,75,90];
+const PRACTICE = [[0,18],[0,26],[90,22],[0,28]];        // invented neighbours (assumption)
 const rad = d => d*Math.PI/180;
 const shuffle = a => { for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const other = s => s==='left'?'right':'left';
+
+// ---- display setup (shared key am_display: {ppcm, dist}) ----
+let disp = {ppcm:37.8, dist:60};
+try { const d = JSON.parse(localStorage.getItem('am_display')||'null');
+  if (d && d.ppcm>20 && d.ppcm<200) disp.ppcm=d.ppcm; if (d && d.dist>=20 && d.dist<=200) disp.dist=d.dist; } catch(e){}
+function saveDisp(){ try { localStorage.setItem('am_display', JSON.stringify({ppcm:disp.ppcm, dist:disp.dist})); } catch(e){} }
+let PXCM = 20, W = 700, H = 600;     // PXCM = px per paper-cm (cm at 60 cm viewing distance)
+const cardRange = document.getElementById('cardRange'), distIn = document.getElementById('dist');
+function applyDisp(){
+  PXCM = disp.ppcm*disp.dist/PAPER_DIST;
+  W = Math.round(SCR_W*PXCM); H = Math.round(SCR_H*PXCM); c.width=W; c.height=H;
+  const pxdeg = disp.ppcm*disp.dist*Math.PI/180;
+  document.getElementById('card').style.width = (disp.ppcm*8.56).toFixed(0)+'px';
+  document.getElementById('ppcmTxt').textContent = disp.ppcm.toFixed(1)+' px/cm';
+  document.getElementById('distNote').textContent = disp.dist===60 ? '(paper: approx. 60 cm)' : '(paper: approx. 60 cm; assumption if different)';
+  const fits = W<=window.innerWidth && H<=window.innerHeight-120;
+  document.getElementById('scaleInfo').innerHTML = pxdeg.toFixed(1)+' px/deg; canvas '+W+' x '+H+' px = '+
+    (2*Math.atan(SCR_W/2/disp.dist)*180/Math.PI).toFixed(1)+' x '+(2*Math.atan(SCR_H/2/disp.dist)*180/Math.PI).toFixed(1)+'°; separation '+SEP+' cm at 60 cm = 12.6°.'+
+    (fits?'':' <span class="warn">The 35 x 30 cm canvas does not fit in this window; scroll, zoom out, or move further away.</span>');
+}
+cardRange.value = Math.round(disp.ppcm*8.56); distIn.value = disp.dist;
+cardRange.addEventListener('input',()=>{ disp.ppcm = +cardRange.value/8.56; applyDisp(); saveDisp(); });
+distIn.addEventListener('change',()=>{ const v=+distIn.value; if (v>=20 && v<=200){ disp.dist=v; applyDisp(); saveDisp(); } });
+window.addEventListener('resize',applyDisp);
+applyDisp();
 
 // ---- frame-locked timing ----
-let fps = 60, framesStim = 4, framesIsi = 11;
+let fd = 1000/60, framesStim = 4, framesIsi = 11, measured = false;
 function setFrames(){
-  const fd = 1000/fps;
   framesStim = Math.max(1, Math.round(70/fd)); framesIsi = Math.max(1, Math.round(180/fd));
-  document.getElementById('fps').textContent = 'Measured refresh ≈ ' + fps.toFixed(0) + ' Hz: stimulus ' + framesStim + ' frames = ' +
-    (framesStim*fd).toFixed(1) + ' ms, ISI ' + framesIsi + ' frames = ' + (framesIsi*fd).toFixed(1) + ' ms.';
+  const frac = [70,180].some(x=>Math.abs(x/fd-Math.round(x/fd))>0.05);
+  document.getElementById('fps').textContent = 'Display: ' + (1000/fd).toFixed(1) + ' Hz (median of 60 frames); stimulus ' + framesStim + ' frames = ' +
+    (framesStim*fd).toFixed(1) + ' ms (paper 70), ISI ' + framesIsi + ' frames = ' + (framesIsi*fd).toFixed(1) + ' ms (paper 180).' +
+    (frac?' Warning: 70 and/or 180 ms is not a whole number of frames at this rate.':'');
 }
 (function measure(){
   const dts=[]; let last=0;
   function f(ts){ if(last) dts.push(ts-last); last=ts;
-    if (dts.length<40) requestAnimationFrame(f);
-    else { dts.sort((a,b)=>a-b); const m=dts[Math.floor(dts.length/2)]; fps = Math.min(240, Math.max(30, 1000/m)); 
-           const std=[30,60,72,75,90,120,144,165,240].reduce((p,q)=>Math.abs(q-fps)<Math.abs(p-fps)?q:p); fps=std; setFrames(); } }
+    if (dts.length<60) requestAnimationFrame(f);
+    else { dts.sort((a,b)=>a-b); fd = dts[Math.floor(dts.length/2)]; measured=true; setFrames();
+           document.getElementById('start').disabled=false; } }
   requestAnimationFrame(f);
 })();
 
 // ---- state ----
 let trials=[], ti=-1, phase='idle';   // idle | trial | rate | between
-let T=null, tr=null, frame=0, probeOn=false, tProbe=0, tmin=0, tmax=0, rateVal=0.5;
-let tStart=null; const results=[]; let prevBeta=null;
+let T=null, tr=null, frame=0, probeOn=false, probeEverOn=false, tProbe=0, tmin=0, tmax=0, rateVal=0.5;
+let tStart=null, lastTs=0, nFrames=0, nLate=0; const results=[]; let prevBeta=null;
 const keys={left:false,right:false,shift:false};
 const status = document.getElementById('status');
 function say(s){ status.innerHTML = s; }
+function scrollTo_(mode){      // bring the (unscaled) canvas part needed into view; geometry is never changed
+  try{ const cv=document.getElementById('c'), r=cv.getBoundingClientRect(), vh=window.innerHeight;
+    const y = mode==='scale' ? r.top+window.scrollY+H-34-vh*0.6 : r.top+window.scrollY+H/2-vh/2;
+    const wr=cv.parentElement, tx = mode==='scale' ? W/2 : W/2;   // horizontal: centre the canvas (scale is centred too)
+    wr.scrollLeft=Math.max(0,tx-wr.clientWidth/2);
+    window.scrollTo({top:Math.max(0,y),behavior:'auto'}); }catch(e){} }
 
 function nextBeta(){ let b; do { b = BETAS[Math.floor(Math.random()*4)]; } while (b===prevBeta); prevBeta=b; return b; }
 
 function buildTrials(kind){
   const L=[]; prevBeta=null;
+  const rest = ()=>L.push({type:'rest'});
+  const pracBlocks = (exp, kindStim)=>{                  // 4 practice stimuli x 2 blocks, 2nd block opposite sides
+    const base = PRACTICE.map(()=>Math.random()<0.5?'left':'right');
+    for (let b=0;b<2;b++) shuffle(PRACTICE.map((s,i)=>i)).forEach(i=>
+      L.push({exp,block:'practice'+(b+1),practice:true,kind:kindStim,alpha:PRACTICE[i][0],theta:PRACTICE[i][1],side:b===0?base[i]:other(base[i])}));
+  };
   if (kind==='1'){
+    pracBlocks('1','rect');
     const S=[[0,20],[0,22],[0,24],[90,20]], base=S.map(()=>Math.random()<0.5?'left':'right');
-    for (let b=0;b<4;b++) shuffle(S.map((s,i)=>i)).forEach(i=>{
-      const side = (b%2===0)?base[i]:(base[i]==='left'?'right':'left');
-      L.push({exp:'1',block:b+1,kind:'rect',alpha:S[i][0],theta:S[i][1],side}); });
+    for (let b=0;b<4;b++){
+      if (b===2) rest();
+      shuffle(S.map((s,i)=>i)).forEach(i=>{
+        const side = (b%2===0)?base[i]:other(base[i]);
+        L.push({exp:'1',block:b+1,kind:'rect',alpha:S[i][0],theta:S[i][1],side}); });
+    }
   } else if (kind==='2'){
+    pracBlocks('2','rect');
     const A=[]; ALPHAS2.forEach(a=>THETAS2.forEach(t=>['left','right'].forEach(s=>A.push({exp:'2',block:1,kind:'rect',alpha:a,theta:t,side:s}))));
-    shuffle(A).forEach(x=>L.push(x));
+    shuffle(A); A.forEach((x,i)=>{ if (i===A.length/2) rest(); L.push(x); });
   } else if (kind==='3e' || kind==='3n'){
-    const blocks=[]; 
-    if (kind==='3e'){ blocks.push('p','p','u','u'); } else { blocks.push('u','u','u'); }
+    const blocks = kind==='3e' ? ['pp','p','R','u'] : ['pu','u','u'];   // pp/pu = practice block, R = rest
     blocks.forEach((bt,bi)=>{
-      const B=[];
-      if (bt==='p') [0,90].forEach(a=>['left','right'].forEach(s=>B.push({exp:'3',block:bi+1,kind:'pdisk',alpha:a,theta:30,side:s})));
-      else ['left','right'].forEach(s=>B.push({exp:'3',block:bi+1,kind:'udisk',alpha:0,theta:30,side:s,practice:(kind==='3n'&&bi===0)}));
+      if (bt==='R'){ rest(); return; }
+      const prac = bt.length===2, k = bt[bt.length-1]==='p'?'pdisk':'udisk', B=[];
+      if (k==='pdisk') [0,90].forEach(a=>['left','right'].forEach(s=>B.push({exp:'3',block:prac?'practice':bi,practice:prac,kind:k,alpha:a,theta:30,side:s})));
+      else ['left','right'].forEach(s=>B.push({exp:'3',block:prac?'practice':bi,practice:prac,kind:k,alpha:0,theta:30,side:s}));
       shuffle(B).forEach(x=>L.push(x)); });
   } else {
-    L.push({exp:'single',block:1,kind:document.getElementById('ss').value,
+    L.push({exp:'single',block:1,practice:false,kind:document.getElementById('ss').value,
       alpha:+document.getElementById('sa').value, theta:+document.getElementById('st').value,
       side:document.getElementById('sside').value, beta:+document.getElementById('sb').value});
   }
-  L.forEach(t=>{ if (t.beta===undefined) t.beta=nextBeta(); });
-  return L;
+  let n=0; L.forEach(t=>{ if (t.type==='rest') return; t.n=++n; if (t.beta===undefined) t.beta=nextBeta(); });
+  L.total=n; return L;
 }
 
-// ---- geometry (cm, y up; origin screen centre) ----
+// ---- geometry (paper cm, y up; origin screen centre) ----
+function halfExt(kind, ang){ const a=rad(ang);
+  return kind==='rect' ? {x:RW/2*Math.abs(Math.cos(a))+RH/2*Math.abs(Math.sin(a)), y:RW/2*Math.abs(Math.sin(a))+RH/2*Math.abs(Math.cos(a))}
+                       : {x:DISK_D/2, y:DISK_D/2}; }
+const RULE_CACHE={};
 function setupTrial(t){
-  const th=rad(t.theta), b=rad(t.beta);
-  const r=JIT_R*Math.sqrt(Math.random()), a=Math.random()*2*Math.PI;
-  const M={x:r*Math.cos(a), y:r*Math.sin(a)};
+  const th=rad(t.theta), b=rad(t.beta), R=SEP/2/Math.sin(th);
   const u={x:Math.cos(b),y:Math.sin(b)}, v={x:-Math.sin(b),y:Math.cos(b)};
-  const c1={x:M.x+SEP/2*v.x,y:M.y+SEP/2*v.y}, c2={x:M.x-SEP/2*v.x,y:M.y-SEP/2*v.y};
-  // axis extent inside the screen (probe centre on the border at the ends)
-  const hx=W/PXCM/2, hy=H/PXCM/2; let lo=-1e9, hi=1e9;
-  [[u.x,M.x,hx],[u.y,M.y,hy]].forEach(([du,m,h])=>{ if (Math.abs(du)>1e-9){ const t1=(-h-m)/du, t2=(h-m)/du; lo=Math.max(lo,Math.min(t1,t2)); hi=Math.min(hi,Math.max(t1,t2)); } });
+  const hx=SCR_W/2, hy=SCR_H/2;
+  const samp = ()=>{ const r=JIT_R*Math.sqrt(Math.random()), a=Math.random()*2*Math.PI; return {x:r*Math.cos(a), y:r*Math.sin(a)}; };
+  const cen = (O,sg)=>({x:O.x+R*Math.cos(b+sg*th), y:O.y+R*Math.sin(b+sg*th)});
+  const fitsFor = (O,kind,beta,theta,alpha)=>{ const bb=rad(beta), tt=rad(theta), RR=SEP/2/Math.sin(tt);
+    return [1,-1].every(sg=>{ const p={x:O.x+RR*Math.cos(bb+sg*tt), y:O.y+RR*Math.sin(bb+sg*tt)}, e=halfExt(kind,beta+sg*theta+alpha); return Math.abs(p.x)+e.x<=hx && Math.abs(p.y)+e.y<=hy; }); };
+  const fits = O=>fitsFor(O,t.kind,t.beta,t.theta,t.alpha);
+  // One placement rule per (kind, theta): literal (P random in the 4-cm circle) only if every beta/alpha of that theta can be shown whole; otherwise the fallback for ALL its trials.
+  const rkey=t.kind+'|'+t.theta;
+  if (!(rkey in RULE_CACHE)){
+    const grid=[{x:0,y:0}]; for (let i=0;i<60;i++){ const r=JIT_R*Math.sqrt((i+0.5)/60), a=i*2.399963; grid.push({x:r*Math.cos(a), y:r*Math.sin(a)}); }
+    const als=t.kind==='rect'?Array.from(new Set(ALPHAS2.concat([0,90]))):[0,90];
+    RULE_CACHE[rkey]=BETAS.every(b=>als.every(al=>grid.some(g=>fitsFor(g,t.kind,b,t.theta,al))));
+  }
+  let O=null, rule;
+  if (RULE_CACHE[rkey]){
+    rule='P in 4-cm circle (literal)';
+    for (let k=0;k<400 && !O;k++){ const q=samp(); if (fits(q)) O=q; }
+    if (!O){ const g=[{x:0,y:0}]; for (let i=0;i<60;i++){ const r=JIT_R*Math.sqrt((i+0.5)/60), a=i*2.399963; g.push({x:r*Math.cos(a), y:r*Math.sin(a)}); } O=g.find(fits)||g[0]; }
+  } else {
+    const M0=samp(); O={x:M0.x-R*Math.cos(th)*u.x, y:M0.y-R*Math.cos(th)*u.y}; rule='chord midpoint in 4-cm circle (fallback)';
+  }
+  const M={x:O.x+R*Math.cos(th)*u.x, y:O.y+R*Math.cos(th)*u.y};
+  const c1=cen(O,1), c2=cen(O,-1);
+  // axis extent inside the screen, parameter s from P along u (probe centre on the border at the ends)
+  let lo=-1e9, hi=1e9;
+  const pe=halfExt(t.kind,t.beta+t.alpha);   // keep the whole probe on the canvas at the border
+  [[u.x,O.x,hx-pe.x],[u.y,O.y,hy-pe.y]].forEach(([du,m,h])=>{ if (Math.abs(du)>1e-9){ const t1=(-h-m)/du, t2=(h-m)/du; lo=Math.max(lo,Math.min(t1,t2)); hi=Math.min(hi,Math.max(t1,t2)); } });
   tmin=lo; tmax=hi;
-  const xAt = s => M.x+s*u.x;
+  const xAt = s => O.x+s*u.x;
   const sLeft = xAt(lo)<xAt(hi)?lo:hi, sRight = xAt(lo)<xAt(hi)?hi:lo;
   tProbe = (t.side==='left')? sLeft : sRight;
-  return { M,u,v,c1,c2, a1:t.beta+t.theta+t.alpha, a2:t.beta-t.theta+t.alpha, aP:t.beta+t.alpha, sLeft, sRight };
+  return { O,M,u,v,c1,c2,rule, a1:t.beta+t.theta+t.alpha, a2:t.beta-t.theta+t.alpha, aP:t.beta+t.alpha, sLeft, sRight };
 }
 
 // ---- drawing ----
 function drawStim(kind, x, y, angDeg){
   ctx.save(); ctx.translate(W/2+x*PXCM, H/2-y*PXCM); ctx.rotate(-rad(angDeg));
+  const k = PXCM/20;
   if (kind==='rect'){
     const L=RW*PXCM, Wd=RH*PXCM;
     ctx.strokeStyle='#f0f0f0'; ctx.lineWidth=1.5; ctx.strokeRect(-L/2,-Wd/2,L,Wd);
@@ -178,12 +269,12 @@ function drawStim(kind, x, y, angDeg){
   ctx.restore();
 }
 function drawScale(){
-  const x0=150,x1=W-150,y=H-34;
+  const x0=W*0.2,x1=W*0.8,y=H-34;
   ctx.strokeStyle='#202020'; ctx.fillStyle='#202020'; ctx.lineWidth=2; ctx.font='12px sans-serif';
   ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x0,y-6); ctx.lineTo(x0,y+6); ctx.moveTo(x1,y-6); ctx.lineTo(x1,y+6); ctx.stroke();
   ctx.textAlign='right'; ctx.fillText('poor',x0-10,y+4); ctx.textAlign='left'; ctx.fillText('good',x1+10,y+4);
-  ctx.textAlign='center'; ctx.fillText('goodness of path perception',W/2,y-14);
+  ctx.textAlign='center'; ctx.fillText('confidence in probe placement / clarity of path',W/2,y-26);
   const mx=x0+(x1-x0)*rateVal; ctx.fillStyle='#fff'; ctx.strokeStyle='#000';
   ctx.beginPath(); ctx.moveTo(mx,y-10); ctx.lineTo(mx-6,y-20); ctx.lineTo(mx+6,y-20); ctx.closePath(); ctx.fill(); ctx.stroke();
 }
@@ -201,61 +292,93 @@ function render(){
     const sl=slot(), k=T.kind;
     if (sl==='t1') drawStim(k,T.c1.x,T.c1.y,T.a1);
     else if (sl==='t2') drawStim(k,T.c2.x,T.c2.y,T.a2);
-    else if (sl==='p' && probeOn) drawStim(k, T.M.x+tProbe*T.u.x, T.M.y+tProbe*T.u.y, T.aP);
+    else if (sl==='p' && probeOn) drawStim(k, T.O.x+tProbe*T.u.x, T.O.y+tProbe*T.u.y, T.aP);
     if (phase==='rate') drawScale();
   }
 }
-function loop(){
+function loop(ts){
   frame++;
+  if (measured && (phase==='trial'||phase==='rate') && lastTs){ nFrames++; if (ts-lastTs>1.5*fd) nLate++; }
+  lastTs=ts;
+  const sc = fd/(1000/60);
   if (phase==='trial'){
     const dir = (keys.left?-1:0)+(keys.right?1:0);
     if (dir){
       if (tStart===null) tStart=performance.now();
-      const step=(keys.shift?0.02:0.12);                     // cm per frame
+      const step=(keys.shift?0.02:0.12);                     // paper-cm per 60-Hz frame
       const sgn = (T.sRight>T.sLeft)?1:-1;                   // +param moves toward screen right
-      tProbe = Math.max(tmin, Math.min(tmax, tProbe + dir*sgn*step*(60/fps)));
+      tProbe = Math.max(tmin, Math.min(tmax, tProbe + dir*sgn*step*sc));
     }
   } else if (phase==='rate'){
     const dir=(keys.left?-1:0)+(keys.right?1:0);
-    rateVal=Math.max(0,Math.min(1,rateVal+dir*(keys.shift?0.002:0.008)*(60/fps)));
+    rateVal=Math.max(0,Math.min(1,rateVal+dir*(keys.shift?0.002:0.008)*sc));
   }
   render(); requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
 // ---- trial flow ----
+let waiting='';
+const INSTR = 'Two shapes will blink in turn at different places. Use the apparent motion between them: first get a clear, stable path with the probe OFF. ' +
+  'When you see a stable path, switch the probe on (Space) and move it (← / →) onto the path. Then switch it off and on again to check that the path is the same with the probe on and off. ' +
+  'When you are satisfied press Enter.';
+const INSTR_RATE = ' A scale will then appear: rate your confidence in the placement of the probe and the clarity of the path.';
 function startSession(){
-  trials=buildTrials(document.getElementById('exp').value); ti=-1; restShown=false; nextTrial();
+  document.getElementById('rest').style.display='none'; dqN=0;
+  trials=buildTrials(document.getElementById('exp').value); ti=-1; waiting='instr'; phase='between';
+  say('<b>Instructions.</b> '+INSTR+(document.getElementById('exp').value==='1'?'':INSTR_RATE)+'<br>Press Enter to continue.');
 }
-let waiting='', restShown=false;
 function trialPrompt(){ tr=trials[ti]; waiting='trial';
-  say('Trial '+(ti+1)+' / '+trials.length+(tr.practice?' (practice)':'')+'. Press Enter to begin.'); }
+  say((tr.practice?'Practice trial ':'Trial ')+tr.n+' / '+trials.total+'. Press Enter to begin.'); }
 function nextTrial(){
   ti++; phase='between';
-  if (ti>=trials.length){ waiting=''; say('Session finished ('+trials.length+' trials).'); return; }
-  if (document.getElementById('exp').value==='2' && ti===Math.floor(trials.length/2) && !restShown){
-    restShown=true; waiting='rest'; say('Rest period (halfway). In the paper observers did an unrelated task here. Press Enter to continue.'); return; }
+  if (ti>=trials.length){ waiting=''; say('Session finished ('+trials.total+' trials). Responses are kept internally; use Export CSV to save them.'); return; }
+  if (trials[ti].type==='rest'){ startDistractor(); return; }
   trialPrompt();
 }
-function beginTrial(){
-  tr=trials[ti]; T=setupTrial(tr); T.kind=tr.kind; probeOn=false; frame=0; tStart=null; rateVal=0.5; phase='trial'; waiting='';
-  say('Trial '+(ti+1)+' / '+trials.length+': get a clear path first, then switch the probe on (Space), move it (←/→), press Enter when done.');
+let dqN=0, dqA=0, dqB=0;
+function startDistractor(){
+  waiting='distract'; dqN=0; document.getElementById('rest').style.display='block';
+  say('Rest period. In the paper observers did an unrelated task here; this is a placeholder (five sums).'); askSum();
 }
-function toggleProbe(){ if (phase==='trial'){ probeOn=!probeOn; document.getElementById('bProbe').classList.toggle('on',probeOn); } }
+function askSum(){ dqA=10+Math.floor(Math.random()*40); dqB=10+Math.floor(Math.random()*40);
+  document.getElementById('dq').textContent=(dqN+1)+'/5:  '+dqA+' + '+dqB+' ='; const i=document.getElementById('dans'); i.value=''; i.focus(); }
+document.getElementById('dans').addEventListener('keydown',e=>{
+  if (e.key==='Enter'){ e.preventDefault(); if (waiting!=='distract') return; dqN++;
+    if (dqN>=5){ document.getElementById('rest').style.display='none'; e.target.blur(); trialPrompt(); } else askSum(); } });
+function refocusDistract(e){ if (waiting==='distract'){ const i=document.getElementById('dans'); if (document.activeElement!==i){ i.focus(); if (e.type==='keydown' && e.key==='Enter') e.preventDefault(); } } }
+document.addEventListener('keydown',refocusDistract,true);
+document.addEventListener('click',refocusDistract,true);
+function beginTrial(){
+  tr=trials[ti]; T=setupTrial(tr); T.kind=tr.kind; probeOn=false; probeEverOn=false; frame=0; tStart=null; rateVal=0.5; nFrames=0; nLate=0; lastTs=0;
+  phase='trial'; waiting=''; scrollTo_('centre');
+  say((tr.practice?'Practice ':'Trial ')+tr.n+' / '+trials.total+': get a clear path first, then switch the probe on (Space), move it (←/→), press Enter when done.');
+}
+function toggleProbe(){ if (phase==='trial'){ probeOn=!probeOn; if (probeOn) probeEverOn=true; document.getElementById('bProbe').classList.toggle('on',probeOn); } }
 function done(){
-  if (phase==='between'){ if (waiting==='rest') trialPrompt(); else if (waiting==='trial') beginTrial(); return; }
+  if (phase==='between'){
+    if (waiting==='instr'){ nextTrial(); } else if (waiting==='trial') beginTrial(); return; }
   if (phase==='trial'){
-    tr._offset = tProbe; tr._rt = tStart===null?null:Math.round(performance.now()-tStart); phase='rate';
-    say('Rate the goodness of the path (← / →), then press Enter.');
-  } else if (phase==='rate'){
-    results.push({exp:tr.exp,block:tr.block,stim:tr.kind,alpha:tr.alpha,theta:tr.theta,beta:tr.beta,start:tr.side,
-      probe_pos_cm_along_axis_from_P:+tr._offset.toFixed(3),rt_ms:tr._rt,goodness_0_1:+rateVal.toFixed(3)});
+    if (!probeEverOn || tStart===null){ say('Switch the probe on (Space) and move it onto the path (←/→) before pressing Enter.'); return; }
+    tr._offset = tProbe; tr._rt = Math.round(performance.now()-tStart);
+    if (tr.exp==='1'){ finishTrial(); return; }          // Exp 1: probe placement only, no timing/rating (p. 467-468)
+    phase='rate'; scrollTo_('scale');
+    say('Rate your confidence in the placement of the probe and the clarity of the path (← / →), then press Enter.');
+  } else if (phase==='rate'){ finishTrial(); }
+}
+function finishTrial(){
+  {
+    const r=x=>+x.toFixed(3);
+    results.push({exp:tr.exp,block:tr.block,practice:tr.practice?1:0,trial_no:tr.n,stim:tr.kind,alpha:tr.alpha,theta:tr.theta,beta:tr.beta,start:tr.side,
+      probe_pos_cm_along_axis_from_P:r(tr._offset),rt_ms:tr.exp==='1'?'':tr._rt,rating_0_1:tr.exp==='1'?'':r(rateVal),
+      P_x_cm:r(T.O.x),P_y_cm:r(T.O.y),chord_mid_x_cm:r(T.M.x),chord_mid_y_cm:r(T.M.y),P_rule:T.rule.split(' (')[1].replace(')',''),
+      frames:nFrames,late_frames:nLate,refresh_hz:+(1000/fd).toFixed(1),ppcm:+disp.ppcm.toFixed(2),dist_cm:disp.dist});
     probeOn=false; document.getElementById('bProbe').classList.remove('on'); nextTrial();
   }
 }
 
 window.addEventListener('keydown',e=>{
-  if (e.target.tagName==='SELECT') return;
+  if (e.target.tagName==='SELECT' || e.target.tagName==='INPUT') return;
   if (e.key==='ArrowLeft'){ keys.left=true; e.preventDefault(); }
   else if (e.key==='ArrowRight'){ keys.right=true; e.preventDefault(); }
   else if (e.key==='Shift') keys.shift=true;
@@ -266,11 +389,11 @@ window.addEventListener('keyup',e=>{
   if (e.key==='ArrowLeft') keys.left=false; else if (e.key==='ArrowRight') keys.right=false; else if (e.key==='Shift') keys.shift=false;
 });
 function hold(id,k){ const b=document.getElementById(id);
-  ['pointerdown'].forEach(ev=>b.addEventListener(ev,e=>{ keys[k]=true; e.preventDefault(); }));
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false)); }
+  b.addEventListener('pointerdown',e=>{ keys[k]=true; e.preventDefault(); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{ keys[k]=false; b.blur(); })); }
 hold('bL','left'); hold('bR','right');
-document.getElementById('bProbe').addEventListener('click',toggleProbe);
-document.getElementById('bDone').addEventListener('click',done);
+document.getElementById('bProbe').addEventListener('click',e=>{ toggleProbe(); e.target.blur(); });
+document.getElementById('bDone').addEventListener('click',e=>{ done(); e.target.blur(); });
 document.getElementById('start').addEventListener('click',e=>{ e.target.blur(); startSession(); });
 
 // ---- single-trial selectors ----
@@ -280,7 +403,8 @@ document.getElementById('start').addEventListener('click',e=>{ e.target.blur(); 
   const ex=document.getElementById('exp'), sg=document.getElementById('single');
   ex.addEventListener('change',()=>sg.style.display = ex.value==='s'?'inline':'none');
 })();
-document.getElementById('export').addEventListener('click',()=>{
+document.getElementById('export').addEventListener('click',e=>{
+  e.target.blur();
   if(!results.length) return;
   const cols=Object.keys(results[0]);
   const csv=[cols.join(',')].concat(results.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
@@ -288,7 +412,8 @@ document.getElementById('export').addEventListener('click',()=>{
   a.download='proffitt_1988_trials.csv'; a.click();
 });
 setFrames();
-say('Choose a session and press Start. Enter begins each trial.');
+document.getElementById('start').disabled=true;
+say('Measuring display refresh, then choose a session and press Start.');
 </script>
 </body>
 </html>

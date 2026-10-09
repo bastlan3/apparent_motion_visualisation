@@ -12,7 +12,10 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
-  canvas { background:#000; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  .stage { max-width:96vw; overflow:auto; }
+  canvas { background:#000; display:block; border-radius:3px; }
+  .warn { color:#d9a441; }
+  #cardbar { height:22px; background:#3a5a9a; border-radius:3px; margin-top:6px; }
   .participant { margin-top:12px; width:720px; max-width:96vw; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
   .status { text-align:center; margin-top:8px; font-size:13px; color:#cfcfcf; min-height:18px; }
@@ -41,14 +44,15 @@
   <div class="sub">One line figure alternates between two views that differ in location and orientation. The observer shortens the SOA
     until form-preserving movement is replaced by partial movement and/or flicker, then lengthens it until form-preserving movement returns.</div>
 
-  <canvas id="c" width="560" height="560"></canvas>
+  <div class="stage"><canvas id="c" width="640" height="640"></canvas></div>
 
   <div class="participant">
     <div class="instr">
       <b>Right key / →</b> shorten &nbsp;·&nbsp; <b>Left key / ←</b> lengthen &nbsp;·&nbsp; <b>Centre key / Space</b> record.<br>
       Phase 1: tap shorten until form-preserving movement is replaced by partial movement and/or flicker, then press centre (SOA1).
-      Phase 2: tap lengthen until form-preserving movement reappears, then press centre (SOA2), which ends the trial.
-      (Exact instruction wording is not reported in the paper.)
+      Phase 2: tap lengthen until form-preserving movement returns, then press centre (SOA2), which ends the trial.<br>
+      <i>Reconstructed task description (wording not reported; based on the p. 86 procedure text):</i> judge whether you see a single object
+      moving back and forth along a path within the picture plane while preserving its shape; press when this gives way to partial movement and/or flicker, and again when it returns.
     </div>
     <div class="status" id="status">Press Space to start trial 1.</div>
     <div class="prow">
@@ -71,9 +75,25 @@
       <div class="ctrl" id="cV">V (deg) <select id="V"></select></div>
       <div class="ctrl" id="cu">u (deg) <select id="u"></select></div>
       <div class="ctrl" id="cP"><span id="pLbl">R (cm)</span> <select id="P"></select></div>
+      <div class="ctrl" id="cA">Exp 3 anchor (assumption) <select id="anchor"><option value="near">near end at ±D/2</option><option value="centre">figure centre at ±D/2</option></select></div>
       <button id="restart">Restart session</button>
     </div>
     <div class="meta" id="info"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Display setup</h2>
+    <div class="grid">
+      <div class="ctrl">Calibration: resize the bar to the width of a credit card (8.56 cm)
+        <input type="range" id="cal" min="150" max="1000" step="1" value="324">
+        <div id="cardbar"></div></div>
+      <div class="ctrl">Viewing distance (cm; paper: 100)
+        <input type="number" id="dist" min="20" max="300" value="100" style="width:80px;background:#1c1c22;color:#d4d4d4;border:1px solid #3a3a44;padding:4px;border-radius:4px"></div>
+      <div class="ctrl">Refresh rate
+        <select id="hzsel"><option value="0">auto (measured)</option></select></div>
+    </div>
+    <div class="meta" id="setup"></div>
+    <div class="meta" id="real"></div>
   </div>
 
   <div class="panel">
@@ -81,34 +101,58 @@
     <table>
       <tr><th>Parameter</th><th>Paper</th><th>This page</th></tr>
       <tr><td>Display</td><td>Megatek calligraphic CRT, P4 phosphor, refreshed every 11 ms; 1-deg vector = 0.2 fL (p. 86)</td><td class="a">Raster canvas, browser refresh (assumed 60 Hz; durations counted in frames). Luminance, line width, screen size, background not specified: bright thin lines on black (assumption).</td></tr>
-      <tr><td>Viewing</td><td>Binocular, 1 m, free fixation, prototype 1.72 deg (p. 86)</td><td class="a">No fixation mark. 1 cm drawn as 40 px; scale is arbitrary on your screen (assumption).</td></tr>
-      <tr><td>Figure</td><td>Straight line (3.0 cm prototype) with a curved sector element at its far end and a short tick (Fig. 1a)</td><td class="a">Line L; arc about 0.4 L long bending left at far end; tick about 0.1 L to the right at mid-length. Arc radius, tick length and scaling with L are read from the figure (assumption).</td></tr>
+      <tr><td>Viewing</td><td>Binocular, 1 m, free fixation, prototype 1.72 deg (p. 86)</td><td class="a">No fixation mark. Stimulus drawn in degrees from the Display setup calibration (px/cm and viewing distance, default 100 cm); paper centimetres are converted at the paper's 1 m (1 cm = 0.573 deg, 3 cm = 1.72 deg). Luminance (0.2 fL per 1-deg vector) cannot be reproduced; line width 2 px is an assumption.</td></tr>
+      <tr><td>Figure</td><td>Straight line (3.0 cm prototype) with a curved sector element at its far end and a short tick (Fig. 1a)</td><td class="a">Line L; arc about 0.43 L long (radius about 1.9 L, sag about 0.05 L) at the far end, perpendicular to the line and bending back toward the near end; tick 0.1 L to the right at mid-length (0.5 L). Values measured from Fig. 1a at 300 dpi; scaling with L assumed proportional (assumption).</td></tr>
       <tr><td>Views</td><td>Near end of the line at R cm from screen centre, extending radially outward; orientation u, then u+V, rotation about screen centre (Fig. 1a)</td><td>As paper; positive rotation drawn clockwise from upright (read from Fig. 1a).</td></tr>
-      <tr><td>Timing</td><td>Two views alternate, blank ISI 50 ms; duration starts at 1000 ms, SOA 1050 ms (p. 86, Fig. 1b)</td><td>ISI = 3 frames (50 ms at 60 Hz). Start duration 60 frames = 1000 ms. Duration is the SOA minus ISI, rounded to whole frames; realised: <span id="real">—</span></td></tr>
-      <tr><td>Response</td><td>Right key: duration/SOA down by 1/11 until movement lost; centre key = SOA1. Left key: up by 1/10 until movement returns; centre key = SOA2, ends trial</td><td>As paper: SOA multiplied by 10/11 or 11/10 per tap; two-phase sequence enforced. SOA is not shown to the observer. No limits stated; floor of one frame duration only.</td></tr>
+      <tr><td>Timing</td><td>Two views alternate, blank ISI 50 ms; duration starts at 1000 ms, SOA 1050 ms (p. 86, Fig. 1b)</td><td>ISI and duration converted to whole frames at the measured refresh rate and counted frame by frame; realised starting values are shown in the Display setup panel. The 11-ms calligraphic refresh is not reproduced.</td></tr>
+      <tr><td>Response</td><td>Right key: duration/SOA down by 1/11 until movement lost; centre key = SOA1. Left key: up by 1/10 until movement returns; centre key = SOA2, ends trial</td><td>Stepping acts on stimulus duration (duration x 10/11 or x 11/10 per tap; SOA = duration + 50 ms), following the paper's wording "duration (or, equivalently, the SOA)" (assumption). Two-phase sequence enforced: only the right (shorten) key is accepted in phase 1 and only the left (lengthen) key in phase 2; the other key is ignored. The SOA is never shown. Duration is held continuously but displayed in whole frames, so at short durations some taps give no visible change. No limits stated; floor of one frame. Each trial opens with the blank ISI (assumption). Blocks end with a break screen (assumption); no inter-trial interval reported.</td></tr>
       <tr><td>Exp 1 (p. 86)</td><td>V = 30, 60, 90, 120; u = 0, 30 … 330; R = 0, 1.5, 3.0, 4.5 cm; 192 pairs in random order; 4 one-hour sessions of 48 trials; 8 observers</td><td>Random list of all 192; blocks of 48 counted.</td></tr>
       <tr><td>Exp 2 (pp. 88–89)</td><td>L = 1.5, 3.0, 4.5, 6.0 cm; far end always at 6.0 cm, near end at M = 6 − L; same V and u; 192 pairs; same 8 observers</td><td>As paper; arc and tick scaled with L (assumption).</td></tr>
-      <tr><td>Exp 3 (p. 91)</td><td>L = 3 cm; pair symmetric about screen centre along a horizontal axis; V = 0, 30, 60, 90; D = 0, 1.5, 3.0, 4.5 cm; 12 orientations; 180 pairs in 4 blocks of 45; 8 of 11 observers retained</td><td class="a">Locations not given: near ends placed at ±D/2 on the horizontal axis, first orientation on the left (assumption). Pair (V=0, D=0) omitted to give 180 (inferred).</td></tr>
+      <tr><td>Exp 3 (p. 91)</td><td>L = 3 cm; pair symmetric about screen centre along a horizontal axis; V = 0, 30, 60, 90; D = 0, 1.5, 3.0, 4.5 cm; 12 orientations; 180 pairs in 4 blocks of 45; 8 of 11 observers retained</td><td class="a">The paper's 8 screen locations are not given: by default near ends at ±D/2 on the horizontal axis (alternative: figure centres at ±D/2; selectable), first orientation on the left (assumption). For V>0 the distance between nearest corresponding parts need not equal D. Pair (V=0, D=0) omitted to give 180 (inferred).</td></tr>
     </table>
   </div>
 
 <script>
 const c = document.getElementById('c'), ctx = c.getContext('2d');
-const W = c.width, H = c.height, CX = W/2, CY = H/2, PXCM = 40;
-const ISI_MS = 50, START_DUR_MS = 1000;
+const ISI_MS = 50, START_DUR_MS = 1000, PAPER_DIST = 100, FIELD_CM = 8.5;
+let W=640, H=640, CX=320, CY=320;
+let pxPerCm = 37.8, distCm = 100, pxPerDeg = 66;
 const LEVELS = {
   1:{V:[30,60,90,120], P:[0,1.5,3,4.5], pn:'R (cm)'},
   2:{V:[30,60,90,120], P:[1.5,3,4.5,6],  pn:'L (cm)'},
   3:{V:[0,30,60,90],   P:[0,1.5,3,4.5], pn:'D (cm)'}
 };
 const U = []; for (let i=0;i<12;i++) U.push(i*30);
+const $ = id=>document.getElementById(id);
+
+// ---- display setup ----
+function loadCal(){ try{ const o=JSON.parse(localStorage.getItem('am_display')||'null'); if(o){ if(o.pxPerCm>0) pxPerCm=Math.min(1000/8.56,Math.max(150/8.56,o.pxPerCm)); if(o.distCm>0) distCm=o.distCm; } }catch(e){} }
+function saveCal(){ try{ localStorage.setItem('am_display', JSON.stringify({pxPerCm, distCm})); }catch(e){} }
+// paper cm (at the paper's 1 m) -> px, via degrees at the observer's distance
+function pxPerPaperCm(){ return pxPerDeg * (180/Math.PI) / PAPER_DIST; }
+function applyScale(){
+  pxPerDeg = pxPerCm * distCm * Math.tan(Math.PI/180);
+  const half = Math.ceil(FIELD_CM*pxPerPaperCm());
+  W = H = 2*half; c.width = W; c.height = H; CX = W/2; CY = H/2;
+  const deg3 = 2*Math.atan(1.5/PAPER_DIST)*180/Math.PI;
+  $('setup').textContent = `${pxPerCm.toFixed(1)} px/cm, ${distCm} cm: ${pxPerDeg.toFixed(1)} px/deg. The 3-cm prototype line (${deg3.toFixed(2)} deg at 1 m) is drawn ${(3*pxPerPaperCm()).toFixed(0)} px long. Field ${(W/pxPerDeg).toFixed(1)} x ${(H/pxPerDeg).toFixed(1)} deg.`;
+}
+function setupDisplayUI(){
+  loadCal();
+  $('cal').value = Math.round(pxPerCm*8.56); $('cardbar').style.width = $('cal').value+'px'; $('dist').value = distCm;
+  $('cal').oninput = ()=>{ const w=+$('cal').value; $('cardbar').style.width=w+'px'; pxPerCm=w/8.56; saveCal(); applyScale(); updateReal(); };
+  $('dist').onchange = ()=>{ const d=+$('dist').value; if(d>=20&&d<=300){ distCm=d; saveCal(); applyScale(); } };
+  [30,60,72,75,90,100,120,144,165,240].forEach(h=>{ const o=document.createElement('option'); o.value=h; o.textContent=h+' Hz (manual)'; $('hzsel').appendChild(o); });
+  $('hzsel').onchange = ()=>{ if(phase==='idle'||true){ hzManual=+$('hzsel').value; hz = hzManual||hzMeasured||60; updateReal(); } };
+  applyScale();
+}
 
 // ---- figure: local coords s along line from near end (0) to far end (L), v to the right ----
 function figurePath(Lpx){
   const lines = [];
   lines.push([[0,0],[Lpx,0]]);
   lines.push([[0.5*Lpx,0],[0.5*Lpx,0.1*Lpx]]);                 // tick, right
-  const r = 0.8*Lpx, span = 0.4*Lpx/r, arc = [];                // arc, bending left
+  const r = 1.9*Lpx, span = 0.43*Lpx/r, arc = [];                // arc, bending left
   for (let i=0;i<=16;i++){ const f=span*i/16; arc.push([Lpx - r + r*Math.cos(f), -r*Math.sin(f)]); }
   lines.push(arc);
   return lines;
@@ -116,19 +160,23 @@ function figurePath(Lpx){
 function drawFigure(nx, ny, thetaDeg, Lcm){
   const th = thetaDeg*Math.PI/180, d=[Math.sin(th),-Math.cos(th)], rt=[Math.cos(th),Math.sin(th)];
   ctx.strokeStyle='#e6e6e6'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.lineJoin='round';
-  for (const pl of figurePath(Lcm*PXCM)){
+  for (const pl of figurePath(Lcm*pxPerPaperCm())){
     ctx.beginPath();
     pl.forEach(([s,v],i)=>{ const x=nx+s*d[0]+v*rt[0], y=ny+s*d[1]+v*rt[1]; i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
     ctx.stroke();
   }
 }
-// view = {nx,ny,theta,L}
+// view = {nx,ny,th,L}  (nx,ny = near end in px)
 function makeViews(cond){
-  const {exp,V,u,P} = cond;
-  const radial = (R,th,L)=>({nx:CX+R*PXCM*Math.sin(th*Math.PI/180), ny:CY-R*PXCM*Math.cos(th*Math.PI/180), th, L});
+  const {exp,V,u,P} = cond, k=pxPerPaperCm();
+  const radial = (R,th,L)=>({nx:CX+R*k*Math.sin(th*Math.PI/180), ny:CY-R*k*Math.cos(th*Math.PI/180), th, L});
   if (exp===1) return [radial(P,u,3), radial(P,u+V,3)];
   if (exp===2) return [radial(6-P,u,P), radial(6-P,u+V,P)];
-  return [{nx:CX-P*PXCM/2, ny:CY, th:u, L:3}, {nx:CX+P*PXCM/2, ny:CY, th:u+V, L:3}];
+  const centre = (cond.anchor||$('anchor').value)==='centre';
+  const pl = (sx,th)=>{ const t=th*Math.PI/180; let x=CX+sx*P*k/2, y=CY;
+    if (centre){ x -= 1.5*k*Math.sin(t); y += 1.5*k*Math.cos(t); }   // shift so line midpoint sits at the location
+    return {nx:x, ny:y, th, L:3}; };
+  return [pl(-1,u), pl(+1,u+V)];
 }
 
 // ---- trial lists ----
@@ -143,19 +191,20 @@ const blockSize = exp => exp===3 ? 45 : 48;
 // ---- state ----
 let exp=1, list=buildList(1), ti=0, cond=null;
 let phase='idle';         // idle | down | up
-let soa=START_DUR_MS+ISI_MS, soa1=null, pos=0;
+let dur=START_DUR_MS, soa1dur=null, soa1Fr=null;
 const log=[];
-let hz=60, measured=false;
-const $ = id=>document.getElementById(id);
+let hz=60, hzMeasured=0, hzManual=0, breakPending=false;
+let stage=3, cnt=0;       // 0 view A, 1 ISI, 2 view B, 3 ISI
 
 function frames(ms){ return Math.max(1, Math.round(ms*hz/1000)); }
-function durMs(){ return Math.max(1000/hz, soa-ISI_MS); }
+function durFrames(){ return frames(dur); }
 
-function fillSelect(sel, vals, cur){ sel.innerHTML=''; vals.forEach(v=>{const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o);}); if(cur!=null && vals.includes(cur)) sel.value=cur; }
+function fillSelect(sel, vals){ sel.innerHTML=''; vals.forEach(v=>{const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o);}); }
 function setupControls(){
   fillSelect($('V'), LEVELS[exp].V); fillSelect($('u'), U); fillSelect($('P'), LEVELS[exp].P); $('pLbl').textContent=LEVELS[exp].pn;
   const r=$('rand').checked; ['cV','cu','cP'].forEach(i=>$(i).classList.toggle('dim', r));
   ['V','u','P'].forEach(i=>$(i).disabled=r);
+  $('cA').style.display = exp===3 ? '' : 'none';
 }
 function currentCond(){
   if ($('rand').checked) return list[ti];
@@ -167,43 +216,60 @@ function updateInfo(){
     ? `Exp ${exp}: trial ${Math.min(ti+1,n)} of ${n} (block ${Math.floor(Math.min(ti,n-1)/bs)+1} of ${Math.ceil(n/bs)}, ${bs} trials per block). Trials logged: ${log.length}.`
     : `Exp ${exp}: fixed condition. Trials logged: ${log.length}.`;
 }
+// static experimenter line: realised starting values only; never updated during a trial
 function updateReal(){
-  const ds=frames(durMs()), isi=frames(ISI_MS), ms=f=>(f*1000/hz).toFixed(1);
-  $('real').textContent = `at ${hz} Hz: ISI ${isi} frames = ${ms(isi)} ms; duration ${ds} frames = ${ms(ds)} ms; SOA ${ds+isi} frames = ${ms(ds+isi)} ms.`;
+  const isi=frames(ISI_MS), ds=frames(START_DUR_MS), ms=f=>(f*1000/hz).toFixed(1);
+  const fr = ISI_MS*hz/1000, warns=[];
+  if (Math.abs(fr-Math.round(fr))>0.05) warns.push(`ISI 50 ms is ${fr.toFixed(2)} frames, not a whole number`);
+  if (Math.abs(START_DUR_MS*hz/1000-Math.round(START_DUR_MS*hz/1000))>0.05) warns.push('1000 ms is not a whole number of frames');
+  $('real').innerHTML = `Display: ${hz} Hz${hzManual?' (manual)':hzMeasured?' (measured, median of 60 frames)':' (measuring...)'}. Realised at trial start: ISI ${isi} frames = ${ms(isi)} ms; duration ${ds} frames = ${ms(ds)} ms; SOA ${ds+isi} frames = ${ms(ds+isi)} ms.`
+    + (warns.length?` <span class="warn">Warning: ${warns.join('; ')}; durations are rounded to whole frames.</span>`:'');
 }
+function resetCycle(){ stage=3; cnt=frames(ISI_MS); }
 function startTrial(){
   cond=currentCond(); if(!cond){ $('status').textContent='Session complete. Export the CSV or restart.'; return; }
-  soa=START_DUR_MS+ISI_MS; soa1=null; pos=0; phase='down';
+  cond=Object.assign({},cond); if(cond.exp===3) cond.anchor=$('anchor').value;
+  dur=START_DUR_MS; soa1dur=null; soa1Fr=null; phase='down'; resetCycle();
   $('status').textContent='Phase 1: tap shorten until movement is lost, then centre key.';
-  updateInfo(); updateReal();
+  updateInfo();
 }
 function press(kind){
-  if (phase==='idle'){ if(kind==='rec') startTrial(); return; }
-  if (kind==='short') soa*=10/11;
-  else if (kind==='long') soa*=11/10;
+  if (breakPending){ if(kind==='rec'){ breakPending=false; $('status').textContent='Press Space to start the next trial.'; } return; }
+  if (phase==='idle'){ if(kind==='rec'){ if(!measured&&!hzManual){ $('status').textContent='Measuring display refresh rate... press Space again in a moment.'; return; } startTrial(); } return; }
+  if (kind==='short'){ if(phase!=='down') return; dur*=10/11; }
+  else if (kind==='long'){ if(phase!=='up') return; dur*=11/10; }
   else if (kind==='rec'){
-    if (phase==='down'){ soa1=soa; phase='up'; $('status').textContent='Phase 2: tap lengthen until movement returns, then centre key.'; }
+    if (phase==='down'){ soa1dur=dur; soa1Fr=durFrames(); phase='up'; $('status').textContent='Phase 2: tap lengthen until movement returns, then centre key.'; }
     else {
-      log.push({trial:log.length+1, exp:cond.exp, V:cond.V, u:cond.u, param:cond.P, soa1_ms:soa1.toFixed(1), soa2_ms:soa.toFixed(1)});
+      const f=durFrames(), isi=frames(ISI_MS);
+      log.push({trial:log.length+1, exp:cond.exp, V:cond.V, u:cond.u, param:cond.P, hz,
+        soa1_ms:(soa1dur+ISI_MS).toFixed(1), soa1_dur_frames:soa1Fr, soa1_shown_ms:(soa1Fr*1000/hz).toFixed(1),
+        soa2_ms:(dur+ISI_MS).toFixed(1), soa2_dur_frames:f, soa2_shown_ms:(f*1000/hz).toFixed(1), isi_frames:isi,
+        anchor: cond.exp===3 ? cond.anchor : ''});
       phase='idle'; if($('rand').checked) ti++;
-      const done = $('rand').checked && ti>=list.length;
-      $('status').textContent = done ? 'Session complete. Export the CSV or restart.' : 'Press Space to start the next trial.';
+      const rnd=$('rand').checked, done = rnd && ti>=list.length;
+      if (done) $('status').textContent = 'Session complete. Export the CSV or restart.';
+      else if (rnd && ti%blockSize(exp)===0){ breakPending=true; $('status').textContent=`Block ${ti/blockSize(exp)} complete. Rest, then press Space to continue.`; }
+      else $('status').textContent = 'Press Space to start the next trial.';
       updateInfo();
     }
   }
-  soa=Math.max(soa, ISI_MS+1000/hz);
-  updateReal();
+  dur=Math.max(dur, 1000/hz);
 }
 $('down').onclick=()=>press('short'); $('up').onclick=()=>press('long'); $('rec').onclick=()=>press('rec');
+document.addEventListener('change',e=>{ const t=e.target; if(t&&(t.tagName==='SELECT'||t.tagName==='INPUT')) setTimeout(()=>t.blur(),0); });
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('button'); if(b) b.blur(); });
 addEventListener('keydown',e=>{
   if (e.repeat) return;
-  if (e.key==='ArrowRight'){ press('short'); e.preventDefault(); }
-  else if (e.key==='ArrowLeft'){ press('long'); e.preventDefault(); }
-  else if (e.key===' ' || e.key==='Enter'){ if(e.target.tagName!=='BUTTON'&&e.target.tagName!=='SELECT'){ press('rec'); e.preventDefault(); } }
+  const tg=e.target.tagName, form=(tg==='SELECT'||tg==='INPUT'||tg==='TEXTAREA');
+  if (e.key==='ArrowRight'){ if(!form){ press('short'); e.preventDefault(); } }
+  else if (e.key==='ArrowLeft'){ if(!form){ press('long'); e.preventDefault(); } }
+  else if (e.key===' ' || e.key==='Enter'){ if(e.target.tagName!=='BUTTON'&&e.target.tagName!=='SELECT'&&e.target.tagName!=='INPUT'){ press('rec'); e.preventDefault(); } }
 });
-$('exp').onchange=()=>{ exp=+$('exp').value; list=buildList(exp); ti=0; phase='idle'; setupControls(); $('status').textContent='Press Space to start trial 1.'; updateInfo(); };
-$('rand').onchange=()=>{ setupControls(); phase='idle'; updateInfo(); };
-$('restart').onclick=()=>{ list=buildList(exp); ti=0; phase='idle'; $('status').textContent='Press Space to start trial 1.'; updateInfo(); };
+function resetSession(msg){ list=buildList(exp); ti=0; phase='idle'; breakPending=false; $('status').textContent=msg||'Press Space to start trial 1.'; updateInfo(); }
+$('exp').onchange=()=>{ exp=+$('exp').value; setupControls(); resetSession(); };
+$('rand').onchange=()=>{ setupControls(); phase='idle'; breakPending=false; updateInfo(); };
+$('restart').onclick=()=>resetSession();
 $('export').onclick=()=>{
   if(!log.length) return;
   const cols=Object.keys(log[0]);
@@ -211,23 +277,35 @@ $('export').onclick=()=>{
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='farrell_1983_raw.csv'; a.click();
 };
 
-// ---- frame loop: one step per display refresh; durations counted in frames ----
-let tPrev=0, tSum=0, tN=0;
+// ---- frame loop: refresh measured over 60 frames (median), then one step per refresh ----
+let tPrev=0; const dts=[]; let measured=false;
 function loop(ts){
-  if (!measured && tPrev){ tSum+=ts-tPrev; tN++; if(tN===40){ const r=1000/(tSum/tN); hz=[30,60,75,90,100,120,144,165,240].reduce((b,x)=>Math.abs(x-r)<Math.abs(b-r)?x:b,60); measured=true; updateReal(); } }
+  if (!measured && tPrev){
+    dts.push(ts-tPrev);
+    if (dts.length>=60){
+      const sorted=dts.slice().sort((a,b)=>a-b), med=sorted[sorted.length>>1];
+      hzMeasured=Math.round(1000/med); measured=true;
+      if(!hzManual) hz=hzMeasured; updateReal();
+    }
+  }
   tPrev=ts;
   ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-  if (phase!=='idle'){
-    const d=frames(durMs()), i=frames(ISI_MS), cyc=2*(d+i);
-    pos=(pos+1)%cyc;
-    const v=makeViews(cond);
-    let k=-1; if (pos<d) k=0; else if (pos>=d+i && pos<2*d+i) k=1;
-    if (k>=0) drawFigure(v[k].nx, v[k].ny, v[k].th, v[k].L);
+  if (phase!=='idle' && !breakPending){
+    if (cnt<=0){
+      stage=(stage+1)%4;
+      cnt = (stage===1||stage===3) ? frames(ISI_MS) : durFrames();
+    }
+    cnt--;
+    if (stage===0 || stage===2){
+      const v=makeViews(cond)[stage===0?0:1];
+      drawFigure(v.nx, v.ny, v.th, v.L);
+    }
   }
   requestAnimationFrame(loop);
 }
-setupControls(); updateInfo(); updateReal();
+setupDisplayUI(); setupControls(); updateInfo(); updateReal();
 requestAnimationFrame(loop);
 </script>
+
 </body>
 </html>

@@ -48,23 +48,32 @@
 
   <div style="max-width:100%;overflow-x:auto"><canvas id="c" width="630" height="540"></canvas></div>
   <div class="status" id="status">&nbsp;</div>
-  <div class="cal">Size calibration (the paper's field was 12.5 × 10.5 cm = 7° × 6° at 1 m, viewed with the right eye; the canvas is drawn at true physical size and is never rescaled). Hold a bank card against the grey bar and drag until it matches the card width (85.6 mm), then view from 1 m (arm's length is about 0.6 m, so sit back).
-    <div><input type="range" id="cal" min="200" max="600" value="324"> <span id="calv"></span></div>
+  <div class="status" id="disp">display: measuring refresh rate…</div>
+  <div class="status" id="warn" style="color:#a08850"></div>
+
+  <div class="cal">
+    <b>Display setup</b> (shared across pages; locked while a run is in progress). Hold a credit card against the grey bar and drag until the bar equals the card width (8.56 cm). Default 37.8 px/cm.
+    <div><input type="range" id="cal" min="150" max="700" step="0.5" value="323.6"> <span id="calv"></span></div>
     <div class="card" id="cardbar"></div>
+    <div style="margin-top:6px">Viewing distance (cm): <input type="number" id="dist" value="100" min="20" max="300" style="width:64px;background:#1c1c22;color:#d4d4d4;border:1px solid #3a3a44"> <span id="distnote">paper: 100 cm (1 m)</span> <button id="paperdist" type="button">use paper distance (100 cm)</button>. Right eye only, fixate the orange point.</div>
   </div>
 
   <div class="participant">
     <div class="instr" id="instr"></div>
     <div class="prow" id="resp"></div>
+    <div class="status" id="ctr">&nbsp;</div>
     <div class="prow">
-      <button id="run">▶ Run continuously (one presentation per 3.2 s ICI)</button>
+      <button id="blk">▶ Run one block (randomised order)</button>
+      <button id="run">▶ Repeat selected condition</button>
       <button id="one">Run one trial</button>
       <button id="stop">■ Stop</button>
     </div>
+    <div class="instr" style="margin-top:6px"><label><input type="checkbox" id="allc" checked> block covers all pairs / durations of the experiment (unchecked: only the selected condition, 10 ISIs)</label></div>
+    <div class="instr" style="margin-top:4px">Respond with keys 1 / 2 / 3 (or the buttons) during the 3200 ms intercycle interval. Responses are stored in memory only.</div>
   </div>
 
   <div class="panel">
-    <h2>Experimenter parameters</h2>
+    <h2>Experimenter parameters (selected condition for manual runs)</h2>
     <div class="grid">
       <div class="ctrl">Experiment
         <div class="seg" id="exp">
@@ -100,7 +109,7 @@
           <button data-v="sep">Separated (one on A, one on B)</button>
         </div>
       </div>
-      <div class="ctrl hide" id="cdur">Shape duration (each; default 100 ms is my assumption)
+      <div class="ctrl hide" id="cdur">Shape duration (each; manual default 100 ms is an assumption)
         <div class="seg" id="dur"></div>
       </div>
     </div>
@@ -114,36 +123,41 @@
   <div class="meta">
     <b>Methods (Kolers &amp; Pomerantz, 1971, J. Exp. Psychol. 87, 99–108). Values from the paper; <span class="as">amber = not stated / my assumption</span>.</b>
     <table>
-      <tr><td>Apparatus (p.99)</td><td>Multichannel electronic tachistoscope; two shapes in sequence with two lighted pauses between. Target area 12.5 × 10.5 cm = 7° × 6° at 1 m viewing distance. Lamp rise 1.5 ms, 90% decay 3.5 ms. Field brightness ≈ 4 ft-L. Timing error &lt; 1%.</td></tr>
+      <tr><td>Apparatus (p.99)</td><td>Multichannel electronic tachistoscope; two shapes in sequence with two lighted pauses between. Target area 12.5 × 10.5 cm = 7° × 6° (drawn here as exactly 7° × 6°) at 1 m viewing distance. Lamp rise 1.5 ms, 90% decay 3.5 ms. Field brightness ≈ 4 ft-L. Timing error &lt; 1%.</td></tr>
       <tr><td>Stimuli (p.100)</td><td>Circle, square, triangle, hollow arrow drawn in black ink on white board, contour 1 mm wide (≈ 3.4′), area equated at 1.56π cm². A circle "subtended 43′" (this equals the circle's <i>radius</i> for 1.56π cm², so the page draws it at that area, diameter ≈ 86′). Centres of gravity coincide with Line A or B of Fig. 1. Shapes are outline only. <span class="as">Triangle (isosceles) and hollow-arrow (block arrow with rectangular shaft) proportions are not given in the paper: assumed.</span></td></tr>
-      <tr><td>Layout (Fig. 1)</td><td>Fixation point FP = small neon point source. Fig. 1 dimension labels 3.7°, 1.7°, 0.5° run B→A, A→FP, FP→right edge. Used here: B 1.1° from the left edge, A = B + 3.7° = 4.8°, FP = A + 1.7° = 6.5° (0.5° from the right edge); A and B at 44% of field height, FP at 48% (read from the printed figure). <span class="as">FP size (small dot with glow) and colour (orange, as for a neon lamp) are assumed.</span></td></tr>
-      <tr><td>Timing (Fig. 1, p.100)</td><td>Shape 1 (25–400 ms; 80 ms in Exp I) → ISI 10, 25, 50, 71, 100, 125, 165, 210, 260, 390 ms (field lit) → shape 2 (same duration) → ICI 3200 ms during which the observer responds → next cycle. <span class="as">Presented here in whole display frames (assumes 60 Hz, 16.7 ms/frame; each period is rounded to the nearest frame, minimum 1 frame, so the 10 ms ISI becomes 1 frame = 16.7 ms and 25 ms becomes 1 frame). The status line shows the realised frame counts and ms. Not tachistoscope-accurate (paper: rise 1.5 ms, timing error under 1%).</span></td></tr>
+      <tr><td>Layout (Fig. 1)</td><td>Fixation point FP = small neon point source. Fig. 1 dimension labels 3.7°, 1.7°, 0.5° run B→A, A→FP, FP→right edge. Used here: B 1.1° from the left edge, A = B + 3.7° = 4.8°, FP = A + 1.7° = 6.5° (0.5° from the right edge); A and B at 44% of field height, FP at 48% (read from the printed figure). <span class="as">FP size (small dot with glow) and colour (orange, as for a neon lamp) are assumed.</span> All sizes are drawn in degrees (shape sizes: paper cm at 1 m × 0.5729°/cm; field and positions directly in degrees) and converted to pixels from the Display setup.</td></tr>
+      <tr><td>Timing (Fig. 1, p.100)</td><td>Shape 1 (25–400 ms; 80 ms in Exp I) → ISI 10, 25, 50, 71, 100, 125, 165, 210, 260, 390 ms (field lit) → shape 2 (same duration) → ICI 3200 ms during which the observer responds → next cycle. <span class="as">Here the refresh rate is measured at load (median of ~60 rAF intervals); every period is converted to a whole number of frames at that rate (nearest, minimum 1) and scheduled by counting frames. The table below is generated by the same function as the trials. Not tachistoscope-accurate (paper: lamp rise 1.5 ms, timing error under 1%).</span><div id="lvl"></div></td></tr>
       <tr><td>Viewing</td><td>Light-adapted right eye only, fixation on FP. 3 min dark adaptation then 1 min light adaptation to a blank field before testing (not reproduced). Extensive practice before each session.</td></tr>
       <tr><td>Exp I (pp.100–102)</td><td>4 shapes → 16 pairs (4 same, 12 disparate); shapes 80 ms each; 10 ISIs; shapes centred on Lines A and B (<span class="as">assumed: first shape at A, second at B</span>). Response: one button if smooth continuous motion was seen, another if anything else. Later part ("complement"): arrow→square, arrow→circle, arrow→triangle.</td></tr>
       <tr><td>Exp II (p.104)</td><td>Right-angled trapezoid (truncated isosceles right triangle), area equal to Exp I shapes, paired with its mirror reflection (M), inversion (I) or 180° planar rotation (R); both members centred on Line A. 5 durations (25, 50, 100, 200, 400 ms; the printed Fig. 4 legend) × 10 ISIs. Response during the ICI: button 1 smooth rotation of a rigid shape, button 2 smooth movement of a plastic shape (the paper gives no further explanation of "plastic"), button 3 neither. Observers were first never told what to see, then given these instructions. <span class="as">Exact proportions and which orientation is shown first are not given. Used here: truncated isosceles right triangle with parallel sides 1 and 0.45 and base 0.55 (45° slanted side), narrow end pointing left first. Default duration 100 ms is arbitrary.</span></td></tr>
       <tr><td>Exp III (p.105)</td><td>Five trapezoid pairs, each shape 100 ms: large left-pointing with its mirror image; small left-pointing with its mirror image; large left vs small left; large right vs small right; large left vs small right. Large = Exp II area, small = half that area. Superposed (both on Line A) and then separated (one on A, one on B). Response: one button for smooth continuous change of any kind, another if the transition was not smooth and continuous.</td></tr>
-      <tr><td>Not specified / not reproduced</td><td class="as">Randomised or counterbalanced pair and ISI order (paper: counterbalanced within sessions) is not used: the page repeats the selected condition. Exp III shape order and shape-to-A/B mapping in the separated case are assumed (first shape at A, second at B). Surround and luminance: the paper gives 4 ft-L field brightness and a darkened-room procedure implied by 3 min dark adaptation; the monitor here is uncalibrated. 3 min dark and 1 min light adaptation, and monocular viewing, are not enforced (view with the right eye only). Responses on this page are not recorded or scored.</td></tr>
+      <tr><td>Trial structure</td><td>Paper: ISI and pair sequences counterbalanced within sessions of 600 observations, practice before each session (Exp I: 4 sessions; Exp II: 6 sessions, 24 observations per point; Exp III: 3 counterbalanced sequences, 4 sessions, 24 observations per point). <span class="as">Here one block = every ISI (× every pair, and in Exp II every duration, in Exp III both placements) once in random order, one trial per 2 flashes + ISI + 3200 ms ICI. The paper's actual sequences, the 6 haphazardly chosen disparate pairs of Exp I, and the practice block are not specified; all 12 disparate pairs are offered. Exp III "left-pointing" is assumed to mean the narrow end of the trapezoid points left.</span></td></tr>
+      <tr><td>Not specified / not reproduced</td><td class="as">Exp III shape-to-A/B mapping in the separated case is assumed (first shape at A, second at B). Surround and luminance: the paper gives 4 ft-L (about 14 cd/m²) field brightness and 3 min dark + 1 min light adaptation; the monitor here is uncalibrated (use a dim room and low monitor brightness) and adaptation is not enforced. Monocular viewing is not enforced (use the right eye only). Exp II was first run uninstructed; only the instructed version is shown. Responses are recorded in memory and not displayed or scored.</td></tr>
     </table>
   </div>
 
 <script>
 const c = document.getElementById('c'), ctx = c.getContext('2d');
-const CM = 0.5729;                     // deg per cm at 1 m
-let PXCM = 32.4, PX, FW, FH, AREA, LINEW, POS, FP;  // px per cm (calibrated), derived values
-function setScale(pxcm){
-  PXCM = pxcm; PX = pxcm/CM;           // px per degree at 1 m
-  FW = 12.5*PXCM; FH = 10.5*PXCM;      // 12.5 x 10.5 cm = 7 x 6 deg
-  AREA = 1.56*Math.PI*PXCM*PXCM;       // px^2 for 1.56*pi cm^2
-  LINEW = 0.1*PXCM;                    // 1 mm contour
+const CMDEG = 0.5729;                  // deg per cm at the paper's 1 m
+let PXCM = 37.8, DIST = 100, PX, FW, FH, AREA, LINEW, POS, FP, FPR;
+function setScale(){
+  PX = PXCM*DIST*Math.PI/180;          // px per degree
+  const cm = v => v*CMDEG*PX;          // paper cm (at 1 m) -> px
+  FW = 7*PX; FH = 6*PX;                // target area 7 x 6 deg (12.5 x 10.5 cm at 1 m)
+  AREA = 1.56*Math.PI*cm(1)*cm(1);     // 1.56*pi cm^2
+  LINEW = Math.max(1, cm(0.1));        // 1 mm contour
   POS = { B:{x:1.1*PX, y:0.44*FH}, A:{x:4.8*PX, y:0.44*FH} };
-  FP = { x:6.5*PX, y:0.48*FH };
-  c.width = Math.round(FW); c.height = Math.round(FH);
+  FP = { x:6.5*PX, y:0.48*FH }; FPR = Math.max(3, 0.12*PX);
+  const dpr = window.devicePixelRatio||1;
+  c.width = Math.round(FW*dpr); c.height = Math.round(FH*dpr);
+  c.style.width = FW+'px'; c.style.height = FH+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 const FIELD = '#d8d8d0', INK = '#050505';
 const ISIS = [10,25,50,71,100,125,165,210,260,390];
 const ICI = 3200;
+const DURS2 = [25,50,100,200,400];
 
-// ---- shapes as polygons (unit coordinates), scaled to area, centred on centroid ----
 function centroidArea(p){ let a=0,cx=0,cy=0; for(let i=0;i<p.length;i++){const [x0,y0]=p[i],[x1,y1]=p[(i+1)%p.length];const k=x0*y1-x1*y0;a+=k;cx+=(x0+x1)*k;cy+=(y0+y1)*k;} a/=2; return {a:Math.abs(a),cx:cx/(6*a),cy:cy/(6*a)}; }
 function norm(p, area){ const m=centroidArea(p); const s=Math.sqrt(area/m.a); return p.map(([x,y])=>[(x-m.cx)*s,(y-m.cy)*s]); }
 const circle=[]; for(let i=0;i<72;i++){const t=i/72*2*Math.PI;circle.push([Math.cos(t),Math.sin(t)]);}
@@ -152,12 +166,10 @@ const BASE = {
   square: [[-1,-1],[1,-1],[1,1],[-1,1]],
   triangle: [[0,-1.15],[1.15,0.85],[-1.15,0.85]],
   arrow: [[-1.2,-0.25],[0.2,-0.25],[0.2,-0.8],[1.2,0],[0.2,0.8],[0.2,0.25],[-1.2,0.25]],
-  // truncated isosceles right triangle: parallel sides 1 (right) and 0.45 (left), base 0.55 -> 45 deg slant; narrow end LEFT
-  trap: [[0,0],[0.55,0],[0.55,1],[0,0.45]]
+  trap: [[0,0],[0.55,0],[0.55,1],[0,0.45]]   // narrow end LEFT (assumed proportions)
 };
 function shape(name, areaMul, flipX, flipY){
-  const p = norm(BASE[name], AREA*areaMul).map(([x,y])=>[flipX?-x:x, flipY?-y:y]);
-  return p;
+  return norm(BASE[name], AREA*areaMul).map(([x,y])=>[flipX?-x:x, flipY?-y:y]);
 }
 function drawShape(poly, at){
   ctx.save(); ctx.translate(at.x, at.y);
@@ -165,82 +177,138 @@ function drawShape(poly, at){
   ctx.beginPath(); poly.forEach(([x,y],i)=> i?ctx.lineTo(x,y):ctx.moveTo(x,y)); ctx.closePath(); ctx.stroke();
   ctx.restore();
 }
-function drawField(shapes){   // shapes: [{poly, at}]
+function drawField(shapes){
   ctx.fillStyle = FIELD; ctx.fillRect(0,0,FW,FH);
   shapes.forEach(s=>drawShape(s.poly, s.at));
-  const g=ctx.createRadialGradient(FP.x,FP.y,0,FP.x,FP.y,8); g.addColorStop(0,'rgba(255,106,42,1)'); g.addColorStop(.35,'rgba(255,106,42,.9)'); g.addColorStop(1,'rgba(255,106,42,0)');
-  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(FP.x,FP.y,8,0,7); ctx.fill();
+  const g=ctx.createRadialGradient(FP.x,FP.y,0,FP.x,FP.y,FPR); g.addColorStop(0,'rgba(255,106,42,1)'); g.addColorStop(.35,'rgba(255,106,42,.9)'); g.addColorStop(1,'rgba(255,106,42,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(FP.x,FP.y,FPR,0,7); ctx.fill();
 }
 
-// ---- state ----
-const S = { exp:1, p1:['circle','circle'], p2:'M', p3:'o_L', loc3:'sup', dur:80, isi:100 };
-const DURS2 = [25,50,100,200,400];
-
-function pairShapes(){
-  if(S.exp===1){
-    return [ {poly:shape(S.p1[0],1), at:POS.A}, {poly:shape(S.p1[1],1), at:POS.B} ];
-  }
-  if(S.exp===2){
+// ---- state: selected (manual) condition ----
+const S = { exp:1, p1:['circle','circle'], p2:'M', p3:'o_L', loc3:'sup', dur:100, isi:100 };
+const snap = () => Object.assign({}, S, {p1:S.p1.slice()});
+function pairShapes(k){
+  if(k.exp===1) return [ {poly:shape(k.p1[0],1), at:POS.A}, {poly:shape(k.p1[1],1), at:POS.B} ];
+  if(k.exp===2){
     const first = shape('trap',1,false,false);
-    const second = S.p2==='M' ? shape('trap',1,true,false) : S.p2==='I' ? shape('trap',1,false,true) : shape('trap',1,true,true);
+    const second = k.p2==='M' ? shape('trap',1,true,false) : k.p2==='I' ? shape('trap',1,false,true) : shape('trap',1,true,true);
     return [ {poly:first, at:POS.A}, {poly:second, at:POS.A} ];
   }
-  const half = 0.5, L = 1;
-  let a,b;
-  switch(S.p3){
+  const half = 0.5, L = 1; let a,b;
+  switch(k.p3){
     case 'o_L': a=shape('trap',L,false); b=shape('trap',L,true); break;
     case 'o_S': a=shape('trap',half,false); b=shape('trap',half,true); break;
     case 's_L': a=shape('trap',L,false); b=shape('trap',half,false); break;
     case 's_R': a=shape('trap',L,true); b=shape('trap',half,true); break;
     default: a=shape('trap',L,false); b=shape('trap',half,true);
   }
-  const loc2 = S.loc3==='sup' ? POS.A : POS.B;
-  return [ {poly:a, at:POS.A}, {poly:b, at:loc2} ];
+  return [ {poly:a, at:POS.A}, {poly:b, at:k.loc3==='sup' ? POS.A : POS.B} ];
 }
 
-// ---- trial engine (frame counted; assumes 60 Hz) ----
-const FRAME = 1000/60;
-let running=false, mode='none', phase='idle', pair=null, raf=0, frameNo=0, plan=null, lastTs=0;
-function durNow(){ return S.exp===1?80 : S.exp===2?S.dur : 100; }
-function frames(ms){ return Math.max(1, Math.round(ms/FRAME)); }
-function mkPlan(){
-  const d=frames(durNow()), i=frames(S.isi), ici=Math.round(3200/FRAME);
-  return {d, i, ici, total:2*d+i+ici};
+// ---- refresh-rate measurement and frame-counted timing ----
+let FRAME = 1000/60, MEASURED = false, HZ = 60;
+let measuring=false;
+function setRunEnabled(on){
+  [['blk','▶ Run one block (randomised order)'],['run','▶ Repeat selected condition'],['one','Run one trial']].forEach(([id,t])=>{
+    const b=document.getElementById(id); b.disabled=!on; b.textContent = on ? t : 'measuring refresh…'; });
 }
-function phaseAt(n){
-  if(n<plan.d) return 's1';
-  if(n<plan.d+plan.i) return 'isi';
-  if(n<2*plan.d+plan.i) return 's2';
-  return 'ici';
+function measureRefresh(done){
+  if(MEASURED || measuring) return;
+  if(document.hidden){ setRunEnabled(false); document.getElementById('disp').textContent='display: tab hidden, will measure refresh rate when visible…'; return; }
+  measuring=true; setRunEnabled(false);
+  const ts=[]; function f(t){
+    if(document.hidden){ measuring=false; document.getElementById('disp').textContent='display: tab hidden, will measure refresh rate when visible…'; return; }
+    ts.push(t); if(ts.length<62) requestAnimationFrame(f); else {
+    const d=[]; for(let i=1;i<ts.length;i++) d.push(ts[i]-ts[i-1]); d.sort((a,b)=>a-b);
+    const med=d[Math.floor(d.length/2)]; if(med>2 && med<100) FRAME=med; MEASURED=true; measuring=false; HZ=1000/FRAME; setRunEnabled(true); done(); } }
+  requestAnimationFrame(f);
 }
-function render(ph){
-  if(ph==='s1') drawField([pair[0]]);
-  else if(ph==='s2') drawField([pair[1]]);
-  else drawField([]);
+let measureDone=()=>{};
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && !MEASURED) measureRefresh(measureDone); });
+const nF = ms => Math.max(1, Math.round(ms/FRAME));
+const durOf = k => k.exp===1?80 : k.exp===2?k.dur : 100;
+function mkPlan(k){ const d=nF(durOf(k)), i=nF(k.isi), ici=nF(ICI); return {d,i,ici,total:2*d+i+ici}; }
+function phaseAt(n,p){ if(n<p.d) return 's1'; if(n<p.d+p.i) return 'isi'; if(n<2*p.d+p.i) return 's2'; return 'ici'; }
+function frameInfo(){
+  const lv=[...new Set([...ISIS,...DURS2,80,100,ICI])].sort((a,b)=>a-b);
+  const odd=lv.filter(v=>Math.abs(v/FRAME-Math.round(v/FRAME))>0.05);
+  return {lv,odd};
 }
-function startTrial(){ pair=pairShapes(); plan=mkPlan(); frameNo=0; phase=''; lastTs=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(tick); }
-function tick(now){
+function updateDisplayLines(){
+  const r=frameInfo();
+  document.getElementById('disp').textContent = MEASURED
+    ? 'display: '+HZ.toFixed(1)+' Hz measured, frame '+FRAME.toFixed(2)+' ms'
+    : 'display: measuring refresh rate…';
+  document.getElementById('warn').textContent = (MEASURED && r.odd.length)
+    ? 'Not a whole number of frames at this rate (rounded): '+r.odd.join(', ')+' ms' : '';
+  const el=document.getElementById('lvl');
+  if(el && MEASURED){
+    el.innerHTML='<br>Levels at '+HZ.toFixed(1)+' Hz (paper ms → frames → realised ms): '+
+      r.lv.map(v=>v+'→'+nF(v)+'→'+(nF(v)*FRAME).toFixed(1)).join(' · ');
+  }
+}
+
+// ---- trial engine ----
+let running=false, mode='none', phase='', cur=null, pair=null, plan=null, raf=0, t0=null, tPrev=0, nPrev=0, queue=[], qi=0, dropped=0;
+const LOG=[]; let respThisTrial=null;
+function startTrial(k){
+  cur=k; pair=pairShapes(k); plan=mkPlan(k); t0=null; nPrev=0; phase=''; respThisTrial=null;
+  cancelAnimationFrame(raf); raf=requestAnimationFrame(tick);
+  document.getElementById('ctr').textContent = mode==='blk' ? 'trial '+(qi+1)+' / '+queue.length : (mode==='cont'?'repeating selected condition':'');
+  setStatus();
+}
+function endTrial(){
+  if(respThisTrial!==null && mode==='blk') LOG.push({n:qi, cond:cur, key:respThisTrial});
+  else if(respThisTrial!==null) LOG.push({n:-1, cond:cur, key:respThisTrial});
+}
+function abortTrial(){
+  // dropped frame during a stimulus/ISI period: trial not logged, re-queued
+  dropped++; respThisTrial=null;
+  if(mode==='blk') queue.push(cur);
+  const msg='trial discarded (dropped frame; discarded so far: '+dropped+')';
+  if(mode==='cont'){ startTrial(snap()); setStatus(msg); return; }
+  if(mode==='blk'){ qi++; if(qi<queue.length){ startTrial(queue[qi]); setStatus(msg); return; } }
+  mode='none'; running=false; drawField([]); setStatus(msg);
+}
+function tick(t){
   if(!running){ drawField([]); setStatus('stopped'); return; }
-  // advance one display frame per rAF callback (one drawn frame = one count)
-  const ph=phaseAt(frameNo);
-  if(ph!==phase){ phase=ph; render(ph); }
-  if(ph==='ici') setStatus('response interval (ICI 3200 ms)');
-  else setStatus();
-  frameNo++;
-  if(frameNo>=plan.total){
-    if(mode==='cont'){ startTrial(); return; }
-    mode='none'; running=false; drawField([]); setStatus('trial finished'); return;
+  if(t0===null){ t0=t; tPrev=t; nPrev=0; }
+  const n=Math.round((t-t0)/FRAME), stimEnd=2*plan.d+plan.i;
+  if(nPrev<stimEnd && (t-tPrev)>1.5*FRAME && n>0){ abortTrial(); return; }
+  tPrev=t; nPrev=n;
+  const ph=phaseAt(n,plan);
+  if(ph!==phase){ phase=ph; drawField(ph==='s1'?[pair[0]]:ph==='s2'?[pair[1]]:[]); setStatus(ph==='ici'?'response window open':''); }
+  if(n>=plan.total-1){
+    endTrial();
+    if(mode==='cont'){ startTrial(snap()); return; }
+    if(mode==='blk'){ qi++; if(qi<queue.length){ startTrial(queue[qi]); return; } document.getElementById('ctr').textContent='block finished ('+queue.length+' trials)'; }
+    mode='none'; running=false; drawField([]); setStatus('finished'); return;
   }
   raf=requestAnimationFrame(tick);
 }
 function setStatus(m){
-  const p=mkPlan(), r=n=>(n*FRAME).toFixed(1);
-  document.getElementById('status').textContent = m ? m+' · ' : '';
-  document.getElementById('status').textContent += 'Shape 1 '+p.d+' fr ('+r(p.d)+' ms) · ISI '+p.i+' fr ('+r(p.i)+' ms) · Shape 2 '+p.d+' fr · ICI 3200 ms (at 60 Hz; requested '+durNow()+' / '+S.isi+' ms)';
+  const k=cur||snap(), p=mkPlan(k), r=n=>(n*FRAME).toFixed(1);
+  document.getElementById('status').textContent = (m?m+' · ':'')+'Shape 1 '+p.d+' fr ('+r(p.d)+' ms) · ISI '+p.i+' fr ('+r(p.i)+' ms) · Shape 2 '+p.d+' fr · ICI '+p.ici+' fr ('+r(p.ici)+' ms) · requested '+durOf(k)+' / '+k.isi+' ms';
 }
-document.getElementById('run').onclick=()=>{ mode='cont'; running=true; startTrial(); };
-document.getElementById('one').onclick=()=>{ mode='one'; running=true; startTrial(); };
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function buildBlock(){
+  const all=document.getElementById('allc').checked, out=[];
+  const SH=['circle','square','triangle','arrow'];
+  let conds=[];
+  if(!all) conds=[snap()];
+  else if(S.exp===1) SH.forEach(a=>SH.forEach(b=>conds.push(Object.assign(snap(),{p1:[a,b]}))));
+  else if(S.exp===2) ['M','I','R'].forEach(m=>DURS2.forEach(d=>conds.push(Object.assign(snap(),{p2:m,dur:d}))));
+  else ['o_L','o_S','s_L','s_R','so'].forEach(p=>['sup','sep'].forEach(l=>conds.push(Object.assign(snap(),{p3:p,loc3:l}))));
+  conds.forEach(k=>ISIS.forEach(i=>out.push(Object.assign({},k,{isi:i}))));
+  return shuffle(out);
+}
+function go(m){ if(!MEASURED) return; mode=m; running=true;
+  if(m==='blk'){ queue=buildBlock(); qi=0; startTrial(queue[0]); } else startTrial(snap()); }
+document.getElementById('blk').onclick=()=>go('blk');
+document.getElementById('run').onclick=()=>go('cont');
+document.getElementById('one').onclick=()=>go('one');
 document.getElementById('stop').onclick=()=>{ running=false; mode='none'; };
+document.addEventListener('visibilitychange',()=>{ if(document.hidden && running){ running=false; mode='none'; } });
 
 // ---- UI ----
 function seg(id, cb){ const el=document.getElementById(id); el.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; [...el.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); cb(b); }); }
@@ -254,11 +322,10 @@ seg('pair3',b=>{ S.p3=b.dataset.v; showStatic(); });
 seg('loc3',b=>{ S.loc3=b.dataset.v; showStatic(); });
 const isiEl=document.getElementById('isi');
 ISIS.forEach(v=>{ const b=document.createElement('button'); b.textContent=v; b.dataset.v=v; if(v===100) b.classList.add('on'); isiEl.appendChild(b); });
-seg('isi',b=>{ S.isi=+b.dataset.v; setStatus(); });
+seg('isi',b=>{ S.isi=+b.dataset.v; if(!running) cur=null; setStatus(); });
 const durEl=document.getElementById('dur');
 DURS2.forEach(v=>{ const b=document.createElement('button'); b.textContent=v+' ms'; b.dataset.v=v; if(v===100) b.classList.add('on'); durEl.appendChild(b); });
-S.dur=100;
-seg('dur',b=>{ S.dur=+b.dataset.v; setStatus(); });
+seg('dur',b=>{ S.dur=+b.dataset.v; if(!running) cur=null; setStatus(); });
 
 const INSTR = {
   1:'Cover your left eye and fixate the orange point with your right eye. Press one button if you saw smooth continuous motion of the test shape across the screen, the other button if you saw anything other than smooth continuous motion.',
@@ -266,19 +333,26 @@ const INSTR = {
   3:'Fixate the point with your right eye. Press one button if you saw smooth continuous change of any kind between the shapes, the other if the transition was not smooth and continuous.'
 };
 const RESP = {
-  1:['Smooth continuous motion','Other than smooth continuous motion'],
+  1:['1 · Smooth continuous motion','2 · Other than smooth continuous motion'],
   2:['1 · Smooth rigid rotation','2 · Smooth plastic movement','3 · Neither'],
-  3:['Smooth continuous change','Not smooth / continuous']
+  3:['1 · Smooth continuous change','2 · Not smooth / continuous']
 };
+function respond(i){
+  if(!running || phase!=='ici' || respThisTrial!==null) return;   // one press per trial: first press kept
+  respThisTrial=i+1;
+  const b=document.getElementById('resp').children[i]; if(b){ b.classList.add('flash'); setTimeout(()=>b.classList.remove('flash'),150); }
+}
 function buildResp(){
   const r=document.getElementById('resp'); r.innerHTML='';
-  RESP[S.exp].forEach((t,i)=>{ const b=document.createElement('button'); b.className='resp'; b.textContent=t;
-    b.onclick=()=>{ b.classList.add('flash'); setTimeout(()=>b.classList.remove('flash'),150); }; r.appendChild(b); });
+  RESP[S.exp].forEach((t,i)=>{ const b=document.createElement('button'); b.className='resp'; b.textContent=t; b.onclick=()=>respond(i); r.appendChild(b); });
   document.getElementById('instr').textContent = INSTR[S.exp];
 }
-function showStatic(){ if(!running){ drawField([]); } setStatus(); }
+document.addEventListener('keydown',e=>{ if(e.repeat) return; const n=parseInt(e.key,10); if(n>=1 && n<=RESP[S.exp].length && !(e.target.tagName==='INPUT' && (e.target.type==='number'||e.target.type==='text'))) respond(n-1); });
+document.addEventListener('click',e=>{ const t=e.target; if(t.tagName==='INPUT' && (t.type==='checkbox'||t.type==='range')) setTimeout(()=>t.blur(),0); });
+document.getElementById('cal').addEventListener('change',e=>e.target.blur());
+function showStatic(){ if(!running){ cur=null; drawField([]); } setStatus(); }
 seg('exp',b=>{
-  running=false; mode='none'; S.exp=+b.dataset.v;
+  running=false; mode='none'; cur=null; S.exp=+b.dataset.v;
   document.getElementById('c1pair').classList.toggle('hide',S.exp!==1);
   document.getElementById('c2pair').classList.toggle('hide',S.exp!==2);
   document.getElementById('c3pair').classList.toggle('hide',S.exp!==3);
@@ -286,17 +360,27 @@ seg('exp',b=>{
   document.getElementById('cdur').classList.toggle('hide',S.exp!==2);
   buildResp(); showStatic();
 });
-const calEl=document.getElementById('cal');
+
+// ---- Display setup (shared key am_display) ----
+const calEl=document.getElementById('cal'), distEl=document.getElementById('dist');
+try{ const d=JSON.parse(localStorage.getItem('am_display')||'null');
+  if(d){ if(d.pxPerCm>5 && d.pxPerCm<200) PXCM=d.pxPerCm; if(d.distCm>=20 && d.distCm<=300) DIST=d.distCm; } }catch(e){}
+calEl.value=PXCM*8.56; distEl.value=DIST;
 function applyCal(){
-  const cardPx=+calEl.value;
-  document.getElementById('cardbar').style.width=cardPx+'px';
-  document.getElementById('calv').textContent=cardPx+' px = 85.6 mm';
-  setScale(cardPx/8.56);
-  if(!running) showStatic();
+  if(running){ calEl.value=PXCM*8.56; distEl.value=DIST; return; }   // display setup locked during a run
+  PXCM=+calEl.value/8.56; DIST=Math.min(300,Math.max(20,+distEl.value||100));
+  document.getElementById('cardbar').style.width=calEl.value+'px';
+  document.getElementById('calv').textContent=PXCM.toFixed(1)+' px/cm';
+  document.getElementById('distnote').textContent = DIST===100 ? 'paper: 100 cm (1 m)' : 'paper: 100 cm; here '+DIST+' cm (sizes kept in degrees)';
+  try{ localStorage.setItem('am_display', JSON.stringify({pxPerCm:PXCM, distCm:DIST})); }catch(e){}
+  setScale(); if(!running) drawField([]);
 }
-calEl.addEventListener('input',applyCal);
-applyCal();
-buildResp(); showStatic();
+document.getElementById('paperdist').onclick=()=>{ if(running) return; distEl.value=100; applyCal(); };
+calEl.addEventListener('input',applyCal); distEl.addEventListener('change',applyCal);
+setInterval(()=>{ [calEl,distEl,document.getElementById('paperdist')].forEach(e=>{ if(e.disabled!==running) e.disabled=running; }); },150);
+applyCal(); buildResp(); showStatic();
+measureDone=()=>{ updateDisplayLines(); setStatus(); };
+measureRefresh(measureDone);
 </script>
 </body>
 </html>

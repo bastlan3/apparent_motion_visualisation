@@ -12,7 +12,13 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
-  canvas { display:block; border-radius:3px; }
+  canvas { display:block; }
+  #stage { background:#fff; max-width:100%; overflow-x:auto; }
+  .warn { color:#d9a441; }
+  .mono { font-variant-numeric:tabular-nums; }
+  input[type=number] { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; border-radius:4px; padding:4px 6px; width:80px; font-size:12px; }
+  #cardbar { height:22px; background:#3b6fb0; border-radius:3px; min-width:20px; }
+  input[type=range] { width:300px; max-width:90vw; }
 
   .participant { margin-top:12px; width:720px; max-width:96vw; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; min-height:36px; }
@@ -40,15 +46,15 @@
   <h1>Shepard &amp; Zare (1983) — path-guided apparent motion</h1>
   <div class="sub">Two black dots alternate on a white ground; a light-gray band is flashed in the interdot field. Reconstruction of the display and the observer's duration-adjustment task (Science 220, 632–634).</div>
 
-  <canvas id="c" width="620" height="300"></canvas>
+  <div id="stage"><canvas id="c" width="620" height="300"></canvas></div>
 
   <div class="participant">
     <div class="instr" id="instr"></div>
-    <div class="stat" id="stat">&nbsp;</div>
-    <div class="prow">
+        <div class="prow">
       <button id="start">Start trial</button>
       <button id="up" disabled>Lengthen dots +10% (Space)</button>
       <button id="end" disabled>End trial (Enter)</button>
+      <button id="newsess" hidden>New session</button>
       <button id="export">Export CSV</button>
     </div>
   </div>
@@ -73,14 +79,30 @@
         <div class="seg" id="cfg"></div>
       </div>
     </div>
+    <div class="stat" style="text-align:left;margin-top:10px"><label><input type="checkbox" id="dbg"> show live timing readout (experimenter only)</label> <span id="stat" class="mono"></span></div>
     <div class="stat" style="text-align:left;margin-top:10px">Current: <b id="cfgLbl"></b> &nbsp; Trials logged: <b id="nLog">0</b></div>
+  </div>
+
+  <div class="panel">
+    <h2>Display setup</h2>
+    <div class="ctrl">Screen scale: resize the bar until it is exactly as wide as a credit card (8.56 cm)
+      <div id="cardbar"></div>
+      <input type="range" id="cardw" min="150" max="700" step="1">
+    </div>
+    <div class="grid" style="margin-top:10px">
+      <div class="ctrl">Pixels per cm <input type="number" id="ppcm" min="10" max="200" step="0.1"></div>
+      <div class="ctrl">Viewing distance (cm) <input type="number" id="vdist" min="10" max="300" step="1"></div>
+      <div class="ctrl"><button id="remeasure">Re-measure refresh</button></div>
+    </div>
+    <div class="stat" style="text-align:left;margin-top:10px" id="dispLine">Measuring refresh rate…</div>
+    <div class="stat warn" style="text-align:left" id="warnLine"></div>
   </div>
 
   <div class="panel">
     <h2>Methods (paper values; page refs to Science 220)</h2>
     <table>
       <tr><th>Parameter</th><th>Value</th><th>Source</th></tr>
-      <tr><td>Display</td><td>Four-field tachistoscope, fields illuminated in a repeating sequence</td><td>p. 633; emulated on a 60 Hz canvas</td></tr>
+      <tr><td>Display</td><td>Four-field tachistoscope, fields illuminated in a repeating sequence</td><td>p. 633; emulated on a canvas (frame-counted at the measured refresh rate)</td></tr>
       <tr><td>Dots / ground</td><td>Black circular dots, 0.42° wide, on white</td><td>p. 633</td></tr>
       <tr><td>Path</td><td>Uniform light gray (Color Aid No. 1A), 0.42° wide, circular arcs bulging upward (Fig. 1D–F)</td><td>p. 633, Fig. 1</td></tr>
       <tr><td>Sequence</td><td>dot A, interdot field (path), dot B, interdot field, repeat; both dots of equal duration</td><td>pp. 633–634</td></tr>
@@ -92,20 +114,25 @@
       <tr><td>No-path</td><td>Blank interdot field; D = 2/3, 2, 3, 4, 6, 9°</td><td>p. 634</td></tr>
       <tr><td>Task</td><td>Fixate the centre of the region defined by the presented path; try to see the dot moving back and forth over the path (no-path: until "good apparent motion"); lengthen until the desired motion is first experienced</td><td>pp. 633–634</td></tr>
       <tr><td>Session</td><td>One session per condition; 5 practice trials then random sequence, 4 trials per configuration; 10 observers</td><td>p. 634</td></tr>
-      <tr><td>Realised timing (60 Hz)</td><td>Whole frames of 16.67 ms: interdot field = 1 frame (16.7 ms, not 5 ms); dot = round(nominal/16.67) frames; 200 ms blank = 12 frames (200 ms)</td><td>Assumption (display limit)</td></tr>
+      <tr><td>Realised timing</td><td>Refresh rate measured at load (median of ~60 rAF intervals); every duration converted to whole frames and scheduled by counting frames; realised ms shown in the Display line. The 5 ms interdot field becomes at least 1 frame (e.g. 16.7 ms at 60 Hz), i.e. longer than the paper's value; the page warns whenever a paper duration is not a whole number of frames</td><td>Assumption (display limit)</td></tr>
+      <tr><td>Dot duration steps</td><td>Nominal duration 100 x 1.1^k ms, rounded to frames; a press that would not change the frame count advances k further until the realised duration changes</td><td>Assumption</td></tr>
       <tr><td>Path shade</td><td>#d2d2d2 on #ffffff (approximation of a light tint; paper gives no luminance)</td><td>Assumption</td></tr>
-      <tr><td>Scale</td><td>32 px per degree (viewing distance not reported)</td><td>Assumption</td></tr>
-      <tr><td>Placement</td><td>Dots at the ends of a horizontal chord, path bulging up; configuration centred on the canvas; no fixation mark drawn; path runs dot-centre to dot-centre (butt ends)</td><td>Assumption</td></tr>
-      <tr><td>Trial control</td><td>Space = lengthen both dots 10%; Enter = end trial (end signal not described in the paper); cycle runs continuously from Start; no decrease key</td><td>Assumption</td></tr>
+      <tr><td>Scale</td><td>Drawn in degrees: px/deg = px per cm (card calibration, default 37.8) x viewing distance x tan 1 deg; viewing distance default 57 cm (not reported in the paper)</td><td>Assumption</td></tr>
+      <tr><td>Placement</td><td>Dots at the ends of a horizontal chord, path bulging up; configuration centred in a white field; no fixation mark drawn; path runs dot-centre to dot-centre (butt ends); the white field fills the stage, surround unspecified</td><td>Assumption</td></tr>
+      <tr><td>Trial control</td><td>Space = lengthen both dots 10 percent (key auto-repeat ignored); Enter = end trial (end signal not described in the paper); Space or Enter starts the next trial; cycle starts at dot A and restarts at dot A after each lengthening; no decrease key; duration capped at about 6.7 s</td><td>Assumption</td></tr>
+      <tr><td>Practice</td><td>5 practice trials with configurations drawn at random from the condition's levels (which ones were used is not reported); first starting dot always A</td><td>Assumption</td></tr>
+      <tr><td>Condition order</td><td>Observers 1-8: variable, fixed, no-path (separate sessions); last two observers started with no-path. Here the condition is chosen by the experimenter</td><td>p. 634, note 10</td></tr>
     </table>
   </div>
 
-  <div class="meta">Not reported in the paper: viewing distance, field size, luminances, absolute dot positions, inter-trial interval, starting dot, upper limit on duration.</div>
+  <div class="meta">Not reported in the paper: viewing distance, field size, luminances, absolute dot positions, tachistoscope surround, fixation mark, inter-trial interval, starting dot, upper limit on duration.</div>
 
 <script>
-const c = document.getElementById('c'), ctx = c.getContext('2d');
-const W = c.width, H = c.height, PXDEG = 32, MIDX = W/2;
-const DOTR = 0.42*PXDEG/2, FRAME = 1000/60, BLANK_FR = 12;
+const c = document.getElementById('c'), ctx = c.getContext('2d'), $=id=>document.getElementById(id);
+let W=620, H=300, PXDEG=37.8*57*Math.tan(Math.PI/180), MIDX=W/2, DOTR=0.42*PXDEG/2;
+let FRAME=1000/60, measured=false;
+let ppcm=37.8, vdist=57;
+try{ const d=JSON.parse(localStorage.getItem('am_display')||'null'); if(d){ if(d.ppcm>0) ppcm=+d.ppcm; if(d.dist>0) vdist=+d.dist; else if(d.vdist>0) vdist=+d.vdist; } }catch(e){}
 const CONFIGS = {
   varL:   [3,4,6,9,12].map(L=>({L, D:3, lab:'L='+L+'°, D=3°'})),
   fixL:   [[6,'6'],[4,'4'],[2,'2'],[2/3,'2/3'],[0,'0']].map(([D,s])=>({L:6, D, lab:'L=6°, D='+s+'°'})),
@@ -113,11 +140,59 @@ const CONFIGS = {
 };
 const INSTR_PATH='Keep your eyes at the centre of the region defined by the path and try to see the dot as moving back and forth over the path. Lengthen the dots until that motion is first experienced, then end the trial.';
 const INSTR_NOPATH='Lengthen the dots until you first experience good apparent motion, then end the trial.';
-const S = { cond:'varL', mode:'session', cfg:CONFIGS.varL[0], running:false, k:0, queue:[], idx:0, practice:0 };
+const S = { cond:'varL', mode:'session', cfg:CONFIGS.varL[0], running:false, k:0, presses:0, queue:[], idx:0, practice:0 };
 const log = [];
+const MAXMS=6700;
 
+// ---------- display setup ----------
+function applyScale(){
+  PXDEG = ppcm*vdist*Math.tan(Math.PI/180);
+  DOTR = 0.42*PXDEG/2;
+  const avail=Math.max(280, Math.min(window.innerWidth-24, 820));
+  const need=Math.ceil(Math.max(...CONFIGS[S.cond].map(k=>Math.max(k.D,(k.L||0)/Math.PI)))*PXDEG+4*DOTR+24);
+  needW=need; W=Math.round(Math.max(avail,need)); H=Math.round(Math.min(560, Math.max(240, 6.5*PXDEG)));
+  c.width=W; c.height=H; MIDX=W/2;
+  $('cardbar').style.width=(ppcm*8.56)+'px';
+  $('cardw').value=Math.round(ppcm*8.56); $('ppcm').value=ppcm.toFixed(1); $('vdist').value=vdist;
+  if(typeof rebuild==='function' && seq) { const sv=si, lf=left; rebuild(); si=Math.min(sv,seq.length-1); left=lf; render(); }
+  dispLine();
+}
+function saveDisp(){ try{ localStorage.setItem('am_display', JSON.stringify({ppcm:ppcm, dist:vdist})); }catch(e){} }
+$('cardw').addEventListener('input',()=>{ ppcm=+$('cardw').value/8.56; saveDisp(); applyScale(); });
+$('cardw').addEventListener('change',()=>$('cardw').blur());
+$('ppcm').addEventListener('change',()=>{ const v=+$('ppcm').value; if(v>0){ ppcm=v; saveDisp(); applyScale(); } });
+$('vdist').addEventListener('change',()=>{ const v=+$('vdist').value; if(v>0){ vdist=v; saveDisp(); applyScale(); } });
+window.addEventListener('resize',()=>{ if(!S.running) applyScale(); });
+
+// ---------- timing ----------
+const nFr = ms => Math.max(1, Math.round(ms/FRAME));
+const dotFramesAt = k => nFr(100*Math.pow(1.1,k));
+const dotFrames = () => dotFramesAt(S.k);
+const BLANK_FR = () => nFr(200), FIELD_FR = () => nFr(5);
+function dispLine(){
+  const f=FIELD_FR(), b=BLANK_FR(), d0=dotFramesAt(0);
+  $('dispLine').innerHTML=(measured?'Measured refresh: <b>'+(1000/FRAME).toFixed(1)+' Hz</b> (frame '+FRAME.toFixed(2)+' ms). ':'Measuring refresh rate… ')+
+    'Realised: interdot field <b>'+f+' fr = '+(f*FRAME).toFixed(1)+' ms</b> (paper 5 ms); initial dot <b>'+d0+' fr = '+(d0*FRAME).toFixed(1)+' ms</b> (paper 100 ms); blank <b>'+b+' fr = '+(b*FRAME).toFixed(1)+' ms</b> (paper 200 ms). Scale: <b>'+PXDEG.toFixed(1)+' px/deg</b>.';
+  const w=[]; [['5 ms interdot field',5],['100 ms initial dot',100],['200 ms blank',200]].forEach(([n,ms])=>{
+    const r=ms/FRAME; if(Math.abs(r-Math.round(r))>0.05 || Math.round(r)<1 || (ms===5)) w.push(n+' = '+r.toFixed(2)+' frames, realised as '+nFr(ms)+' ('+(nFr(ms)*FRAME).toFixed(1)+' ms)'); });
+  const wide = needW>Math.max(280, Math.min(window.innerWidth-24, 820)) ? ' The largest stimulus in this condition ('+needW+' px wide) exceeds the available page width; the stage scrolls horizontally.' : '';
+  $('warnLine').textContent = (measured && w.length ? 'Not a whole number of frames at this rate: '+w.join('; ')+'.' : '')+wide;
+}
+function measure(){
+  measured=false; $('start').disabled=true; $('dispLine').textContent='Measuring refresh rate…';
+  const t=[]; let prev=0;
+  function f(ts){ if(prev) t.push(ts-prev); prev=ts;
+    if(t.length<60) return requestAnimationFrame(f);
+    t.sort((a,b)=>a-b); FRAME=t[t.length>>1]; measured=true;
+    $('start').disabled = S.running || (S.mode==='session' && S.practice>=5 && S.idx>=S.queue.length);
+    if(seq){ const sv=si, lf=left; rebuild(); si=Math.min(sv,seq.length-1); left=Math.min(lf,seq[si][1]); }
+    dispLine(); }
+  requestAnimationFrame(f);
+}
+$('remeasure').onclick=()=>{ if(!S.running) measure(); $('remeasure').blur(); };
+
+// ---------- geometry ----------
 function solveHalf(r){ let lo=1e-4, hi=Math.PI; for(let i=0;i<60;i++){ const m=(lo+hi)/2; (Math.sin(m)/m>r)?lo=m:hi=m; } return (lo+hi)/2; }
-// geometry: chord at y=0, path bulges up (negative y)
 function geom(cfg, hasPath){
   const D = cfg.D*PXDEG, L = (cfg.L||0)*PXDEG;
   let pts=null;
@@ -129,7 +204,7 @@ function geom(cfg, hasPath){
   }
   let top=0;
   if (pts) top = pts.circle ? -2*pts.R : Math.min(...pts.map(p=>p[1]));
-  const off=H/2-top/2;                       // centre region vertically
+  const off=H/2-top/2;
   return { pts, off, xs:[MIDX-D/2, MIDX+D/2] };
 }
 function drawDot(g,i){ ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(g.xs[i],g.off,DOTR,0,2*Math.PI); ctx.fill(); }
@@ -142,90 +217,99 @@ function drawPath(g){
   ctx.stroke();
 }
 
-// frame-counted sequencer: list of [type, frames]
-function blankFr(){ return (S.cond==='fixL' && S.cfg.D<0.5) ? BLANK_FR : 0; }
-function dotFrames(){ return Math.max(1, Math.round(100*Math.pow(1.1,S.k)/FRAME)); }
+// ---------- frame-counted sequencer (one step per rAF = one display frame) ----------
+function blankFr(){ return (S.cond==='fixL' && S.cfg.D<0.5) ? BLANK_FR() : 0; }
 function buildSeq(){
-  const d=dotFrames(), bl=blankFr(), mid = S.cond!=='noPath' ? 'P' : 'W';
-  const s=[['A',d]]; if(bl) s.push(['W',bl]); s.push([mid,1]); if(bl) s.push(['W',bl]);
-  s.push(['B',d]); if(bl) s.push(['W',bl]); s.push([mid,1]); if(bl) s.push(['W',bl]);
+  const d=dotFrames(), bl=blankFr(), mid = S.cond!=='noPath' ? 'P' : 'W', fl=FIELD_FR();
+  const s=[['A',d]]; if(bl) s.push(['W',bl]); s.push([mid,fl]); if(bl) s.push(['W',bl]);
+  s.push(['B',d]); if(bl) s.push(['W',bl]); s.push([mid,fl]); if(bl) s.push(['W',bl]);
   return s;
 }
-let seq, si=0, left=1, acc=0, last=0, G;
+let seq=null, si=0, left=1, G, needW=0;
 function rebuild(){ G=geom(S.cfg, S.cond!=='noPath'); seq=buildSeq(); si=0; left=seq[0][1]; }
 function render(){
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  if(!S.running) return;
+  if(!S.running||!seq) return;
   const t=seq[si][0];
   if(t==='A') drawDot(G,0); else if(t==='B') drawDot(G,1); else if(t==='P') drawPath(G);
 }
 function step(){ if(--left<=0){ si=(si+1)%seq.length; if(si===0) seq=buildSeq(); left=seq[si][1]; } }
-function loop(ts){
-  if(!last) last=ts;
-  acc += ts-last; last=ts;
-  if(acc>FRAME*4) acc=FRAME;
-  while(acc>=FRAME-1){ acc-=FRAME; if(S.running) step(); }
-  render(); requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
+function loop(){ if(S.running) step(); render(); requestAnimationFrame(loop); }
 
-const $=id=>document.getElementById(id);
+function onsetMs(){ return (dotFrames()+FIELD_FR()+2*blankFr())*FRAME; }
 function stat(){
-  if(!S.running) return;
-  const d=dotFrames(), bl=blankFr(), dm=d*FRAME, onset=(d+1+2*bl)*FRAME;
-  $('stat').innerHTML='Dot duration nominal <b>'+(100*Math.pow(1.1,S.k)).toFixed(0)+'</b> ms, realised <b>'+d+' frames = '+dm.toFixed(1)+' ms</b>; onset-to-onset <b>'+onset.toFixed(1)+' ms</b> (dot + 1-frame field'+(bl?' + 2 x 200 ms blank':'')+')';
+  if(!S.running||!$('dbg').checked){ $('stat').textContent=''; return; }
+  const d=dotFrames();
+  $('stat').textContent=' dot nominal '+(100*Math.pow(1.1,S.k)).toFixed(0)+' ms, realised '+d+' fr = '+(d*FRAME).toFixed(1)+' ms; onset-to-onset '+onsetMs().toFixed(1)+' ms';
 }
+$('dbg').addEventListener('change',stat);
 function setCfgLbl(){ $('cfgLbl').textContent=S.cfg.lab; }
 function baseInstr(){ return S.cond==='noPath'?INSTR_NOPATH:INSTR_PATH; }
 function beginTrial(){
-  S.running=true; S.k=0; rebuild(); setCfgLbl();
+  if(S.running||!measured||$('start').disabled) return;
+  S.running=true; S.k=0; S.presses=0; rebuild(); left=seq[0][1]+1; setCfgLbl();
   const tag = S.mode==='session' ? (S.practice<5 ? 'Practice '+(S.practice+1)+'/5' : 'Trial '+(S.idx+1)+'/'+S.queue.length) : 'Manual trial';
   $('instr').textContent = tag+' — '+baseInstr();
   $('up').disabled=false; $('end').disabled=false; $('start').disabled=true; stat();
 }
-function lengthen(){ if(!S.running) return; if(dotFrames()>400) return; S.k++; seq=buildSeq(); si=0; left=seq[0][1]; stat(); }
+function lengthen(){
+  if(!S.running) return;
+  if(100*Math.pow(1.1,S.k)>MAXMS) return;
+  const f0=dotFrames(); let n=0;
+  do{ S.k++; n++; }while(dotFrames()===f0 && n<40 && 100*Math.pow(1.1,S.k)<=MAXMS);
+  S.presses++; seq=buildSeq(); si=0; left=seq[0][1]+1; stat();
+}
 function endTrial(){
   if(!S.running) return;
-  const d=dotFrames(), bl=blankFr();
+  const d=dotFrames();
   const rec = S.mode==='session' && S.practice<5 ? 'practice' : 'recorded';
-  log.push({condition:S.cond, L_deg:S.cfg.L===null?'':S.cfg.L, D_deg:+S.cfg.D.toFixed(3), kind:rec,
-            nominalDotMs:+(100*Math.pow(1.1,S.k)).toFixed(1), dotFrames:d, realisedOnsetMs:+((d+1+2*bl)*FRAME).toFixed(1)});
+  log.push({condition:S.cond, L_deg:S.cfg.L===null?'':S.cfg.L, D_deg:+S.cfg.D.toFixed(3), kind:rec, presses:S.presses,
+            nominalDotMs:+(100*Math.pow(1.1,S.k)).toFixed(1), dotFrames:d, frameMs:+FRAME.toFixed(3), realisedDotMs:+(d*FRAME).toFixed(1), realisedOnsetMs:+onsetMs().toFixed(1)});
   $('nLog').textContent=log.length;
-  S.running=false; $('up').disabled=true; $('end').disabled=true; $('start').disabled=false; $('stat').innerHTML='&nbsp;';
+  S.running=false; $('up').disabled=true; $('end').disabled=true; $('start').disabled=false; $('stat').textContent='';
   if(S.mode==='session'){
     if(S.practice<5){ S.practice++; S.cfg = S.practice<5 ? rand(CONFIGS[S.cond]) : S.queue[0]; }
     else { S.idx++; if(S.idx<S.queue.length) S.cfg=S.queue[S.idx]; }
-    if(S.practice>=5 && S.idx>=S.queue.length){ $('instr').textContent='Session complete.'; $('start').disabled=true; render(); return; }
+    if(S.practice>=5 && S.idx>=S.queue.length){ $('instr').textContent='Session complete. Press "New session" to start again.'; $('start').disabled=true; $('newsess').hidden=false; render(); return; }
   }
   $('instr').textContent = baseInstr(); setCfgLbl(); render();
 }
 function rand(a){ return a[Math.floor(Math.random()*a.length)]; }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function resetSession(){
-  S.running=false; S.practice=0; S.idx=0;
+  $('newsess').hidden=true; S.running=false; S.practice=0; S.idx=0;
   S.queue = shuffle([].concat(...[0,1,2,3].map(()=>CONFIGS[S.cond])));
   S.cfg = S.mode==='session' ? rand(CONFIGS[S.cond]) : CONFIGS[S.cond][0];
-  $('up').disabled=true; $('end').disabled=true; $('start').disabled=false; $('stat').innerHTML='&nbsp;';
+  $('up').disabled=true; $('end').disabled=true; $('start').disabled=!measured; $('stat').textContent='';
   setCfgLbl(); $('instr').textContent=baseInstr(); rebuild(); render();
 }
 function buildCfgButtons(){
   const w=$('cfg'); w.innerHTML='';
   CONFIGS[S.cond].forEach(cf=>{ const b=document.createElement('button'); b.textContent=cf.lab.replace(/^no path, /,'');
     if(cf===S.cfg) b.classList.add('on');
-    b.onclick=()=>{ if(S.running||S.mode!=='manual') return; S.cfg=cf; [...w.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); setCfgLbl(); rebuild(); render(); };
+    b.onclick=()=>{ b.blur(); if(S.running||S.mode!=='manual') return; S.cfg=cf; [...w.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); setCfgLbl(); rebuild(); render(); };
     w.appendChild(b); });
   $('cfgWrap').style.opacity = S.mode==='manual'?1:.35;
 }
 function seg(id, fn){ document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
-  if(S.running) return; document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset.v); })); }
-seg('cond', v=>{ S.cond=v; resetSession(); buildCfgButtons(); });
+  b.blur(); if(S.running) return; document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset.v); })); }
+seg('cond', v=>{ S.cond=v; resetSession(); applyScale(); buildCfgButtons(); });
 seg('mode', v=>{ S.mode=v; resetSession(); buildCfgButtons(); });
-$('start').onclick=beginTrial; $('up').onclick=lengthen; $('end').onclick=endTrial;
-document.addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); lengthen(); } else if(e.code==='Enter'&&S.running){ e.preventDefault(); endTrial(); } });
+$('newsess').onclick=()=>{ $('newsess').blur(); resetSession(); buildCfgButtons(); };
+$('start').onclick=()=>{ $('start').blur(); beginTrial(); };
+$('up').onclick=()=>{ $('up').blur(); lengthen(); };
+$('end').onclick=()=>{ $('end').blur(); endTrial(); };
+function typing(e){ const t=e.target; return t && (t.tagName==='INPUT'&&t.type!=='checkbox'&&t.type!=='range' || t.tagName==='TEXTAREA'); }
+document.addEventListener('keydown',e=>{
+  if(typing(e)) return;
+  if(e.code==='Space'||e.code==='Enter'){ e.preventDefault(); if(e.repeat) return;
+    if(S.running){ if(e.code==='Space') lengthen(); else endTrial(); }
+    else beginTrial(); } });
+document.addEventListener('keyup',e=>{ if(e.code==='Space'&&!typing(e)) e.preventDefault(); });
 $('export').onclick=()=>{ if(!log.length) return; const cols=Object.keys(log[0]);
   const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='shepard_zare_1983.csv'; a.click(); };
-resetSession(); buildCfgButtons();
+applyScale(); resetSession(); buildCfgButtons(); measure(); requestAnimationFrame(loop);
 </script>
 </body>
 </html>

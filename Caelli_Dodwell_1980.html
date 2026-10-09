@@ -12,7 +12,14 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:740px; text-align:center; line-height:1.5; }
-  canvas { background:#000; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  canvas { background:#000; display:block; border-radius:3px; }
+  .cwrap { max-width:96vw; overflow:auto; }
+  details.setup { margin-top:12px; width:740px; max-width:96vw; font-size:12px; color:#9a9a9a; }
+  details.setup summary { cursor:pointer; color:#777; font-size:11px; }
+  #cardbar { height:14px; background:#8a93b8; border-radius:2px; margin:6px 0; }
+  #disp { margin-top:8px; width:740px; max-width:96vw; font-size:11px; color:#777; line-height:1.5; }
+  #disp .warn { color:#c9a45c; }
+  input[type=number] { width:70px; background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; border-radius:4px; padding:3px 5px; }
   .participant { margin-top:12px; width:740px; max-width:96vw; text-align:center; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; }
   .prow { margin-top:10px; display:flex; gap:18px; align-items:center; justify-content:center; flex-wrap:wrap; }
@@ -29,6 +36,7 @@
   button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
   button.go { background:#27406b; border-color:#3f64a0; color:#fff; }
   .hidden { display:none !important; }
+  .dis { opacity:.35; pointer-events:none; }
   .meta { margin-top:20px; width:740px; max-width:96vw; font-size:11px; color:#777; line-height:1.6; }
   .meta table { border-collapse:collapse; width:100%; margin:6px 0 10px; }
   .meta td, .meta th { border-bottom:1px solid #1f1f25; padding:3px 8px 3px 0; text-align:left; vertical-align:top; font-weight:normal; }
@@ -49,7 +57,16 @@
     <button data-e="3">Exp 3: Poggendorff</button>
   </div>
 
-  <canvas id="c" width="760" height="440"></canvas>
+  <div class="cwrap"><canvas id="c" width="760" height="440"></canvas></div>
+  <div id="disp">Measuring display refresh…</div>
+  <details class="setup"><summary>Display setup (screen scale and viewing distance)</summary>
+    <div class="ctrl" style="margin-top:8px">Resize the bar to the width of a credit card (8.56 cm)
+      <div id="cardbar"></div>
+      <input type="range" id="cal" min="150" max="700" step="1" value="323"></div>
+    <div class="ctrl" style="margin-top:8px">Viewing distance (cm): <input type="number" id="dist" min="20" max="300" step="1" value="57">
+      <span class="as" style="color:#c9a45c">57 cm is an assumption; the paper gives no viewing distance.</span></div>
+    <div id="setupTxt" style="margin-top:6px"></div>
+  </details>
 
   <div class="participant">
     <div class="instr" id="instr"></div>
@@ -58,14 +75,18 @@
       <button id="no">No (N)</button>
     </div>
     <div class="prow hidden" id="resp2">
+      <button id="new2">New trial (random probe start)</button>
+      <button id="done2" class="go hidden">Adjustment done: next trial</button>
       <div class="ctrl">Probe position along the path (↑ / ↓ keys also)
         <input type="range" id="pp" min="-5.4" max="5.4" step="0.05" value="0"></div>
-      <div class="ctrl">Probe orientation (← / → keys also)
+      <div class="ctrl" id="paWrap">Probe orientation (← / → keys also)
         <input type="range" id="pa" min="-90" max="90" step="1" value="0"></div>
     </div>
     <div class="prow hidden" id="resp3">
+      <button id="new3">New trial (random start)</button>
+      <button id="done3" class="go hidden">Adjustment done: next trial</button>
       <div class="ctrl">Vertical position of the right diagonal (↑ / ↓ keys also)
-        <input type="range" id="pd" min="-9" max="9" step="0.02" value="0"></div>
+        <input type="range" id="pd" min="0" max="100" step="0.1" value="50"></div>
     </div>
     <div class="prow"><button class="go" id="run">Present trial</button><span id="status" style="font-size:11px;color:#777"></span></div>
   </div>
@@ -74,28 +95,39 @@
     <h2>Experimenter parameters</h2>
     <div class="grid" id="par1">
       <div class="ctrl">Trial selection
-        <div class="seg" id="rmode"><button data-r="rand" class="on">random cell of the grid (hidden)</button><button data-r="set">set manually</button></div></div>
+        <div class="seg" id="rmode"><button data-r="block" class="on">block: shuffled grid, 20 reps per cell</button><button data-r="set">set manually</button></div></div>
       <div class="ctrl" id="manual1">Spatial separation: <span class="v" id="sepLbl"></span>
         <input type="range" id="sep" min="0" max="9" step="1" value="3"></div>
       <div class="ctrl" id="manual2">SOA: <span class="v" id="soaLbl"></span>
         <input type="range" id="soa" min="40" max="400" step="40" value="120"></div>
       <div class="ctrl">Disk exposure: 40 ms (fixed)</div>
+      <div class="ctrl" id="blockInfo"></div>
     </div>
     <div class="grid hidden" id="par2">
-      <div class="ctrl">Configuration
+      <div class="ctrl">Trial selection
+        <div class="seg" id="rmode2"><button data-r="block">block: 18 conditions x 8 adjustments, shuffled</button><button data-r="set" class="on">set manually</button></div></div>
+      <div class="ctrl" id="blockInfo2"></div>
+      <div class="ctrl" id="cfgWrap">Configuration
         <div class="seg" id="cfg">
           <button data-c="1" class="on">1 (3-disk)</button><button data-c="2">2 (3-disk)</button><button data-c="3">3 (3-disk)</button>
           <button data-c="4">4 (4-disk)</button><button data-c="5">5 (4-disk)</button><button data-c="6">6 (4-disk)</button>
         </div></div>
-      <div class="ctrl">4-disk presentation
+      <div class="ctrl" id="modeWrap">4-disk presentation
         <div class="seg" id="mode"><button data-m="seq" class="on">1-2-3-4 sequential</button><button data-m="pair">left pair, then right pair</button></div></div>
-      <div class="ctrl">Exposure / ISI
+      <div class="ctrl" id="expoWrap">Exposure / ISI
         <div class="seg" id="expo"><button data-x="150" class="on">150 / 50 ms</button><button data-x="300">300 / 50 ms</button></div></div>
-      <div class="ctrl">Probe visible
-        <div class="seg" id="pvis"><button data-p="after" class="on">after the trial only</button><button data-p="during">during the trial and after</button><button data-p="long">1 s before, during, after</button></div></div>
+      <div class="ctrl" id="dselWrap">Disks shown (control, configs 1-3 only)
+        <div class="seg" id="dsel"><button data-d="all" class="on">all three</button><button data-d="23">only points 2 and 3 (control)</button></div></div>
+      <div class="ctrl" id="ptypeWrap">Probe type (control, configs 3 and 6 only)
+        <div class="seg" id="ptype"><button data-t="bar" class="on">oriented line</button><button data-t="disk">disk point (control)</button></div></div>
+      <div class="ctrl" id="pvisWrap">Probe visible (control, configs 3 and 6 only)
+        <div class="seg" id="pvis"><button data-p="after" class="on">after the trial only</button><button data-p="during">only during the trial (first onset to last offset)</button><button data-p="long">from 1000 ms before to 1000 ms after the trial</button></div></div>
     </div>
     <div class="grid hidden" id="par3">
-      <div class="ctrl">Presentation
+      <div class="ctrl">Trial selection
+        <div class="seg" id="rmode3"><button data-r="block">block: 3 conditions x 10 trials, shuffled</button><button data-r="set" class="on">set manually</button></div></div>
+      <div class="ctrl" id="blockInfo3"></div>
+      <div class="ctrl" id="pgWrap">Presentation
         <div class="seg" id="pg">
           <button data-g="static" class="on">Static, 4 s</button>
           <button data-g="50">Halves 50 / 20 / 50 ms</button>
@@ -109,40 +141,76 @@
     <p>Everything below is from Caelli &amp; Dodwell (1980). <span class="as">Amber</span> = not given in the paper (assumption made here).
        The page shows the display and the response task only.</p>
     <table id="tbl"></table>
-    <p>Scale on this page: <span class="as">40 canvas px = 1° (assumed; the paper gives no viewing distance, screen size or pixel scale)</span>.
+    <p>Scale: <span class="as">screen px/cm and viewing distance come from "Display setup" (default 37.8 px/cm; 57 cm assumed, the paper gives no viewing distance, screen size or pixel scale)</span>; every stimulus is drawn in degrees converted at that scale and the canvas is not rescaled by CSS.
        Display: bright disks/lines on a dark ground (the paper used a Hewlett-Packard P15 phosphor scope, disk luminance 3.14 foot-Lamberts, p. 30; a
-       browser screen cannot reproduce that luminance or the scope's phosphor decay). Durations are counted in display frames (1 frame = 1/60 s = 16.7 ms), so they are
-       rounded to whole frames: 40 ms = 2 frames (33.3 ms); 20 ms = 1 frame (16.7 ms); 50 ms = 3 frames (50 ms); 150 ms = 9 frames (150 ms); 200 ms = 12 frames (200 ms);
-       300 ms = 18 frames (300 ms); SOA 40 to 400 ms in 40 ms steps = 2 to 24 frames (33.3 to 400 ms, nominal 40 ms = 2 frames). The realised values assume a 60 Hz display.</p>
+       browser screen cannot reproduce that luminance or the scope's phosphor decay). The display refresh interval is measured at load (median of about 60 requestAnimationFrame intervals); every duration is converted to a whole number of frames and scheduled by counting frames. The line above the canvas lists the realised durations at the measured rate and warns where a paper duration is not a whole number of frames.</p>
   </div>
 
 <script>
 (function(){
 'use strict';
 var cv = document.getElementById('c'), ctx = cv.getContext('2d');
-var W = cv.width, H = cv.height, PPD = 40; // px per degree (assumed)
+var W = 760, H = 440, PPD = 37.6;
 var $ = function(id){ return document.getElementById(id); };
 var exp = 1;
-var S = { sepI:3, soa:120, rmode:'rand', cfg:1, mode:'seq', expo:150, pvis:'after', pg:'static' };
+var S = { sepI:3, soa:120, rmode:'block', rmode2:'set', rmode3:'set', cfg:1, mode:'seq', expo:150, pvis:'after', pg:'static', dsel:'all', ptype:'bar' };
 var SEP_MAX = 8 + 10/60;              // 8 deg 10 arcmin
 var SEP_STEP = SEP_MAX/9;             // 10 equally spaced levels, 0 .. 8.17 deg (assumed)
 var stim = [];
 var running = false, token = 0;
-var probeOn = false;
+var probeOn = false, live3 = false;
+var pxPerCm = 37.8, distCm = 57, FRAME = 1000/60, measured = false, hz = 60;
+var DOT2 = 0.3;                       // Exp 2 disk diameter, deg (assumed)
+var DISK1 = 0.87;                     // Exp 1 disk diameter, deg (as printed, unit unresolved)
 
 function setText(id, t){ $(id).textContent = t; }
-function fr(ms){ return Math.max(1, Math.round(ms/16.667)); }
+function fr(ms){ return Math.max(1, Math.round(ms/FRAME)); }
+function A(t){ return '<span class="as">'+t+'</span>'; }
 
-// ---------- Exp 2 geometry (read off Fig. 6; scale assumed 0.04 deg per figure px) ----------
-var K2 = 0.04 * PPD;
-// positions relative to disk 1, y up positive
+// ---------- display setup (shared key am_display) ----------
+function loadCal(){ try{ var o=JSON.parse(localStorage.getItem('am_display')||'null'); if(o){ if(o.pxPerCm>0) pxPerCm=o.pxPerCm; if(o.distCm>0) distCm=o.distCm; } }catch(e){} }
+function saveCal(){ try{ localStorage.setItem('am_display', JSON.stringify({pxPerCm:pxPerCm, distCm:distCm})); }catch(e){} }
+var K2 = 0, K3 = 0;
+function applyScale(){
+  PPD = pxPerCm * distCm * Math.tan(Math.PI/180);
+  K2 = 0.0272*PPD; K3 = 0.04*PPD;
+  W = Math.round(Math.max(600, 20*PPD)); H = Math.round(Math.max(360, 12.5*PPD));
+  cv.width = W; cv.height = H;
+  setText('setupTxt', pxPerCm.toFixed(1)+' px/cm at '+distCm+' cm = '+PPD.toFixed(1)+' px/deg; field '+(W/PPD).toFixed(1)+' x '+(H/PPD).toFixed(1)+' deg.');
+  if (typeof draw==='function') draw();
+}
+
+// ---------- refresh measurement and realised durations ----------
+function measureRefresh(done){
+  var ts=[], n=0;
+  function f(t){ ts.push(t); if (++n<62) requestAnimationFrame(f); else {
+    var d=[]; for (var i=1;i<ts.length;i++) d.push(ts[i]-ts[i-1]); d.sort(function(a,b){return a-b;});
+    var m=d[Math.floor(d.length/2)]; if (m>4 && m<60) FRAME=m; measured=true; hz=1000/FRAME; done(); } }
+  requestAnimationFrame(f);
+}
+function updDisp(){
+  var items=[['40',40],['20',20],['50',50],['150',150],['200',200],['300',300],['1000',1000],['4000',4000]];
+  var out=[], warn=[];
+  items.forEach(function(it){ var n=it[1]/FRAME, r=Math.max(1,Math.round(n));
+    out.push(it[0]+' ms = '+r+' fr = '+(r*FRAME).toFixed(1)+' ms');
+    if (Math.abs(n-Math.round(n))>0.1) warn.push(it[0]+' ms is '+n.toFixed(2)+' frames'); });
+  var h='Display: '+(measured?'measured ':'default ')+hz.toFixed(1)+' Hz (frame '+FRAME.toFixed(2)+' ms). Realised: '+out.join('; ')+'. SOA levels 40 to 400 ms in 40 ms steps become whole frames likewise.';
+  if (warn.length) h+=' <span class="warn">Warning, not a whole number of frames at this rate: '+warn.join('; ')+'.</span>';
+  $('disp').innerHTML=h;
+}
+
+// ---------- Exp 2 geometry (measured from Fig. 6, PJR column, rows 1-2, 300 dpi render of p. 31) ----------
+// Coordinates are in Fig. 6 pixels of that render (x right, y up) relative to the first disk of the cell; ONE uniform
+// scale is applied to all of them (ASSUMED 0.0272 deg per Fig. 6 pixel, so disk 1 to disk 3 is about 5.5 deg).
+// px = probe path x-position (the vertical line in Fig. 6 row 1; for 4-disk the x of the probe bars in row 2), same units.
+var UNIT2 = 0.0272;
 var CFG = {
-  1: { n:3, d:[[0,0],[46,89],[138,137]], pair:null },
-  2: { n:3, d:[[0,0],[46,89],[138,89]],  pair:null },
-  3: { n:3, d:[[0,0],[46,89],[138,47]],  pair:null },
-  4: { n:4, d:[[0,0],[-9,-20],[112,100],[127,118]], pair:[[0,1],[2,3]] },
-  5: { n:4, d:[[0,0],[-9,-20],[127,53],[149,50]],   pair:[[0,1],[2,3]] },
-  6: { n:4, d:[[0,0],[-9,-20],[103,0],[127,-14]],   pair:[[0,1],[2,3]] }
+  1: { n:3, d:[[0,0],[68.8,134.3],[201.3,204.0]], px:132.4, pair:null },
+  2: { n:3, d:[[0,0],[68.8,134.3],[202.3,136.5]], px:132.4, pair:null },
+  3: { n:3, d:[[0,0],[68.8,134.3],[204.2,67.4]],  px:132.4, pair:null },
+  4: { n:4, d:[[0,0],[-12.9,-29.7],[176.0,166.8],[147.3,143.0]], px:69.4, pair:[[0,1],[2,3]] },
+  5: { n:4, d:[[0,0],[-12.9,-29.7],[171.1,67.0],[205.8,66.9]],   px:71.8, pair:[[0,1],[2,3]] },
+  6: { n:4, d:[[0,0],[-12.9,-29.7],[144.8,-7.9],[176.0,-35.0]],  px:74.8, pair:[[0,1],[2,3]] }
 };
 function cfgOrigin(c){
   var d = CFG[c].d, minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
@@ -150,16 +218,23 @@ function cfgOrigin(c){
   return { ox: W/2 - K2*(minx+maxx)/2, oy: H/2 + K2*(miny+maxy)/2 };
 }
 function cfgPt(c,i){ var o=cfgOrigin(c), p=CFG[c].d[i]; return [o.ox + K2*p[0], o.oy - K2*p[1]]; }
-function probeX(){
-  var c=S.cfg, xs = CFG[c].d.map(function(_,i){return cfgPt(c,i)[0];}); var mn=Math.min.apply(null,xs), mx=Math.max.apply(null,xs);
-  return (mn+mx)/2 + (mx-mn)*0.12; }
+function probeX(){ var c=S.cfg, o=cfgOrigin(c); return o.ox + K2*CFG[c].px; }
 var probe = { y:0, a:0 };
 
 // ---------- Exp 3 geometry (read off Fig. 8A; scale assumed) ----------
-var K3 = 0.04 * PPD;
 var P3 = { vlx:757, vrx:842, vy0:120, vy1:372, ldA:[680,368], ldB:[755,293], rdA:[842,205], rdB:[905,142] };
 function p3(x,y,dy){ return [W/2 + K3*(x-800), H/2 + K3*(y-246) + (dy||0)]; }
-var rdBase = 0, rdAdj = 0; // hidden random start offset (deg) + observer adjustment (deg)
+var e3lo = -4;                          // hidden slider mapping: offset (deg) = e3lo + 0.08*slider
+function e3off(){ return e3lo + 0.08*(+$('pd').value); }
+function buildE3(which){
+  var dy = -e3off()*PPD;
+  var a1=p3(P3.vlx,P3.vy0), a2=p3(P3.vlx,P3.vy1), b1=p3(P3.vrx,P3.vy0), b2=p3(P3.vrx,P3.vy1);
+  var ld=p3(P3.ldA[0],P3.ldA[1]), ld2=p3(P3.ldB[0],P3.ldB[1]);
+  var rd=p3(P3.rdA[0],P3.rdA[1],dy), rd2=p3(P3.rdB[0],P3.rdB[1],dy);
+  var ln=function(p,q){ return {k:'line',x0:p[0],y0:p[1],x1:q[0],y1:q[1]}; };
+  var left=[ln(a1,a2),ln(ld,ld2)], right=[ln(b1,b2),ln(rd,rd2)];
+  return which==='left'?left:which==='right'?right:left.concat(right);
+}
 
 // ---------- drawing ----------
 function draw(){
@@ -170,7 +245,7 @@ function draw(){
   }
   if (exp===2){
     ctx.strokeStyle='#2a2a32'; ctx.lineWidth=1; var px=probeX();
-    ctx.beginPath(); ctx.moveTo(px,H/2-120); ctx.lineTo(px,H/2+120); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px,H/2-3*PPD); ctx.lineTo(px,H/2+3*PPD); ctx.stroke();
     if (probeOn) drawProbe();
   }
   stim.forEach(function(it){
@@ -180,24 +255,23 @@ function draw(){
   });
 }
 function drawProbe(){
-  var px=probeX(), py=H/2 - probe.y*PPD, L=0.5*PPD, a=probe.a*Math.PI/180;
-  ctx.strokeStyle='#e0b050'; ctx.lineWidth=3;
+  var px=probeX(), py=H/2 - probe.y*PPD;
+  ctx.strokeStyle=ctx.fillStyle='#e0b050';
+  if (S.ptype==='disk'){ ctx.beginPath(); ctx.arc(px,py,DOT2/2*PPD,0,6.2832); ctx.fill(); return; }
+  var L=0.5*PPD, a=probe.a*Math.PI/180; ctx.lineWidth=3;
   ctx.beginPath(); ctx.moveTo(px-L*Math.cos(a),py+L*Math.sin(a)); ctx.lineTo(px+L*Math.cos(a),py-L*Math.sin(a)); ctx.stroke();
 }
 
-// ---------- frame-counted timeline player ----------
+// ---------- frame-counted timeline player (one rAF = one display frame) ----------
 // steps: [{f: frames, items, probe: bool|undefined}]
 function play(steps, done){
   running = true; var my = ++token;
-  var si = 0, left = steps[0].f, last = -1e9, started = false;
+  var si = 0, left = 0, started = false;
   function apply(){ stim = steps[si].items; if (steps[si].probe!==undefined) probeOn = steps[si].probe; draw(); }
-  function tick(t){
+  function tick(){
     if (my!==token || !running) return;
-    if (t - last >= 15){            // one logical 60 Hz frame
-      last = t;
-      if (started){ left--; if (left<=0){ si++; if (si>=steps.length){ stim=[]; running=false; draw(); if(done) done(); return; } left=steps[si].f; apply(); } }
-      else { started=true; apply(); }
-    }
+    if (!started){ started=true; left=steps[0].f; apply(); }
+    else { left--; if (left<=0){ si++; if (si>=steps.length){ stim=[]; running=false; draw(); if(done) done(); return; } left=steps[si].f; apply(); } }
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -208,51 +282,119 @@ function newProbeStart(){ // random start above or below the display region, wit
   probe.y = (Math.random()<0.5?1:-1)*rand(3.5,5.0); probe.a = Math.round(rand(-90,90));
   $('pp').value=probe.y; $('pa').value=probe.a;
 }
-function newRdStart(){ rdBase = rand(-3,3); rdAdj = 0; $('pd').value = 0; }
+function newE3Start(){ e3lo = -rand(3,5); $('pd').value = Math.round(rand(10,90)); live3=false; stim=[]; }
+
+// ---------- Exp 1 block ----------
+var blk = [], tIdx = 0, awaiting = false, itiTimer = null, cur1 = null, log1 = [];
+function buildBlock(){
+  blk = [];
+  for (var s=0;s<10;s++) for (var t=1;t<=10;t++) for (var r=0;r<20;r++) blk.push([s,t*40]);
+  for (var i=blk.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var x=blk[i]; blk[i]=blk[j]; blk[j]=x; }
+  tIdx=0; updBlockInfo();
+}
+function updBlockInfo(){ setText('blockInfo', S.rmode==='block' ? 'Trial '+Math.min(tIdx+1,blk.length)+' of '+blk.length+' (10 separations x 10 SOAs x 20 repetitions; ITI 1 s assumed)' : ''); }
 
 function run(){
-  if (running) return;
+  if (running || awaiting) return;
+  if (itiTimer){ clearTimeout(itiTimer); itiTimer=null; }
   $('run').disabled = true; setText('status','');
   var steps=[];
   if (exp===1){
     var si = S.sepI, soa = S.soa;
-    if (S.rmode==='rand'){ si = Math.floor(Math.random()*10); soa = 40*(1+Math.floor(Math.random()*10)); }
-    var r = 0.87/2*PPD, sep=si*SEP_STEP*PPD, y=H/2;
+    if (S.rmode==='block'){ if (tIdx>=blk.length){ setText('status','Block complete.'); $('run').disabled=false; return; } si=blk[tIdx][0]; soa=blk[tIdx][1]; }
+    cur1={si:si,soa:soa};
+    var r = DISK1/2*PPD, sep=si*SEP_STEP*PPD, y=H/2;
     var a={k:'disk',x:W/2-sep/2,y:y,r:r}, b={k:'disk',x:W/2+sep/2,y:y,r:r};
     var gap = Math.max(fr(soa)-fr(40),0);
-    steps=[{f:18,items:[]},{f:fr(40),items:[a]}];
+    steps=[{f:fr(300),items:[]},{f:fr(40),items:[a]}];
     if (gap>0) steps.push({f:gap,items:[]});
     steps.push({f:fr(40),items:[b]});
-    steps.push({f:3,items:[]});
-    play(steps,function(){ $('run').disabled=false; setText('status','Respond: Y = smooth continuous motion, N = not.'); });
+    steps.push({f:fr(50),items:[]});
+    play(steps,function(){ awaiting=true; updBlockInfo(); setText('status','Respond: Y = smooth continuous motion, N = not.'); });
   } else if (exp===2){
-    var c=S.cfg, E=fr(S.expo), disks=[], r2 = 0.87/2*PPD;
-    newProbeStart();
+    var c=S.cfg, E=fr(S.expo), disks=[], r2 = DOT2/2*PPD;
     for (var i=0;i<CFG[c].n;i++){ var p=cfgPt(c,i); disks.push({k:'disk',x:p[0],y:p[1],r:r2}); }
     var groups = [];
-    if (CFG[c].n===3) disks.forEach(function(d){ groups.push([d]); });
+    if (CFG[c].n===3){ disks.forEach(function(d,i){ if (!(S.dsel==='23' && i===0)) groups.push([d]); }); }
     else if (S.mode==='seq'){ // leftmost first within each pair (Fig. 6 caption: left to right)
       CFG[c].pair.forEach(function(pr){ pr.slice().sort(function(i,j){return disks[i].x-disks[j].x;}).forEach(function(i){ groups.push([disks[i]]); }); });
     } else CFG[c].pair.forEach(function(pr){ groups.push(pr.map(function(i){return disks[i];})); });
-    var pOn = (S.pvis!=='after');
-    if (S.pvis==='long') steps.push({f:60,items:[],probe:true});
-    steps.push({f:18,items:[],probe:pOn});
+    // probe window: 'during' = exactly first-disk onset to last-disk offset; 'long' = exactly 1000 ms before and after that window
+    var pOn = (S.pvis!=='after'), pLong = (S.pvis==='long');
+    if (pLong) steps.push({f:fr(1000),items:[],probe:true});
+    else steps.push({f:fr(300),items:[],probe:false});
     groups.forEach(function(g,gi){ steps.push({f:E,items:g,probe:pOn}); if (gi<groups.length-1) steps.push({f:fr(50),items:[],probe:pOn}); });
-    steps.push({f:S.pvis==='long'?60:3,items:[],probe:pOn});
+    steps.push({f:pLong?fr(1000):fr(50),items:[],probe:pLong});
     probeOn = false; draw();
-    play(steps,function(){ probeOn=true; draw(); $('run').disabled=false; setText('status','Adjust the probe: first its position, then its orientation.'); });
+    play(steps,function(){ probeOn=true; draw(); $('run').disabled=false; setText('status',S.rmode2==='block'?'Adjust the probe (position, then orientation); present again to look again; then press "Adjustment done".':'Adjust the probe (position, then orientation), present again to look again, or start a new trial.'); });
   } else {
-    var Lv, a1=p3(P3.vlx,P3.vy0), a2=p3(P3.vlx,P3.vy1), b1=p3(P3.vrx,P3.vy0), b2=p3(P3.vrx,P3.vy1);
-    var dy = -(rdBase+rdAdj)*PPD;
-    var ld=p3(P3.ldA[0],P3.ldA[1]), ld2=p3(P3.ldB[0],P3.ldB[1]);
-    var rd=p3(P3.rdA[0],P3.rdA[1],dy), rd2=p3(P3.rdB[0],P3.rdB[1],dy);
-    var ln=function(p,q){ return {k:'line',x0:p[0],y0:p[1],x1:q[0],y1:q[1]}; };
-    var left=[ln(a1,a2),ln(ld,ld2)], right=[ln(b1,b2),ln(rd,rd2)];
-    if (S.pg==='static') steps=[{f:18,items:[]},{f:240,items:left.concat(right)}];
-    else { var e=fr(+S.pg); steps=[{f:18,items:[]},{f:e,items:left},{f:fr(20),items:[]},{f:e,items:right}]; }
-    steps.push({f:3,items:[]});
-    play(steps,function(){ $('run').disabled=false; setText('status','Adjust the right diagonal, then present again.'); });
+    live3=false;
+    if (S.pg==='static') steps=[{f:fr(300),items:[]},{f:fr(4000),items:buildE3('all')}];
+    else { var e=fr(+S.pg); steps=[{f:fr(300),items:[]},{f:e,items:buildE3('left')},{f:fr(20),items:[]},{f:e,items:buildE3('right')}]; }
+    play(steps,function(){
+      $('run').disabled=false;
+      if (S.pg==='static'){ live3=true; stim=buildE3('all'); draw(); setText('status',S.rmode3==='block'?'Adjust the right diagonal (figure stays visible), then press "Adjustment done".':'Adjust the right diagonal (figure stays visible), or start a new trial.'); }
+      else setText('status',S.rmode3==='block'?'Adjust the right diagonal; present again to look again; then press "Adjustment done".':'Adjust the right diagonal, then present again, or start a new trial.');
+    });
   }
+}
+function respond1(v){
+  if (exp!==1 || !awaiting) return;
+  awaiting=false; log1.push({trial:cur1, yes:v}); // stored internally only
+  setText('status','Response recorded.');
+  if (S.rmode==='block'){ tIdx++; updBlockInfo(); if (tIdx<blk.length){ itiTimer=setTimeout(function(){ itiTimer=null; run(); },1000); } else { setText('status','Block complete.'); $('run').disabled=false; } }
+  else $('run').disabled=false;
+}
+
+// ---------- Exp 2 / Exp 3 blocks (order within the block is an assumption; the paper gives no order) ----------
+function shuffle(a){ for (var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var x=a[i]; a[i]=a[j]; a[j]=x; } return a; }
+var blk2=[], t2=0, log2=[], blk3=[], t3=0, log3=[];
+function buildBlock2(){
+  blk2=[];
+  [1,2,3].forEach(function(c){ [150,300].forEach(function(x){ for (var r=0;r<8;r++) blk2.push({cfg:c,mode:'seq',expo:x}); }); });
+  [4,5,6].forEach(function(c){ ['seq','pair'].forEach(function(m){ [150,300].forEach(function(x){ for (var r=0;r<8;r++) blk2.push({cfg:c,mode:m,expo:x}); }); }); });
+  shuffle(blk2); t2=0; applyTrial2();
+}
+function buildBlock3(){
+  blk3=[]; ['static','50','200'].forEach(function(g){ for (var r=0;r<10;r++) blk3.push(g); });
+  shuffle(blk3); t3=0; applyTrial3();
+}
+function setSeg(id, attr, val){ Array.prototype.forEach.call($(id).children,function(b){ b.classList.toggle('on', b.getAttribute(attr)==String(val)); }); }
+function updBlockInfo2(){ setText('blockInfo2', S.rmode2==='block' ? (t2<blk2.length ? 'Trial '+(t2+1)+' of '+blk2.length+' (18 conditions x 8 adjustments; shuffled order assumed)' : 'Block complete ('+blk2.length+' adjustments).') : ''); }
+function updBlockInfo3(){ setText('blockInfo3', S.rmode3==='block' ? (t3<blk3.length ? 'Trial '+(t3+1)+' of '+blk3.length+' (3 conditions x 10 trials; shuffled order assumed)' : 'Block complete ('+blk3.length+' trials).') : ''); }
+function applyTrial2(){
+  if (t2<blk2.length){ var c=blk2[t2]; S.cfg=c.cfg; S.mode=c.mode; S.expo=c.expo; setSeg('cfg','data-c',c.cfg); setSeg('mode','data-m',c.mode); setSeg('expo','data-x',c.expo); }
+  S.dsel='all'; S.ptype='bar'; S.pvis='after'; setSeg('dsel','data-d','all'); setSeg('ptype','data-t','bar'); setSeg('pvis','data-p','after');
+  newProbeStart(); probeOn=false; stim=[]; updPtype(); updCtl(); updBlockInfo2(); draw();
+  $('run').disabled = !measured || t2>=blk2.length; $('done2').disabled = t2>=blk2.length;
+}
+function applyTrial3(){
+  if (t3<blk3.length){ S.pg=blk3[t3]; setSeg('pg','data-g',S.pg); }
+  newE3Start(); updBlockInfo3(); draw();
+  $('run').disabled = !measured || t3>=blk3.length; $('done3').disabled = t3>=blk3.length;
+}
+function done2(){
+  if (S.rmode2!=='block' || running || t2>=blk2.length) return;
+  log2.push({trial:blk2[t2], y:probe.y, a:probe.a}); t2++; // stored internally only
+  setText('status', t2<blk2.length ? 'Recorded. Next condition set.' : 'Block complete.'); applyTrial2();
+}
+function done3(){
+  if (S.rmode3!=='block' || running || t3>=blk3.length) return;
+  log3.push({trial:blk3[t3], off:e3off()}); t3++; // stored internally only
+  setText('status', t3<blk3.length ? 'Recorded. Next condition set.' : 'Block complete.'); applyTrial3();
+}
+// control conditions only where the paper used them (Table 3): probe controls configs 3 and 6; points-2-and-3 control configs 1-3
+function updCtl(){
+  var blk = S.rmode2==='block', c=S.cfg;
+  var okProbe = !blk && (c===3 || c===6), okD = !blk && c<=3;
+  if (!okProbe){ S.ptype='bar'; S.pvis='after'; setSeg('ptype','data-t','bar'); setSeg('pvis','data-p','after'); updPtype(); }
+  if (!okD){ S.dsel='all'; setSeg('dsel','data-d','all'); }
+  $('ptypeWrap').classList.toggle('dis',!okProbe); $('pvisWrap').classList.toggle('dis',!okProbe); $('dselWrap').classList.toggle('dis',!okD);
+  $('cfgWrap').classList.toggle('dis',blk); $('modeWrap').classList.toggle('dis',blk); $('expoWrap').classList.toggle('dis',blk);
+  $('pgWrap').classList.toggle('dis',S.rmode3==='block');
+  $('modeWrap').style.opacity = blk?'':(c>3?1:0.35);
+  $('new2').classList.toggle('hidden',blk); $('done2').classList.toggle('hidden',!blk);
+  $('new3').classList.toggle('hidden',S.rmode3==='block'); $('done3').classList.toggle('hidden',S.rmode3!=='block');
 }
 
 // ---------- UI ----------
@@ -265,80 +407,103 @@ function seg(id, attr, cb){
 }
 function updLbl(){
   setText('sepLbl', (S.sepI*SEP_STEP).toFixed(2)+'°'); setText('soaLbl', S.soa+' ms');
-  $('manual1').classList.toggle('hidden', S.rmode==='rand'); $('manual2').classList.toggle('hidden', S.rmode==='rand');
+  $('manual1').classList.toggle('hidden', S.rmode==='block'); $('manual2').classList.toggle('hidden', S.rmode==='block');
+  updBlockInfo();
 }
+function updPtype(){ $('paWrap').classList.toggle('hidden', S.ptype==='disk'); }
+function reset(){ running=false; token++; awaiting=false; if (itiTimer){ clearTimeout(itiTimer); itiTimer=null; } stim=[]; probeOn=false; live3=false; $('run').disabled=!measured; setText('status',''); }
 function setExp(n){
-  exp=n; stim=[]; probeOn=false; running=false; token++; $('run').disabled=false; setText('status','');
+  exp=n; reset();
   [1,2,3].forEach(function(i){ $('par'+i).classList.toggle('hidden',i!==n); $('resp'+i).classList.toggle('hidden',i!==n); });
+  $('resp1').classList.toggle('hidden', n!==1);
   var T = {
     1:'Two disks flash one after the other (disk 1 then disk 2). Keep fixating the screen centre. After each trial say whether you saw smooth continuous motion from one disk to the other (yes/no).',
-    2:'Disks flash in sequence. Adjust the small probe line along the vertical path so that its position and orientation correspond to the contour you perceive, first position, then orientation.',
+    2:'Disks flash in sequence. Adjust the small probe along the vertical path so that its position and orientation correspond to the contour you perceive, first position, then orientation.',
     3:'The left two segments (vertical + diagonal) and right two segments appear, statically or one half after the other. Adjust the vertical position of the right diagonal until it looks collinear with the left diagonal.'
   };
   setText('instr', T[n]);
-  if (n===2) newProbeStart();
-  if (n===3) newRdStart();
+  if (n===1 && S.rmode==='block' && !blk.length) buildBlock();
+  if (n===2){ newProbeStart(); updPtype(); }
+  if (n===3) newE3Start();
+  updCtl(); updBlockInfo2(); updBlockInfo3();
   buildTable(); updLbl(); draw();
 }
 Array.prototype.forEach.call($('expSel').children,function(b){ b.addEventListener('click',function(){
   Array.prototype.forEach.call($('expSel').children,function(x){x.classList.remove('on');}); b.classList.add('on'); setExp(+b.dataset.e); }); });
 $('sep').oninput=function(){ S.sepI=+this.value; updLbl(); };
 $('soa').oninput=function(){ S.soa=+this.value; updLbl(); };
-seg('rmode','data-r',function(v){ S.rmode=v; updLbl(); });
-seg('cfg','data-c',function(v){ S.cfg=+v; $('mode').style.opacity = (+v>3)?1:0.35; stim=[]; newProbeStart(); probeOn=false; draw(); });
+seg('rmode','data-r',function(v){ S.rmode=v; if (v==='block') buildBlock(); reset(); updLbl(); draw(); });
+seg('cfg','data-c',function(v){ S.cfg=+v; reset(); updCtl(); newProbeStart(); draw(); });
 seg('mode','data-m',function(v){ S.mode=v; });
 seg('expo','data-x',function(v){ S.expo=+v; });
 seg('pvis','data-p',function(v){ S.pvis=v; });
-seg('pg','data-g',function(v){ S.pg=v; });
+seg('dsel','data-d',function(v){ S.dsel=v; });
+seg('ptype','data-t',function(v){ S.ptype=v; updPtype(); draw(); });
+seg('pg','data-g',function(v){ S.pg=v; reset(); newE3Start(); draw(); });
+seg('rmode2','data-r',function(v){ S.rmode2=v; reset(); if (v==='block') buildBlock2(); else { updBlockInfo2(); updCtl(); newProbeStart(); draw(); } });
+seg('rmode3','data-r',function(v){ S.rmode3=v; reset(); if (v==='block') buildBlock3(); else { updBlockInfo3(); updCtl(); newE3Start(); draw(); } });
+$('done2').onclick=done2; $('done3').onclick=done3;
 $('pp').oninput=function(){ probe.y=+this.value; draw(); };
 $('pa').oninput=function(){ probe.a=+this.value; draw(); };
-$('pd').oninput=function(){ rdAdj=+this.value; };
+$('pd').oninput=function(){ if (live3){ stim=buildE3('all'); draw(); } };
+$('new2').onclick=function(){ if (running) return; newProbeStart(); probeOn=false; stim=[]; setText('status',''); draw(); };
+$('new3').onclick=function(){ if (running) return; newE3Start(); setText('status',''); draw(); };
 $('run').onclick=run;
-$('yes').onclick=function(){ setText('status','Response recorded: yes'); };
-$('no').onclick=function(){ setText('status','Response recorded: no'); };
+$('yes').onclick=function(){ respond1(true); };
+$('no').onclick=function(){ respond1(false); };
 document.addEventListener('keydown',function(e){
   var k=e.key;
-  if (exp===1 && (k==='y'||k==='Y')) $('yes').click();
-  if (exp===1 && (k==='n'||k==='N')) $('no').click();
-  if (exp===3 && (k==='ArrowUp'||k==='ArrowDown')){ rdAdj += (k==='ArrowUp'?0.02:-0.02); rdAdj=Math.max(-9,Math.min(9,rdAdj)); $('pd').value=rdAdj; e.preventDefault(); }
+  if (exp===1 && (k==='y'||k==='Y')) respond1(true);
+  if (exp===1 && (k==='n'||k==='N')) respond1(false);
+  if (exp===3 && (k==='ArrowUp'||k==='ArrowDown')){ var v=+$('pd').value + (k==='ArrowUp'?0.5:-0.5); $('pd').value=Math.max(0,Math.min(100,v)); $('pd').oninput(); e.preventDefault(); }
   if (exp===2 && (k==='ArrowUp'||k==='ArrowDown')){ probe.y += (k==='ArrowUp'?0.05:-0.05); probe.y=Math.max(-5.4,Math.min(5.4,probe.y)); $('pp').value=probe.y; draw(); e.preventDefault(); }
-  if (exp===2 && (k==='ArrowLeft'||k==='ArrowRight')){ probe.a += (k==='ArrowRight'?-1:1); probe.a=Math.max(-90,Math.min(90,probe.a)); $('pa').value=probe.a; draw(); e.preventDefault(); }
+  if (exp===2 && (k==='ArrowLeft'||k==='ArrowRight') && S.ptype==='bar'){ probe.a += (k==='ArrowRight'?-1:1); probe.a=Math.max(-90,Math.min(90,probe.a)); $('pa').value=probe.a; draw(); e.preventDefault(); }
 });
 
-function A(t){ return '<span class="as">'+t+'</span>'; }
 function buildTable(){
   var rows = {
   1:[['Display','HP P15 phosphor scope, two disk flashes (p. 30)'],['Disk luminance','3.14 foot-Lamberts (p. 30)'],
      ['Disk size','Printed "0.87′" (p. 30). The paper uses the same prime for arcminutes in "8°10′", so the literal reading is 0.87 arcmin; '+A('0.87 deg drawn here; unresolved')],
      ['Exposure per disk','40 ms (p. 30)'],['SOA','40 to 400 ms, orthogonal with separation (p. 30); '+A('10 levels in steps of 40 ms assumed (2000 trials / 20 repeats = 100 cells)')],
      ['Separation','0 to 8°10′ (= 8.17 deg) (p. 30); '+A('10 equally spaced levels (step 0.91 deg) assumed')],
-     ['Repetitions','Each spatial and temporal value presented 20 times (p. 30); randomly assigned spatial and temporal intervals. Page: random cell of the grid on each trial (parameters hidden), or manual setting.'],
-     ['Task','After each trial, yes/no judgement of smooth continuous motion from one disk to the other (p. 30)'],
+     ['Repetitions','Each spatial and temporal value presented 20 times, randomly assigned spatial and temporal intervals (p. 30). Block mode here: the 100 cells x 20 repetitions are shuffled into one 2000-trial sequence (the first subject\'s count); or set one cell manually.'],
+     ['Task','After each trial, yes/no judgement of smooth continuous motion from one disk to the other (p. 30). Responses are stored internally only and not shown.'],
      ['Fixation','Fixate the screen centre at all times (p. 30); '+A('grey fixation cross drawn here is an assumption')],
-     ['Subjects','2 (TMC, PJR), briefly trained; over 2000 and 400 trials respectively (p. 30)'],
-     ['Unspecified',A('Orientation of the pair (horizontal assumed), position relative to fixation (symmetric about centre assumed), background, viewing distance, inter-trial interval, response device')]],
+     ['Subjects','2 (TMC, PJR), briefly trained; over 2000 and 400 trials respectively (p. 30). The second subject\'s 400 trials are not 20 repetitions of a 100-cell grid, and the paper does not say how that design differed; '+A('this page runs the 2000-trial design (10 x 10 x 20) only')],
+     ['Unspecified',A('Orientation of the pair (horizontal assumed), position relative to fixation (symmetric about centre, disk 1 on the left assumed), background, viewing distance (57 cm assumed), inter-trial interval (1 s assumed), 300 ms lead-in and 50 ms tail blank, response device')]],
   2:[['Display','Disks on the scope, configurations of Fig. 6 (3-disk: 1, 2, 3; 4-disk: 4, 5, 6) (p. 31)'],
-     ['Disk coordinates',A('Read off the small Fig. 6 diagram by eye; no coordinates or scale given. 40 px per deg and 0.04 deg per figure px assumed. Disk diameter 0.87 deg assumed (same as Exp 1; not stated for Exp 2).')],
-     ['Order','3-disk: 1-2-3. 4-disk: either sequential 1-2-3-4 ("from left to right", Fig. 6 caption), or left two simultaneously then right two simultaneously (p. 31). '+A('Order within a pair not given: leftmost first assumed.')],
-     ['Exposure, ISI','(150, 50) or (300, 50) ms (exposure, ISI) (p. 31); results were pooled over the two'],
+     ['Disk coordinates','Positions of the disk centres measured from Fig. 6 (PJR column; rows 1-2, 4-disk row 2 geometry also used for row 3) on a 300 dpi render, with one uniform scale for every disk and both axes. '+A('Scale assumed: 0.0272 deg per Fig. 6 pixel (disk 1 to disk 3 about 5.5 deg); the paper gives no scale.')+' 3-disk configs 1-3 differ in the position of disk 3 (upper, middle, lower); 4-disk configs 4-6 differ in the right pair (upper, middle, lower).'],
+     ['Probe path position','Vertical path drawn in the upper-left cell of Fig. 6 (p. 31). '+A('Its horizontal position is set per configuration from Fig. 6: about 50% of the way between disk 2 and disk 3 for the 3-disk configs; for the 4-disk configs from the horizontal position of the probe bars in row 2 (about 40 to 50% of the way between the left pair and the right pair); the path line itself is only drawn in the Fig. 6 cell for 3-disk and is shown faintly on every configuration here.')],
+     ['Disk size',A('0.3 deg diameter assumed: the paper gives no Exp 2 disk size, and the dots in Fig. 6 are small relative to the spacing of the close pairs.')],
+     ['Order','3-disk: 1-2-3. 4-disk: either sequential 1-2-3-4 ("from left to right", Fig. 6 caption), or left two simultaneously then right two simultaneously (p. 31). '+A('Order within a pair not given: leftmost first assumed. ISI between the two pairs taken as 50 ms; the caption mentions "two SOA periods", unclear.')],
+     ['Exposure, ISI','(150, 50) or (300, 50) ms (exposure, ISI) (p. 31)'],
      ['Task','Adjust a small oriented line (probe) along a vertical path to the perceived position, then rotate it to the contour direction there (p. 31)'],
-     ['Probe starts','Random starting positions above and below the observed regions; 8 adjustments per condition (p. 31); '+A('new random start (3.5 to 5 deg from centre) on each presentation')],
-     ['Probe appearance',A('0.5 deg half-length amber line, no numeric readout; faint vertical guide line for the path is drawn in Fig. 6 only and is an assumption')],
-     ['Probe timing',A('Main-experiment timing not specified; hidden during the trial, shown afterwards by default.')+' Control conditions (Discussion, pp. 33-34): probe present only during the trial, or for 1 s before, during and 1 s after each trial; also 3-disk configurations with only points 2 and 3.'],
+     ['Trial structure','18 conditions: 3 three-disk configs x 2 exposures, plus 3 four-disk configs x 2 presentation modes x 2 exposures; 8 adjustments per condition = 144 adjustments (p. 31). Block mode here runs all 144 in one shuffled sequence (condition set automatically, counter shown, "Adjustment done" stores the setting internally). '+A('Shuffled order, and one block, assumed; or set conditions manually.')],
+     ['Probe starts','Random starting positions above and below the observed regions; 8 adjustments per condition (p. 31); '+A('random start 3.5 to 5 deg from centre and random orientation; re-drawn only on "New trial", so presenting again keeps the current adjustment')],
+     ['Probe appearance',A('0.5 deg half-length amber line, no numeric readout; faint vertical guide line for the path (drawn in Fig. 6 only in one cell) is an assumption')],
+     ['Probe timing',A('Main-experiment timing not specified; hidden during the trial, shown afterwards by default.')+' Control conditions (Discussion, p. 33, Table 3): for configs 3 and 6, a disk-point or bar probe shown only during the trial (here exactly first-disk onset to last-disk offset) or from 1000 ms before to 1000 ms after it; for configs 1-3, only points 2 and 3 shown at 150/50 ms. Selectable above only for those configurations, in manual mode.'],
      ['Subjects','3 (TMC, PJR, PCD), trained on the probe technique (p. 31)'],
-     ['Unspecified',A('Luminance, viewing distance, fixation, trials per subject, probe length')]],
+     ['Unspecified',A('Luminance, viewing distance (57 cm assumed), fixation, trials per subject, probe length, inter-trial interval, control-condition disk-probe size, 300 ms blank lead-in and 50 ms blank tail (not in long-probe mode)')]],
   3:[['Figure','Poggendorff: two verticals with a diagonal on each side (Fig. 8A, p. 32); '+A('geometry read off the small figure (both diagonals 45 deg), 0.04 deg per figure px assumed')],
      ['Conditions','(1) static, 4 s; (2) 50 ms exposure per half, ISI 20 ms; (3) 200 ms exposure per half, ISI 20 ms (p. 33)'],
      ['Sequential order','Left two segments (vertical + diagonal) first, then right two (p. 32)'],
-     ['Task','Adjust vertical position (intercept) of the right diagonal until collinear with left diagonal; random starting positions (p. 33). Subjects not instructed to attend to the area between the verticals.'],
-     ['Repetitions','10 trials per condition after practice (p. 33)'],
+     ['Task','Adjust vertical position (intercept) of the right diagonal until collinear with the left diagonal; random starting positions (p. 33). Subjects not instructed to attend to the area between the verticals.'],
+     ['Repetitions','10 trials per condition after practice (p. 33): 3 conditions x 10 = 30 trials. Block mode here runs the 30 in one shuffled sequence with a counter and "Adjustment done" button. '+A('Shuffled order assumed.')],
      ['Subjects','Same 3 (TMC, PJR, PCD) (p. 33)'],
-     ['Unspecified',A('Line width, luminance, viewing distance, how the adjustment is made and how the static 4 s trial and adjustment interleave (here: adjust blind, then present again), start offset range (±3 deg assumed), no numeric readout')]]
+     ['Unspecified',A('Line width, luminance, viewing distance (57 cm assumed), how the adjustment is made and how presentation and adjustment interleave (here: static condition keeps the figure visible while the slider moves; sequential conditions are adjusted between presentations), slider mapping and random start (hidden, no numeric readout), inter-trial interval, 300 ms blank lead-in before the first segment')]]
   };
   $('tbl').innerHTML = rows[exp].map(function(r){ return '<tr><th>'+r[0]+'</th><td>'+r[1]+'</td></tr>'; }).join('');
 }
-$('mode').style.opacity = 0.35;
+
+loadCal();
+$('cal').value = Math.round(pxPerCm*8.56); $('cardbar').style.width = $('cal').value+'px'; $('dist').value = distCm;
+$('cal').oninput = function(){ var w=+$('cal').value; $('cardbar').style.width=w+'px'; pxPerCm=w/8.56; saveCal(); applyScale(); };
+$('dist').oninput = function(){ var d=+$('dist').value; if (d>=20 && d<=300){ distCm=d; saveCal(); applyScale(); } };
+applyScale();
 setExp(1);
+$('run').disabled = true;
+updDisp();
+measureRefresh(function(){ updDisp(); $('run').disabled=false; });
 })();
 </script>
 </body>

@@ -12,21 +12,27 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 12px; max-width:720px; text-align:center; line-height:1.5; }
-  canvas { background:#fff; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  canvas { background:#fff; display:block; border-radius:3px; }
   .box { margin-top:12px; width:720px; max-width:96vw; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.55; }
   .instr b { color:#cfcfcf; }
   .row { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
   .row label { font-size:12px; color:#9a9a9a; }
   input, select { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:4px 7px; border-radius:4px; font-size:12px; }
-  input[type=range] { width:300px; max-width:80vw; accent-color:#8a93b8; padding:0; }
   button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:6px 13px; border-radius:4px; cursor:pointer; font-size:12px; }
   button:hover:not(:disabled) { background:#26262e; }
   button:disabled { opacity:.4; cursor:default; }
   .val { font-size:20px; color:#e8e8e8; font-variant-numeric:tabular-nums; min-width:44px; text-align:center; }
-  .scale { display:flex; justify-content:space-between; font-size:10.5px; color:#8a8a94; line-height:1.4; gap:10px; margin-top:4px; }
-  .scale div { flex:1; } .scale div:nth-child(2){ text-align:center; } .scale div:nth-child(3){ text-align:right; }
+  .track { position:relative; width:480px; max-width:90vw; height:40px; cursor:pointer; touch-action:none; margin:0 auto; }
+  .track .line { position:absolute; left:0; right:0; top:14px; height:4px; background:#3a3a44; border-radius:2px; }
+  .track .tick { position:absolute; top:8px; width:2px; height:16px; background:#6b6b75; transform:translateX(-1px); }
+  .track .lab { position:absolute; top:24px; font-size:11px; color:#9a9a9a; transform:translateX(-50%); }
+  .track .mark { position:absolute; top:6px; width:6px; height:20px; background:#8a93b8; border-radius:3px; transform:translateX(-3px); display:none; }
+  .anch { font-size:10.5px; color:#8a8a94; line-height:1.45; margin-top:6px; }
+  .anch div { margin-top:3px; }
   .status { font-size:11px; color:#777; text-align:center; margin-top:8px; }
+  .dispLine { font-size:10.5px; color:#6b6b75; text-align:center; margin-top:6px; max-width:720px; line-height:1.5; }
+  .warn { color:#d9a35a; }
   .exp { margin-top:16px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:12px; font-size:12px; color:#9a9a9a; }
   .exp h2, .meta h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:8px; }
   .meta { margin-top:20px; width:720px; max-width:96vw; font-size:11px; color:#777; line-height:1.55; }
@@ -35,6 +41,9 @@
   th { color:#8a8a94; font-weight:600; }
   .assume { color:#d9a35a; }
   .hide { display:none; }
+  details.setup { margin-top:8px; font-size:11px; color:#777; max-width:720px; }
+  details.setup summary { cursor:pointer; text-align:center; }
+  #calBar { height:18px; background:#8a93b8; margin:8px 0; border-radius:2px; }
 </style>
 </head>
 <body>
@@ -42,24 +51,50 @@
   <h1>Shepard &amp; Judd (1976) — apparent rotation of 3-D objects</h1>
   <div class="sub">Two views of one object alternate in the same place, with no gap. Watch for as long as you like, then rate the quality of the apparent rotation.</div>
 
-  <canvas id="c" width="440" height="440"></canvas>
+  <canvas id="c" width="400" height="400"></canvas>
+  <div class="dispLine" id="disp">Measuring display refresh…</div>
+  <details class="setup"><summary>Display setup</summary>
+    <div class="row">
+      <label>Viewing distance <input id="dist" type="number" min="20" max="300" step="1" value="57" style="width:64px"> cm</label>
+      <span id="ppdTxt"></span>
+    </div>
+    <div class="row">Resize the bar until it is as wide as a credit card (8.56 cm):
+      <input type="range" id="calRange" min="150" max="700" step="1" value="323" style="width:220px"></div>
+    <div style="overflow-x:auto"><div id="calBar"></div></div>
+    <div class="row"><span id="ppcmTxt"></span> <button id="calReset" type="button">Reset to default 37.8 px/cm</button></div>
+  </details>
 
   <div class="box" id="startBox">
+    <div class="instr"><b>Instructions.</b> Two views of one object will alternate in the same place. Watch for as long as you need, then rate the quality of the apparent rotation on a scale from 1 to 3, using tenths between the points if you wish:</div>
+    <div class="anch">
+      <div><b>1</b> — strikingly like seeing an actual 3-D object rocking back and forth; the object seems to rotate as a rigid whole throughout its entire trajectory.</div>
+      <div><b>2</b> — apparent movement, but nonrigid or noncoherent: for large angles, different parts appear to move independently or to deform into other non-corresponding parts (jumbling); for small angles, a vibration; or the object moves too rapidly to be followed as a rigid whole.</div>
+      <div><b>3</b> — the two alternating views appear superimposed; flickering but no apparent movement.</div>
+    </div>
     <div class="row"><label>Observer number <input id="obs" type="number" min="1" value="1" style="width:60px"></label>
+      <label><input type="checkbox" id="prac" checked> start with 5 practice trials (not logged)</label>
       <button id="begin">Begin 135-trial session</button></div>
-    <div class="status">Before the session you can practise with the experimenter free-play controls below (not logged).</div>
+    <div class="status">Refresh rate is re-measured when the session starts.</div>
   </div>
 
   <div class="box hide" id="trialBox">
-    <div class="instr">Rate the apparent rotation from <b>1</b> to <b>3</b>; values between the points (tenths) are allowed.</div>
-    <div class="row"><input type="range" id="rate" min="1" max="3" step="0.1" value="2"><span class="val" id="rateVal">—</span></div>
-    <div class="scale">
-      <div><b>1</b> — strikingly like seeing an actual 3-D object rocking back and forth; the object seems to rotate as a rigid whole throughout its entire trajectory.</div>
-      <div><b>2</b> — apparent movement, but nonrigid or noncoherent: parts move independently or deform (jumbling) for large angles, a vibration for small angles, or the motion is too rapid to follow as a rigid whole.</div>
-      <div><b>3</b> — the two views appear superimposed; flickering but no apparent movement.</div>
+    <div class="instr" style="text-align:center">Click on the scale to rate the apparent rotation (1 to 3; tenths allowed).</div>
+    <div class="row"><span class="val" id="rateVal">—</span></div>
+    <div class="track" id="track">
+      <div class="line"></div>
+      <div class="tick" style="left:0"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:100%"></div>
+      <div class="lab" style="left:0">1</div><div class="lab" style="left:50%">2</div><div class="lab" style="left:100%">3</div>
+      <div class="mark" id="mark"></div>
     </div>
-    <div class="row"><button id="submit" disabled>Submit rating &amp; next trial</button></div>
+    <div class="row" style="margin-top:18px"><label>or type <input type="number" id="rateNum" min="1" max="3" step="0.1" style="width:64px"></label><span class="warn" id="rateMsg"></span>
+      <button id="submit" disabled>Submit rating &amp; next trial</button></div>
+    <div class="anch">
+      <div><b>1</b> — rigid rotation of a 3-D object, like seeing it rock back and forth.</div>
+      <div><b>2</b> — apparent movement, but nonrigid / noncoherent (jumbling, vibration, or too rapid to follow as a rigid whole).</div>
+      <div><b>3</b> — views superimposed; flicker, no apparent movement.</div>
+    </div>
     <div class="status" id="prog"></div>
+    <div class="row hide" id="restart"><button id="restartBtn" type="button">Start a new session</button></div>
   </div>
 
   <div class="exp">
@@ -68,7 +103,7 @@
       <label><input type="checkbox" id="free"> Free-play (shows parameters; not logged; not part of the paper's procedure)</label>
     </div>
     <div class="row hide" id="freeBox" style="justify-content:flex-start">
-      <label>Condition <select id="fType"><option value="D1">depth pair 1</option><option value="D2">depth pair 2</option><option value="P">picture plane</option></select></label>
+      <label>Condition <select id="fType"><option value="D1">depth pair 1 (depth object)</option><option value="D2">depth pair 2 (depth object)</option><option value="P">picture plane</option></select></label>
       <label>Angle <select id="fAng"><option>20</option><option selected>60</option><option>100</option><option>140</option><option>180</option></select>°</label>
       <label>Field duration <select id="fDur"></select> ms</label>
       <span id="fReal"></span>
@@ -81,129 +116,213 @@
     <h2>Methods (Shepard &amp; Judd, 1976, Science 191, 952–954)</h2>
     <table>
       <tr><th>Parameter</th><th>Paper</th><th>This page</th></tr>
-      <tr><td>Stimulus</td><td>Perspective line drawings of Shepard–Metzler ten-cube objects, each view in a circular field; end cube nearest the top coloured yellow in both conditions (p. 953, Fig. 1)</td><td>Computer-drawn ten-cube objects, black edges on white inside a circle, top end cube yellow. <span class="assume">Assumption: the exact objects/views of the paper are not reproduced in the article; these are look-alikes.</span></td></tr>
-      <tr><td>Conditions</td><td>Rotation in depth about the object's vertical axis, or in the picture plane (a different object for each condition); angular differences 20, 60, 100, 140, 180° (p. 953)</td><td>Same levels. <span class="assume">Assumption: absolute start orientations (views placed symmetrically about a fixed oblique view).</span></td></tr>
-      <tr><td>Pairs</td><td>Per angle: 1 picture-plane pair and 2 depth pairs (different depth objects/views) (p. 953)</td><td>Same: pair P, D1, D2.</td></tr>
-      <tr><td>Presentation</td><td>Two fields of an Iconix tachistoscope in continuous alternation; one field ends as the other begins (no ISI); equal field durations (p. 953)</td><td>Single canvas, views swapped on a frame count; no blank between fields; alternation continues until the rating is submitted.</td></tr>
-      <tr><td>Field durations</td><td>Nine rates, 500 to 40 ms; the nine values are not listed (p. 953)</td><td id="durTxt"></td></tr>
-      <tr><td>Response</td><td>Rating 1–3 with tenths allowed; observers trained on the scale beforehand; unlimited time; angle and rate not announced (p. 953–954)</td><td>Slider 1.0–3.0 in 0.1 steps with the paper's three anchors; angle and duration hidden. <span class="assume">Assumption: slider as response device; no practice trials specified.</span></td></tr>
+      <tr><td>Stimulus</td><td>Perspective line drawings of Shepard–Metzler ten-cube objects, each view in a circular field; end cube nearest the top coloured yellow in both conditions (p. 953, Fig. 1)</td><td>Computer-drawn ten-cube objects (one depth object, one picture-plane object), black edges on white inside a circle, top end cube yellow, hidden faces removed. <span class="assume">Assumption: the exact Shepard–Metzler objects, orientations, size and viewing geometry are not given in the article; these are look-alikes. Circle diameter 10 deg (assumed; whether the circle is a physical aperture is not stated); object scaled so its farthest point from the circle centre is about 0.62 of the circle radius (measured on Fig. 1 rendered at 500 dpi: the object spans about 0.55 of the diameter in height and 0.6 in width), one scale per object for all views; yellow #f2d200.</span></td></tr>
+      <tr><td>Conditions</td><td>Rotation in depth about the object's vertical axis, or in the picture plane (a different object for each condition); angular differences 20, 60, 100, 140, 180° (p. 953, first paragraph)</td><td>Same levels. <span class="assume">Assumptions: absolute start orientations (views placed symmetrically about a base view); the picture-plane pair is drawn as a pure rotation of the image about the circle centre (Fig. 1A may also involve a perspective change); which view of a pair is shown first is randomised on each trial.</span></td></tr>
+      <tr><td>Pairs</td><td>Per angle: 1 picture-plane pair and 2 depth pairs of the single depth object (two different pairs of perspective views, so that no one hard-to-interpret pair dominates) (p. 953)</td><td>Same: P (picture-plane object), D1 and D2 (two pairs of views of the one depth object). <span class="assume">Assumption: D1 and D2 differ in base orientation (yaw 25 deg / tilt −22 deg vs yaw −40 deg / tilt +18 deg).</span></td></tr>
+      <tr><td>Presentation</td><td>Two fields of an Iconix tachistoscope in continuous alternation; one field ends as the other begins (no ISI); equal field durations (p. 953)</td><td>Single canvas, views swapped on a count of display frames; no blank between fields; alternation continues until the rating is submitted (<span class="assume">assumed</span>). A browser is not a tachistoscope: display latency cannot be controlled, and dropped frames are counted and logged.</td></tr>
+      <tr><td>Field durations</td><td>Nine rates, 500 to 40 ms; the nine values are not listed (p. 953, 954)</td><td id="durTxt"></td></tr>
+      <tr><td>Response</td><td>Rating 1–3 with tenths allowed; observers trained on the scale beforehand; unlimited time; angle and rate not announced (p. 953–954)</td><td>Click-anywhere scale 1.0–3.0 in 0.1 steps (no preset position) or typed value, with the paper's three anchors; angle and duration hidden. Instruction screen shows the anchors. <span class="assume">Assumptions: on-screen scale as response device; 5 unlogged practice trials (the number is not given).</span></td></tr>
       <tr><td>Trial structure</td><td>10 observers; 5 angles × 3 pairs × 9 rates = 135 ratings each. Three equal blocks by condition, depth pairs half before and half after the picture-plane block. Each pair rated at all nine rates before moving to the next angle; angle order counterbalanced across observers; rate order randomised within each angle (p. 954)</td><td>Blocks D1 / P / D2 (45 trials each; <span class="assume">assumed: D1/D2 order swaps for even observers</span>). Angle order is a cyclic rotation of 20-60-100-140-180 by observer number (<span class="assume">assumed; same order in every block</span>); the nine durations are shuffled for each angle.</td></tr>
-      <tr><td>Size, distance, luminance, fixation</td><td>Not specified</td><td><span class="assume">Assumption: 440 px field on screen, black on white, no fixation mark.</span></td></tr>
+      <tr><td>Size, distance, luminance, fixation</td><td>Not specified</td><td><span class="assume">Assumptions: viewing distance 57 cm, 10 deg circle (see Display setup), black on white, no fixation mark.</span></td></tr>
     </table>
     <div id="realised"></div>
   </div>
 
 <script>
-const c = document.getElementById('c'), ctx = c.getContext('2d');
-const W = c.width, H = c.height, CX = W/2, CY = H/2, R = 205;
-const UNIT = 24, CAM = 30;
+const $=id=>document.getElementById(id);
+const c=$('c'), ctx=c.getContext('2d');
+const D2R=Math.PI/180, CAM=30;          // camera distance in cube edges (assumed)
+const CIRCLE_DEG=10, FILL=0.62;         // assumed circle diameter; object's farthest point ~0.62 of circle radius (measured on Fig. 1, 500 dpi)
+const CARD_CM=8.56;
 
-// objects: chains of unit cubes with right-angle bends; first cube = yellow end (top end)
+// ---- display setup (shared across pages) ----
+let disp={ppcm:37.8,dist:57};
+try{ const d=JSON.parse(localStorage.getItem('am_display')||'null'); if(d&&d.ppcm>0&&d.dist>0) disp={ppcm:+d.ppcm,dist:+d.dist}; }catch(e){}
+function saveDisp(){ try{ localStorage.setItem('am_display',JSON.stringify({ppcm:disp.ppcm,dist:disp.dist})); }catch(e){} }
+function ppd(){ return disp.ppcm*disp.dist*Math.PI/180; }   // px per degree (small-angle)
+let W=400,H=400,CX=200,CY=200,R=188;
+function resize(){
+  R=CIRCLE_DEG/2*ppd(); const side=Math.ceil(2*R+8);
+  c.width=side; c.height=side; W=H=side; CX=CY=side/2;
+  $('ppdTxt').textContent=ppd().toFixed(1)+' px/deg; circle '+CIRCLE_DEG+' deg = '+(CIRCLE_DEG*ppd()/disp.ppcm).toFixed(1)+' cm';
+  $('ppcmTxt').textContent=disp.ppcm.toFixed(1)+' px/cm';
+  $('calBar').style.width=(CARD_CM*disp.ppcm).toFixed(0)+'px'; $('calRange').value=Math.round(CARD_CM*disp.ppcm);
+  $('dist').value=disp.dist; computeScales();
+}
+$('dist').onchange=()=>{ const v=+$('dist').value; if(v>=20&&v<=300){ disp.dist=v; saveDisp(); resize(); } };
+$('calRange').oninput=()=>{ disp.ppcm=(+$('calRange').value)/CARD_CM; saveDisp(); resize(); };
+$('calReset').onclick=()=>{ disp.ppcm=37.8; saveDisp(); resize(); };
+
+// ---- objects: ten-cube chains, first cube = yellow top end ----
 function chain(start, moves){
   const cells=[start.slice()]; let p=start.slice();
   for(const [d,n] of moves) for(let i=0;i<n;i++){ p=[p[0]+d[0],p[1]+d[1],p[2]+d[2]]; cells.push(p); }
   return cells;
 }
-const OBJ = {
-  D1: chain([0,5,0], [[[0,-1,0],4],[[1,0,0],3],[[0,0,1],2]]),
-  D2: chain([0,5,0], [[[0,-1,0],3],[[0,0,1],3],[[1,0,0],3]]),
-  P : chain([2,5,0], [[[-1,0,0],2],[[0,-1,0],4],[[0,0,1],3]])
+const OBJ={
+  DEPTH: chain([0,5,0], [[[0,-1,0],4],[[1,0,0],3],[[0,0,1],2]]),       // the one depth object (10 cubes; arms ~3-4 cubes as in Fig. 1B)
+  P    : chain([2,5,0], [[[-1,0,0],2],[[0,-1,0],4],[[1,0,0],2],[[0,0,1],1]])        // the picture-plane object (10 cubes; C shape as in Fig. 1A)
 };
-const FACES=[[0,1,2,3],[4,5,6,7],[0,1,5,4],[3,2,6,7],[0,3,7,4],[1,2,6,5]];
-function corners(b){ const [x,y,z]=b; return [[x,y,z],[x+1,y,z],[x+1,y+1,z],[x,y+1,z],[x,y,z+1],[x+1,y,z+1],[x+1,y+1,z+1],[x,y+1,z+1]]; }
+const GEOM={ D1:{obj:'DEPTH',yaw0:25,tilt:-22}, D2:{obj:'DEPTH',yaw0:-40,tilt:18}, P:{obj:'P',yaw0:25,tilt:-22} };
 function rotY(v,a){const c=Math.cos(a),s=Math.sin(a);return [c*v[0]+s*v[2],v[1],-s*v[0]+c*v[2]];}
 function rotX(v,a){const c=Math.cos(a),s=Math.sin(a);return [v[0],c*v[1]-s*v[2],s*v[1]+c*v[2]];}
-const D2R=Math.PI/180, TILT=-22*D2R, YAW0=25;   // assumed viewing geometry
-
+const FACES=[[0,1,2,3],[4,5,6,7],[0,1,5,4],[3,2,6,7],[0,3,7,4],[1,2,6,5]];
+function corners(b){ const [x,y,z]=b; return [[x,y,z],[x+1,y,z],[x+1,y+1,z],[x,y+1,z],[x,y,z+1],[x+1,y,z+1],[x+1,y+1,z+1],[x,y+1,z+1]]; }
+function centroid(cells){ return [0,1,2].map(k=>cells.reduce((a,b)=>a+b[k]+0.5,0)/cells.length); }
+// project all cubes of an object for a given view; returns cubes with 3-D camera-space data
+function project(key, yawDeg){
+  const g=GEOM[key], cells=OBJ[g.obj], cen=centroid(cells);
+  return cells.map((cell,ci)=>{
+    const vs=corners(cell).map(v=>{
+      let p=[v[0]-cen[0],v[1]-cen[1],v[2]-cen[2]]; p=rotY(p,yawDeg*D2R); p=rotX(p,g.tilt*D2R);
+      const f=CAM/(CAM-p[2]); return {x:p[0]*f,y:-p[1]*f,z:p[2],p};
+    });
+    const cc=[0,1,2].map(k=>vs.reduce((a,v)=>a+v.p[k],0)/8);
+    return {vs,cc,ci,dist:Math.hypot(cc[0],cc[1],CAM-cc[2])};
+  });
+}
+// scale (deg per cube edge) so that the object, in every view used, fits FILL of the circle diameter
+const SCALE={};
+function computeScales(){
+  const groups={DEPTH:['D1','D2'],P:['P']};      // one scale per object, over all its views
+  for(const o in groups){
+    let m=0;
+    for(const key of groups[o]){
+      const g=GEOM[key], ys=[];
+      if(key==='P') ys.push(g.yaw0); else for(let y=g.yaw0-100;y<=g.yaw0+100;y+=5) ys.push(y);
+      for(const y of ys) for(const cb of project(key,y)) for(const v of cb.vs) m=Math.max(m,Math.hypot(v.x,v.y));
+    }
+    for(const key of groups[o]) SCALE[key]=FILL*(CIRCLE_DEG/2)/m;
+  }
+}
+function drawCircle(){ ctx.beginPath(); ctx.arc(CX,CY,R,0,2*Math.PI); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.stroke(); }
+function blank(){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H); drawCircle(); }
 function draw(key, yawDeg, imgDeg){
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  const cells=OBJ[key], n=cells.length;
-  const cen=[0,1,2].map(k=>cells.reduce((a,b)=>a+b[k]+0.5,0)/n);
-  const ca=Math.cos(imgDeg*D2R), sa=Math.sin(imgDeg*D2R), faces=[];
-  cells.forEach((cell,ci)=>{
-    const vs=corners(cell).map(v=>{
-      let p=[v[0]-cen[0],v[1]-cen[1],v[2]-cen[2]];
-      p=rotY(p,yawDeg*D2R); p=rotX(p,TILT);
-      const f=CAM/(CAM-p[2]); let x=p[0]*UNIT*f, y=-p[1]*UNIT*f;
-      return {x:CX+x*ca-y*sa, y:CY+x*sa+y*ca, z:p[2]};
-    });
-    for(const f of FACES){ faces.push({q:f.map(i=>vs[i]), z:f.reduce((a,i)=>a+vs[i].z,0)/4, top:ci===0}); }
-  });
-  faces.sort((a,b)=>a.z-b.z);
+  const u=SCALE[key]*ppd(), ca=Math.cos(imgDeg*D2R), sa=Math.sin(imgDeg*D2R);
+  const cubes=project(key,yawDeg).sort((a,b)=>b.dist-a.dist);      // far to near
   ctx.lineJoin='round'; ctx.strokeStyle='#000'; ctx.lineWidth=1.3;
-  for(const fc of faces){
-    ctx.beginPath(); fc.q.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
-    ctx.fillStyle=fc.top?'#f2d200':'#fff'; ctx.fill(); ctx.stroke();
+  for(const cb of cubes){
+    for(const f of FACES){
+      const fc=[0,1,2].map(k=>f.reduce((a,i)=>a+cb.vs[i].p[k],0)/4);
+      const out=[fc[0]-cb.cc[0],fc[1]-cb.cc[1],fc[2]-cb.cc[2]], toCam=[-fc[0],-fc[1],CAM-fc[2]];
+      if(out[0]*toCam[0]+out[1]*toCam[1]+out[2]*toCam[2]<=0) continue;   // back face
+      ctx.beginPath();
+      f.forEach((i,k)=>{ const v=cb.vs[i], x=v.x*u, y=v.y*u, px=CX+x*ca-y*sa, py=CY+x*sa+y*ca; k?ctx.lineTo(px,py):ctx.moveTo(px,py); });
+      ctx.closePath(); ctx.fillStyle=cb.ci===0?'#f2d200':'#fff'; ctx.fill(); ctx.stroke();
+    }
   }
-  ctx.beginPath(); ctx.arc(CX,CY,R,0,2*Math.PI); ctx.lineWidth=2; ctx.stroke();
+  drawCircle();
 }
-// the two views of a pair
 function views(key, ang){
-  if(key==='P') return [[YAW0,-ang/2],[YAW0,ang/2]];
-  return [[YAW0-ang/2,0],[YAW0+ang/2,0]];
+  const y0=GEOM[key].yaw0;
+  return key==='P' ? [[y0,-ang/2],[y0,ang/2]] : [[y0-ang/2,0],[y0+ang/2,0]];
 }
 
-// ---- frame-locked timing ----
-let frameMs=1000/60;
-const NOMINAL=[500,400,300,200,150,100,70,50,40];   // assumed set within the paper's 500–40 ms range
-const cur={key:'D1',ang:60,fdMs:300,framesPer:18,f:0,run:false};
+// ---- frame-counted timing ----
+let frameMs=1000/60, refreshOK=false;
+const NOMINAL=[500,400,300,200,150,100,80,60,40];   // assumed reading of the Fig. 2A duration ticks
+const cur={key:'D1',ang:60,fdMs:300,framesPer:18,f:0,run:false,swap:false,drops:0,last:null};
 function framesFor(ms){ return Math.max(1,Math.round(ms/frameMs)); }
-function setStim(key,ang,ms){ cur.key=key;cur.ang=ang;cur.fdMs=ms;cur.framesPer=framesFor(ms);cur.f=0;cur.run=true; }
-function loop(){
+function setStim(key,ang,ms,swap){ cur.key=key;cur.ang=ang;cur.fdMs=ms;cur.framesPer=framesFor(ms);cur.f=0;cur.swap=!!swap;cur.drops=0;cur.last=null;cur.run=true; }
+function loop(t){
   if(cur.run){
-    const field=Math.floor(cur.f/cur.framesPer)%2, v=views(cur.key,cur.ang)[field];
-    draw(cur.key,v[0],v[1]); cur.f++;
-  } else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H); ctx.beginPath(); ctx.arc(CX,CY,R,0,2*Math.PI); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.stroke(); }
+    let steps=1;
+    if(cur.last!==null){ steps=Math.max(1,Math.round((t-cur.last)/frameMs)); if(steps>1) cur.drops+=steps-1; }
+    cur.last=t;
+    const vw=views(cur.key,cur.ang), field=(Math.floor(cur.f/cur.framesPer)+(cur.swap?1:0))%2, v=vw[field];
+    draw(cur.key,v[0],v[1]); cur.f+=steps;     // dropped frames still advance the frame count
+  } else blank();
   requestAnimationFrame(loop);
 }
-// measure refresh
-(function(){ let t0=0,k=0,ts=[]; function m(t){ ts.push(t); if(ts.length<61){requestAnimationFrame(m);return;}
-  const d=(ts[60]-ts[10])/50; frameMs=d; const hz=1000/d; document.getElementById('hz').textContent=hz.toFixed(1)+' Hz (frame '+d.toFixed(2)+' ms)';
-  fillDur(); requestAnimationFrame(loop);} requestAnimationFrame(m); })();
-
-function fillDur(){
-  const real=NOMINAL.map(ms=>{const f=framesFor(ms);return f*frameMs;});
-  document.getElementById('durTxt').innerHTML='<span class="assume">Assumption: '+NOMINAL.join(', ')+' ms</span>. Realised on this display ('+(1000/frameMs).toFixed(1)+' Hz, whole frames): '+
-    NOMINAL.map((ms,i)=>framesFor(ms)+' fr = '+real[i].toFixed(1)).join('; ')+' ms. At 60 Hz: 500→30 fr, 400→24, 300→18, 200→12, 150→9, 100→6, 70→4 (66.7 ms), 50→3, 40→2 (33.3 ms; 40 ms is not realisable).';
-  const sel=document.getElementById('fDur'); if(!sel.options.length) NOMINAL.forEach(ms=>sel.add(new Option(ms,ms)));
-  sel.value="300";
+function measure(cb){      // median rAF interval over ~60 frames
+  const ts=[]; (function m(t){ ts.push(t); if(ts.length<62){ requestAnimationFrame(m); return; }
+    const d=[]; for(let i=2;i<ts.length;i++) d.push(ts[i]-ts[i-1]); d.sort((a,b)=>a-b);
+    frameMs=d[d.length>>1]; refreshOK=true; showDisp(d[d.length-1]); if(cb) cb(); })(performance.now());
+}
+function showDisp(maxD){
+  const hz=1000/frameMs; if($('hz')) $('hz').textContent=hz.toFixed(1)+' Hz ('+frameMs.toFixed(2)+' ms/frame)';
+  const f=NOMINAL.map(ms=>({ms,fr:framesFor(ms),re:framesFor(ms)*frameMs,whole:Math.abs(ms/frameMs-Math.round(ms/frameMs))<0.05}));
+  const bad=f.filter(x=>!x.whole);
+  let line='Display: '+hz.toFixed(1)+' Hz (median frame '+frameMs.toFixed(2)+' ms). Field durations (whole frames): '+f.map(x=>x.ms+'→'+x.fr+' fr = '+x.re.toFixed(1)+' ms').join('; ')+'.';
+  if(bad.length) line+=' <span class="warn">Warning: '+bad.map(x=>x.ms+' ms').join(', ')+' not a whole number of frames at this rate; rounded.</span>';
+  if(maxD>1.5*frameMs) line+=' <span class="warn">Irregular frame intervals seen during measurement (longest '+maxD.toFixed(1)+' ms).</span>';
+  $('disp').innerHTML=line;
+  $('durTxt').innerHTML='<span class="assume">Assumption: '+NOMINAL.join(', ')+' ms</span> (best reading of the tick labels on the paper’s duration axis, p. 954; 500, 400, 300, 200, 150, 100 are clear, the last three are crowded). Realised on this display: '+f.map(x=>x.fr+' fr = '+x.re.toFixed(1)).join('; ')+' ms.';
+  const sel=$('fDur'); if(!sel.options.length) NOMINAL.forEach(ms=>sel.add(new Option(ms,ms))); sel.value="300";
 }
 
+// ---- response scale ----
+let val=null;
+function setVal(v){
+  v=Math.min(3,Math.max(1,Math.round(v*10)/10)); val=v;
+  $('rateVal').textContent=v.toFixed(1); $('rateNum').value=v.toFixed(1);
+  $('mark').style.display='block'; $('mark').style.left=((v-1)/2*100)+'%'; $('submit').disabled=false;
+}
+function clearVal(){ val=null; $('rateMsg').textContent=''; $('rateVal').textContent='—'; $('rateNum').value=''; $('mark').style.display='none'; $('submit').disabled=true; }
+(function(){ const tr=$('track'); let down=false;
+  const at=e=>{ const r=tr.getBoundingClientRect(); setVal(1+2*Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))); };
+  tr.addEventListener('pointerdown',e=>{ down=true; try{tr.setPointerCapture(e.pointerId);}catch(_){} at(e); });
+  tr.addEventListener('pointermove',e=>{ if(down) at(e); });
+  tr.addEventListener('pointerup',()=>{ down=false; });
+})();
+$('rateNum').addEventListener('change',()=>{ const v=parseFloat($('rateNum').value); $('rateMsg').textContent='';
+  if(!isFinite(v)){ return; }
+  if(v<1||v>3) $('rateMsg').textContent='Out of range: the scale runs from 1 to 3; value set to '+Math.min(3,Math.max(1,v)).toFixed(1)+'.';
+  setVal(v); });
+
 // ---- session ----
-let seq=[], idx=-1, tStart=0, log=[], touched=false, obsId=1;
+let sessionActive=false, seq=[], idx=-1, tStart=0, log=[], obsId=1, nPrac=0;
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 function buildSeq(obs){
   const base=[20,60,100,140,180], k=(obs-1)%5, order=base.slice(k).concat(base.slice(0,k));
-  const blocks = obs%2===1 ? ['D1','P','D2'] : ['D2','P','D1'], s=[];
-  blocks.forEach(b=>order.forEach(a=>shuffle(NOMINAL.slice()).forEach(ms=>s.push({pair:b,cond:b==='P'?'plane':'depth',ang:a,ms}))));
+  const blocks=obs%2===1?['D1','P','D2']:['D2','P','D1'], s=[];
+  blocks.forEach(b=>order.forEach(a=>shuffle(NOMINAL.slice()).forEach(ms=>s.push({pair:b,cond:b==='P'?'plane':'depth',ang:a,ms,swap:Math.random()<0.5,prac:false}))));
   return s;
 }
-const $=id=>document.getElementById(id);
-function showTrial(){
-  const t=seq[idx]; setStim(t.pair,t.ang,t.ms); touched=false;
-  $('rate').value=2; $('rateVal').textContent='—'; $('submit').disabled=true; tStart=performance.now();
-  $('prog').textContent='Trial '+(idx+1)+' of '+seq.length;
+function buildPractice(n){
+  const out=[]; for(let i=0;i<n;i++) out.push({pair:['D1','P','D2'][Math.floor(Math.random()*3)],cond:'practice',ang:[20,60,100,140,180][Math.floor(Math.random()*5)],ms:NOMINAL[Math.floor(Math.random()*9)],swap:Math.random()<0.5,prac:true});
+  return out;
 }
-$('begin').onclick=()=>{ obsId=Math.max(1,+$('obs').value||1); seq=buildSeq(obsId); log=[]; idx=0; $('free').checked=false; $('freeBox').classList.add('hide');
-  $('startBox').classList.add('hide'); $('trialBox').classList.remove('hide'); showTrial(); };
-$('rate').addEventListener('input',()=>{ touched=true; $('rateVal').textContent=(+$('rate').value).toFixed(1); $('submit').disabled=false; });
+function showTrial(){
+  const t=seq[idx]; setStim(t.pair,t.ang,t.ms,t.swap); clearVal(); tStart=performance.now();
+  $('prog').textContent=t.prac?('Practice '+(idx+1)+' of '+nPrac):('Trial '+(idx+1-nPrac)+' of '+(seq.length-nPrac));
+}
+$('begin').onclick=()=>{
+  $('begin').disabled=true; $('begin').textContent='Measuring refresh…'; cur.run=false;
+  measure(()=>{
+    obsId=Math.max(1,+$('obs').value||1); const main=buildSeq(obsId), pr=$('prac').checked?buildPractice(5):[];
+    nPrac=pr.length; seq=pr.concat(main); log=[]; idx=0; sessionActive=true; $('free').checked=false; $('free').disabled=true; $('freeBox').classList.add('hide');
+    $('startBox').classList.add('hide'); $('trialBox').classList.remove('hide');
+    $('begin').disabled=false; $('begin').textContent='Begin 135-trial session'; showTrial();
+  });
+};
 $('submit').onclick=()=>{
-  const t=seq[idx];
-  log.push({observer:obsId,trial:idx+1,condition:t.cond,pair:t.pair,angleDeg:t.ang,fieldNominalMs:t.ms,fieldFrames:framesFor(t.ms),
-    frameMs:frameMs.toFixed(2),rating:(+$('rate').value).toFixed(1),rtMs:Math.round(performance.now()-tStart)});
-  $('export').disabled=false; idx++;
-  if(idx>=seq.length){ cur.run=false; $('prog').textContent='Session complete ('+seq.length+' trials). Export the CSV.'; $('submit').disabled=true; return; }
+  if(val===null) return; const t=seq[idx];
+  if(!t.prac) log.push({observer:obsId,trial:idx+1-nPrac,condition:t.cond,pair:t.pair,angleDeg:t.ang,fieldNominalMs:t.ms,fieldFrames:cur.framesPer,
+    frameMs:frameMs.toFixed(2),firstViewSwapped:t.swap?1:0,droppedFrames:cur.drops,ppcm:disp.ppcm.toFixed(1),distCm:disp.dist,rating:val.toFixed(1),rtMs:Math.round(performance.now()-tStart)});
+  $('export').disabled=!log.length; idx++;
+  if(idx>=seq.length){ cur.run=false; clearVal(); $('prog').textContent='Session complete ('+log.length+' trials). Export the CSV before starting a new session.'; $('restart').classList.remove('hide'); return; }
   showTrial();
 };
 $('export').onclick=()=>{ if(!log.length)return; const cols=Object.keys(log[0]);
   const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='shepard_judd_1976.csv'; a.click(); };
 
-// ---- free play ----
-function applyFree(){ if(!$('free').checked)return; const ms=+$('fDur').value; setStim($('fType').value,+$('fAng').value,ms);
+$('restartBtn').onclick=()=>{
+  if(log.length && !confirm('Start a new session? Un-exported ratings from this session will be lost.')) return;
+  sessionActive=false; seq=[]; idx=-1; log=[]; cur.run=false; clearVal(); $('export').disabled=true;
+  $('restart').classList.add('hide'); $('trialBox').classList.add('hide'); $('startBox').classList.remove('hide');
+  $('free').disabled=false; $('prog').textContent='';
+};
+// ---- free play (experimenter) ----
+function applyFree(){ if(sessionActive||!$('free').checked)return; setStim($('fType').value,+$('fAng').value,+$('fDur').value,false);
   $('fReal').textContent=cur.framesPer+' frames = '+(cur.framesPer*frameMs).toFixed(1)+' ms per field'; }
-$('free').onchange=()=>{ $('freeBox').classList.toggle('hide',!$('free').checked); if($('free').checked){ applyFree(); } else if(idx<0||idx>=seq.length){ cur.run=false; } else showTrial(); };
+$('free').onchange=()=>{ if(sessionActive){ $('free').checked=false; return; } $('freeBox').classList.toggle('hide',!$('free').checked); if($('free').checked){ applyFree(); } else if(idx<0||idx>=seq.length){ cur.run=false; } else showTrial(); };
 ['fType','fAng','fDur'].forEach(id=>$(id).onchange=applyFree);
+
+resize(); requestAnimationFrame(loop); measure();
 </script>
+
 </body>
 </html>
