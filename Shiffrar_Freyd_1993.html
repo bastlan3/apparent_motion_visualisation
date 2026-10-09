@@ -60,7 +60,7 @@ input[type=number]{ background:#333; color:#ddd; border:1px solid #555; border-r
 </div>
 
 <div class="panel" id="ansPanel" style="display:none">
-  <h2>Answer sheet</h2>
+  <h2>Answer sheet <span id="ansLvl" style="font-weight:400;color:#999"></span></h2>
   <p>Indicate the path(s) of the motion, if any, on the diagram. Several paths may be drawn. Tick the box if no motion was seen.</p>
   <canvas id="ans" width="300" height="250" style="margin:8px auto 6px"></canvas>
   <div style="display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap">
@@ -107,7 +107,7 @@ input[type=number]{ background:#333; color:#ddd; border:1px solid #555; border-r
     <tr><td>Exp 1 design</td><td>N = 32 naive students; between-subjects 2 (full/half) x 2 (set); 8 per cell. Each observer saw one set of 6 pairs at all 6 SOAs in one session; presentation order randomised, half with increasing and half with decreasing SOA per stimulus (pp. 380-381). The full-cycle, impossible-shortest-path cell was collected in 1989 (Fig. 2 caption)</td><td>Session: 6 pairs in random order, each at the 6 SOAs in the chosen order (36 trials)</td></tr>
     <tr><td>Exp 2 stimuli</td><td>16 pairs: 4 joint + 4 solidity poses, each in a concise and a lengthy version (p. 382)</td><td>Pair menu follows these names</td></tr>
     <tr><td>Exp 2 design</td><td>N = 8 within subjects, none from Exp 1; full cycle, SOAs 150-650 ms (SD/ISI split assumed as Exp 1); all concise or all lengthy stimuli first (p. 382)</td><td>Session: 2 blocks of 8 pairs, random order in a block, 6 SOAs each; SOA order assumed as chosen. 96 trials</td></tr>
-    <tr><td>Response</td><td>Path(s) of motion, if any, marked on answer-sheet diagrams for each SOA level; no RT (pp. 380, 382)</td><td>Answer sheet after each viewing (cleared per trial); both poses overlaid, blue = picture 1, red = picture 2 (assumption). Responses kept in memory only</td></tr>
+    <tr><td>Response</td><td>Path(s) of motion, if any, marked on answer-sheet diagrams for each SOA level; no RT (pp. 380, 382)</td><td>Shown after the observer stops the display, one sheet per SOA level of the stimulus, in the experimental order (viewing, then answer sheet, then next SOA level). Sheet drawn here as a diagram of both poses overlaid, blue = picture 1, red = picture 2, on which paths are drawn freehand; the paper says only 'diagrams on an answer sheet' (pp. 380, 382), so the diagram layout is an assumption. Responses kept in memory only</td></tr>
     <tr><td>Instructions</td><td>Observers would see rapidly flashing pictures of a model in different poses; sometimes a kind of motion might be seen, sometimes with a clear path, sometimes multiple paths or none (p. 380)</td><td>Paraphrased on the start screen</td></tr>
     <tr><td>Not specified</td><td colspan="2">Picture size/position, viewing distance, luminance, number of cycles, inter-trial interval, how trials were started, repeats per pair x SOA, pair order within session, which pairs of a set each observer saw, SOA order in Exp 2.</td></tr>
   </table>
@@ -191,7 +191,7 @@ const EXP2 = [];
  ['solidity','Arm about the torso, ventro-dorsal', P({R:[20,20]}), P({R:[100,100]}), P({R:[170,170]})],
  ['solidity','Hand about the head, lateral', P({R:[140,140]}), P({R:[170,170]}), P({R:[-150,-150]})],
  ['solidity','One foot about the other, lateral', P({RL:[-8,-8]}), P({RL:[-30,-30]}), P({RL:[-55,-55]})],
- ['solidity','One arm about the other arm, lateral (Fig. 3 type)', P({L:[-70,90],R:[-10,180]}), P({L:[-70,90],R:[80,105]}), P({L:[-70,90],R:[90,90]}), P({L:[-70,90],RS:1.3,R:[40,-150]})]
+ ['solidity','One arm about the other arm, lateral (Fig. 3 type)', P({L:[-70,90],R:[-10,180]}), P({L:[-70,90],R:[80,105]}), P({L:[-70,90],R:[75,90]}), P({L:[-70,90],RS:1.3,R:[40,-150]})]
 ].forEach(d=>{
   EXP2.push({g:'Exp 2, '+d[0]+', concise', v:'concise', n:d[1]+' (concise)', A:d[2], B:d[3]});
   EXP2.push({g:'Exp 2, '+d[0]+', lengthy', v:'lengthy', n:d[1]+' (lengthy)', A:d[5]||d[2], B:d[4]});
@@ -314,7 +314,7 @@ function nextTrial(){
   buildSeq(); stopSeq();
 }
 $('show').onclick=()=>{ $('show').style.display='none'; $('done').style.display=''; startSeq(); };
-function openAnswer(){ stopSeq(); $('done').style.display='none'; $('runBtns').style.display='none'; strokes=[]; drawSheet(); $('ansPanel').style.display='block'; }
+function openAnswer(){ stopSeq(); const nk=SOAS.length, st=Math.floor(ti/nk)+1, lv=(ti%nk)+1; $('ansLvl').textContent='(stimulus '+st+' of '+(trials.length/nk)+', SOA level '+lv+' of '+nk+')'; $('done').style.display='none'; $('runBtns').style.display='none'; strokes=[]; drawSheet(); $('ansPanel').style.display='block'; }
 $('done').onclick=openAnswer;
 document.addEventListener('keydown',e=>{ if(e.code==='Space' && inSession && !(e.target&&e.target.tagName==='BUTTON') && $('done').style.display!=='none'){ e.preventDefault(); openAnswer(); } });
 $('next').onclick=()=>{ results.push({trial:ti,pair:curPair.n,soa:SOAS[curK],half:curHalf,noMotion:$('nomo').checked,strokes:strokes.slice()}); nextTrial(); };

@@ -36,7 +36,7 @@ details.setup summary { cursor:pointer; }
 <h1>Chatterjee, Freyd &amp; Shiffrar (1996) &mdash; Experiments 1&ndash;5: two alternating pictures</h1>
 <div class="monitor">
 <canvas id="c"></canvas>
-<div class="row" id="stopRow"><button id="stopBtn" disabled>Stop</button></div>
+<div class="row" id="stopRow"><button id="stopBtn" disabled style="visibility:hidden">Stop</button></div>
 </div>
 <div class="meta" id="instr" style="margin-top:12px"><b>Instructions (paraphrase of p. 919&ndash;920, not the original wording).</b> You will see two pictures of a model in different poses flashing rapidly in alternation. You may sometimes see motion between them. Look for as long as you need to decide which path the moving part takes, then click Stop below the pictures. A &ldquo;Please Respond&rdquo; screen follows; click it, then say whether the path of motion was around or through. Click to start the next trial.</div>
 <div class="row">
@@ -85,7 +85,7 @@ details.setup summary { cursor:pointer; }
 </table>
 
 <h2 class="assume">Not specified in the paper (assumptions here)</h2>
-<p class="assume">Backdrop and blank-interval colour (near-black used, like the dark backdrop of the published photographs; the Exp 3 surround is black as stated), fixation point (none), refresh rate (measured at load), which picture comes first (A), number of cycles before stop (unlimited), button labels beyond "Please Respond" and stop, the prompt text "The path of motion was" and the labels "Around"/"Through"/"Next trial", instruction wording (the paper gives only its gist), left/right position of the Around and Through buttons (not specified; randomised per trial here), the stand-in shape drawn for the occluding body part in Exp 3 (a plain block at the part's position; the moving limb is drawn as in Exp 1), stimulus drawings and limb displacement (nominally &plusmn;0.40&deg; of the occluder centre, i.e. 0.8&deg; between the two pictures; widened per pair so the limb tip lies clearly beside the occluder, never on it: tip centre = occluder half-width + tip radius + 3 units; in Exp 3 the waist/other occluders are narrowed to at most 34 units so both limb positions fit in the 1.1&deg; &times; 1.6&deg; window; the paper only says the limb is clearly on either side of the part, p. 918), side views drawn as front views, practice stimuli (four invented layouts, not the paper's), how the 28 stimuli of Exp 3&ndash;5 are split between the 2 blocks (here: each pair gets 2 random SOAs per block) and how SOAs are spread over the 4 blocks of Exp 1&ndash;2 (here: each pair meets each SOA once per condition). Exp 1&ndash;2 session: both conditions in random order, 4 blocks each; Exp 3&ndash;5 session: 2 blocks of 14. Run session starts with the 4 practice trials.</p>
+<p class="assume">Backdrop and blank-interval colour (near-black used, like the dark backdrop of the published photographs; the Exp 3 surround is black as stated), fixation point (none), refresh rate (measured at load), which picture comes first (A), number of cycles before stop (unlimited), how the around/through report was given (the paper says only that observers &ldquo;indicated&rdquo; it, p. 920, so it may have been verbal; on-screen Around/Through buttons are used here, only the next-trial button is stated to be a mouse click), the drawn arm (a two-segment limb of constant length with a bent elbow; drawing stand-in only, the poses are given in words), button labels beyond "Please Respond" and stop, the prompt text "The path of motion was" and the labels "Around"/"Through"/"Next trial", instruction wording (the paper gives only its gist), left/right position of the Around and Through buttons (not specified; randomised per trial here), the stand-in shape drawn for the occluding body part in Exp 3 (a plain block at the part's position; the moving limb is drawn as in Exp 1), stimulus drawings and limb displacement (nominally &plusmn;0.40&deg; of the occluder centre, i.e. 0.8&deg; between the two pictures; widened per pair so the limb tip lies clearly beside the occluder, never on it: tip centre = occluder half-width + tip radius + 3 units; in Exp 3 the waist/other occluders are narrowed to at most 34 units so both limb positions fit in the 1.1&deg; &times; 1.6&deg; window; the paper only says the limb is clearly on either side of the part, p. 918), side views drawn as front views, practice stimuli (four invented layouts, not the paper's), how the 28 stimuli of Exp 3&ndash;5 are split between the 2 blocks (here: each pair gets 2 random SOAs per block) and how SOAs are spread over the 4 blocks of Exp 1&ndash;2 (here: each pair meets each SOA once per condition). Exp 1&ndash;2 session: both conditions in random order, 4 blocks each; Exp 3&ndash;5 session: 2 blocks of 14. Run session starts with the 4 practice trials.</p>
 </div>
 
 <script>
@@ -189,7 +189,7 @@ function drawBody(skip,item,manq){
   const L=seated
    ?{rarm:[[212,100],[200,170],[205,230]],larm:[[288,100],[300,170],[295,230]],
      rleg:[[232,195],[205,300],[225,372]],lleg:[[268,195],[295,300],[275,372]]}
-   :{rarm:[[212,100],[200,170],[205,230]],larm:[[288,100],[300,170],[295,230]],
+   :{rarm:[[212,100],[200,170],[205,230]],larm:[[288,100],[300,170],[312,230]],
      rleg:[[232,215],[228,295],[228,372]],lleg:[[268,215],[272,295],[272,372]]};
   for(const k in L){ if(k===skip) continue; const p=L[k]; const w=(k.endsWith('arm')?16:24)*(manq?0.8:1);
     capsule(p[0],p[1],w,col); capsule(p[1],p[2],w*0.85,col);
@@ -219,7 +219,15 @@ function drawScene(item,side,cond){
   const arm=item.lb.endsWith('arm');
   if(bodyLimb){
     const w=(arm?12:16)*(manq?0.85:1);
-    capsule(org,tip,w,manq?'#b88a55':'#8a9bbd');
+    const lc=manq?'#b88a55':'#8a9bbd';
+    if(arm){ // two-segment arm of constant length (same in both pictures), elbow bent outward; drawing stand-in only
+      const ta=[oc[0]-tipOff(item,cond),oc[1]], tb=[oc[0]+tipOff(item,cond),oc[1]];
+      const L=Math.max(131,1.05*Math.max(Math.hypot(ta[0]-org[0],ta[1]-org[1]),Math.hypot(tb[0]-org[0],tb[1]-org[1])));
+      const dx=tip[0]-org[0], dy=tip[1]-org[1], d=Math.max(Math.hypot(dx,dy),1), h=Math.sqrt(Math.max(L*L/4-d*d/4,0));
+      let nx=-dy/d, ny=dx/d; const out=org[0]<250?-1:1; if(Math.abs(nx)<0.2){ if(ny<0){nx=-nx;ny=-ny;} } else if(nx*out<0){nx=-nx;ny=-ny;}
+      const el=[org[0]+dx/2+nx*h, org[1]+dy/2+ny*h];
+      capsule(org,el,w,lc); capsule(el,tip,w*0.9,lc); if(manq)disc(el,w*0.6,'#8a6338');
+    } else capsule(org,tip,w,lc);
     disc(tip,arm?8:9,manq?'#8a6338':'#e0b090');
   } else { // floating board of limb length, detached from the body (no joint)
     const dx=tip[0]-org[0], dy=tip[1]-org[1], len=Math.hypot(dx,dy), ang=Math.atan2(dy,dx), gap=14;
@@ -249,7 +257,7 @@ function btn(label,x,y,w,h,id){ctx.setTransform(K,0,0,K,0,0);ctx.fillStyle='#e8e
 function idleMsg(){drawText('Choose a mode to begin',UH/2,16,'#777');}
 
 function startTrial(t){
-  trial=t; state='flash'; frameCount=0; stopBtn.disabled=false; respRects=[]; tStart=performance.now();
+  trial=t; state='flash'; frameCount=0; stopBtn.disabled=false; stopBtn.style.visibility='visible'; respRects=[]; tStart=performance.now();
   const fr=sdFrames(t.soa); let last=null;
   cancelAnimationFrame(raf);
   function loop(){
@@ -265,7 +273,7 @@ function startTrial(t){
 }
 function label(t){return (t.practice?'Practice ':'Trial ')+(t.k+1)+'/'+t.of+(t.nblocks>1?' · block '+(t.block+1)+'/'+t.nblocks:'')+' · SOA '+t.soa+' ms';}
 function stop(){
-  if(state!=='flash')return; cancelAnimationFrame(raf); stopBtn.disabled=true; trial.rt=performance.now()-tStart;
+  if(state!=='flash')return; cancelAnimationFrame(raf); stopBtn.disabled=true; stopBtn.style.visibility='hidden'; trial.rt=performance.now()-tStart;
   state='please'; respRects=[]; blank(); btn('Please Respond',UW/2-90,UH/2-22,180,44,'please');
   setStatus(label(trial));
 }

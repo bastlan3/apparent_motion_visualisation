@@ -33,6 +33,12 @@
   .meta td, .meta th { border-top:1px solid #222; padding:3px 6px; text-align:left; vertical-align:top; font-weight:normal; }
   .meta th { color:#8a8a8a; }
   .tag { color:#c9a050; }
+  #sheet { display:inline-flex; gap:18px; align-items:center; justify-content:center; flex-wrap:wrap; background:#f1efe8; padding:12px 16px; border-radius:3px; margin-top:8px; max-width:96vw; }
+  #sheet canvas { width:300px; max-width:80vw; background:#fff; display:block; border:1px solid #bbb; }
+  #answers { display:flex; flex-direction:column; gap:7px; }
+  #answers button { background:#fff; color:#111; border:1px solid #777; font-family:Georgia,serif; font-size:15px; min-width:78px; padding:5px 10px; }
+  #answers button:hover:not(:disabled) { background:#e6e3d8; }
+  #answers button:disabled { opacity:.45; cursor:default; }
 </style>
 </head>
 <body>
@@ -44,13 +50,12 @@
   <canvas id="c" width="520" height="600"></canvas>
 
   <div class="participant">
-    <div class="instr">Watch the alternating pictures for as many cycles as you like, then indicate the path of motion on the answer sheet
-      (options: <b>A</b>, <b>B</b>, <b>A&amp;B</b> or <b>other</b>). Sometimes the path may be very clear, sometimes there may be several paths, or no motion.
-      <span style="color:#666">(The buttons are active only during a trial block. The original sheet showed a line drawing of the stimulus with paths A and B diagrammed; those drawings are not reproduced. Responses are kept in memory only and are never shown or scored.)</span></div>
+    <div class="instr">You will see rapidly flashing pictures of a model in different poses. You may see a kind of motion. Watch the alternating pictures for as many cycles as you like, then
+      indicate on the answer sheet below the path(s) of motion you experienced: <b>A</b>, <b>B</b>, <b>A&amp;B</b> or <b>other</b>. Sometimes the path may be very clear, sometimes there may be several paths, or no motion.
+      <span style="color:#666">(The sheet appears below the display during a trial block; responses are kept in memory only and are never shown or scored.)</span></div>
     <div class="prow" id="prog" style="font-size:12px;color:#777;min-height:16px"></div>
-    <div class="prow" id="answers">
-      <button data-a="A">A</button><button data-a="B">B</button><button data-a="A&B">A&amp;B</button><button data-a="other">other</button>
-    </div>
+    <div id="sheet" style="visibility:hidden"><canvas id="sc" width="300" height="300"></canvas>
+      <div id="answers"><button data-a="A">A</button><button data-a="B">B</button><button data-a="A&B">A&amp;B</button><button data-a="other">other</button></div></div>
   </div>
 
   <div class="panel">
@@ -101,7 +106,7 @@
   <div class="meta">
     <b>Methods (Shiffrar &amp; Freyd, 1990, Psychological Science 1(4), 257–264).</b>
     <b class="tag">Photographs cannot be reproduced here: body pairs are simple drawn figures; frame aspect follows the figures per stimulus family (measured on Fig. 1 and Fig. 3): arm/hand/head photos about 0.98 (page 520 x 530), leg photos about 0.86 (520 x 605), clock photos about 0.90 (520 x 580), rectangles unspecified (assumed 0.90, 520 x 578); the picture height is drawn at an assumed 12 deg, set in Display setup, and the width follows the family aspect with a plain background; poses are approximations (Fig. 1 shows only two example pairs; the leg pair is cropped below the waist, the arm pair above the thigh). The actual stimuli were full-colour photographs of a model, stationary except for one or two limbs. Clocks were photographs of a real wall clock.</b>
-    On the original answer sheet path A was the shortest path and path B a longer path between the two positions; in Exp. 1 path A was always the physically/anatomically impossible path and path B the longer, possible one (p. 260). The diagrams themselves are not reproduced.
+    <b class="tag">Answer sheet (p. 260): a simple line drawing of the stimulus with two possible paths of motion diagrammed, A the shortest path and B a longer path, with the choices "A", "B", "A&amp;B", "other" to the right of the drawing. The paper does not reproduce a sheet, so the page draws it schematically: an edge-traced line drawing of both pictures (first picture dark, second picture grey) with the two paths drawn as arrows labelled A and B (arrow shapes, sheet size and colours are assumptions).</b>
     <table>
       <tr><th>Parameter</th><th>Paper's value</th><th>Page</th></tr>
       <tr><td>Apparatus</td><td>Gerbrands four-field tachistoscope controlled by IBM PC/XT; photos mounted on cards; observer's forehead on a visor</td><td>258</td></tr>
@@ -109,19 +114,19 @@
       <tr><td>Exp. 1 stimuli</td><td>15 pairs of full-colour photos of a model: 5 joint-constraint (arm about elbow; fingers of the right hand about the wrist; whole hand about wrist; head about neck; whole arm about shoulder), 10 solidity-constraint (one or two limbs on two sides of a body part; e.g. foot about foot, fist about head/torso, hand about other hand, finger about finger, open hand about head/torso, arm about other arm, leg about other leg)</td><td>258</td></tr>
       <tr><td>Exp. 1 SOA levels</td><td>7 levels. Shortest = 150 ms (SD 100 + ISI 50); each higher level adds 50 ms to SD and to ISI (SOA +100 ms); longest 750 ms for 13 of 15 pairs. Two pairs had different starts: head-about-neck joint pair SD 100 / ISI 20; one solidity pair (foot about the other) SD 150 / ISI 100; steps of 100 ms SOA (SD step 50 ms)</td><td>258</td></tr>
       <tr><td>Exp. 1 order</td><td>Each pair seen at each of 7 SOAs in one session (~1 h); pair order randomized between subjects; 5 observers saw SOAs in increasing order, 4 in decreasing order</td><td>258, 260</td></tr>
-      <tr><td>Display cycle</td><td>Photos alternate; observer watches "as many cycles as desired". Blank during ISI (luminance, field and fixation <span class="tag">not specified</span>; assumed uniform light grey, the same field used behind the drawn clocks and rectangles)</td><td>258, 260</td></tr>
-      <tr><td>Response</td><td>Answer sheet with line drawing of the stimulus and two possible paths, "A" and "B", plus options "A", "B", "A&amp;B", "other"; 7 sheets per pair (one per SOA). In Exp. 1 path A was always the physically/anatomically impossible path and B the longer possible one (methods fact, p. 260)</td><td>258, 260</td></tr>
+      <tr><td>Display cycle</td><td>Photos alternate; observer watches "as many cycles as desired". Blank during ISI (luminance, field and fixation <span class="tag">not specified</span>; the blank between pictures is assumed to be a uniform light grey field)</td><td>258, 260</td></tr>
+      <tr><td>Response</td><td>Answer sheet with line drawing of the stimulus and two possible paths, "A" and "B", plus options "A", "B", "A&amp;B", "other" to the right of the drawing; path A was always the shortest path and B a longer path; one sheet per SOA per pair (7 per pair in Exp. 1). Drawn schematically on the page, shown below the display during a trial</td><td>258, 260</td></tr>
       <tr><td>Exp. 2 observers</td><td>10 University of Oregon students, naive</td><td>261</td></tr>
       <tr><td>Exp. 2 stimuli</td><td>6 pairs of clock photographs (hands differing by 2, 3, 4 or 5 hours) and 4 pairs of line-drawn rectangles (large rectangle plus small rectangle at a different location in each card)</td><td>261</td></tr>
       <tr><td>Exp. 2 SOA levels</td><td>4 levels: shortest 150 ms (SD 100 + ISI 50); +100 ms to both SD and ISI per level (SOA 150, 350, 550, 750 ms)</td><td>261</td></tr>
       <tr><td>Exp. 2 order</td><td>Line drawings before clocks; 5 observers ascending SOA, 5 descending; ~45 min session; same answer sheet format</td><td>261</td></tr>
-      <tr class="tag"><td>Unspecified / assumed</td><td>Display size and visual angle (page assumes a picture height of 12 deg), viewing distance (page assumes 57 cm), luminance, blank field, fixation, number of cycles viewed, photo cropping and backgrounds, answer-sheet drawing sizes. Poses for body pairs other than the two in Fig. 1 are guesses. Clocks: Fig. 3 shows the long hand at 12 in both cards and the short hand moving from near 12 to about 5 (clockwise) for the 5 h pair, plus a thin sweep hand near 3; the page applies the same hand roles to the 2, 3 and 4 h separations (inferred). The page draws the whole face with all 12 numerals visible (Fig. 3 shows it nearly filling the frame) but cannot reproduce the perspective of the photo; the paper lists only 4 separations (2, 3, 4, 5 h) for 6 pairs, so pairs 5-6 (2 h, 3 h) are assumed. Rectangles: text says the large rectangle is oblique, Fig. 3 draws the small one oblique; this page follows the figure (small oblique rectangle left of the large one in card 1, right of it in card 2, large fixed, drawn dashed as in the figure only schematically). Sizes, tilt, and the positions for rectangle pairs 2-4 are assumed. Within a block, SOAs of a pair are shown consecutively in ascending or descending order (the paper says only that SOA order was ascending for some observers and descending for others; ordering of sheets across pairs is not stated); 1000 ms blank between trials is assumed; a trial ends when the observer presses an answer. The two-session or between-subject counterbalancing (5 ascending / 4 or 5 descending) is not enforced.</td><td>258-262</td></tr>
+      <tr class="tag"><td>Unspecified / assumed</td><td>Display size and visual angle (page assumes a picture height of 12 deg), viewing distance (page assumes 57 cm), luminance, blank field, fixation, number of cycles viewed, photo cropping and backgrounds, answer-sheet drawing sizes. Poses for body pairs other than the two in Fig. 1 are guesses. Clocks: Fig. 3 shows the long hand at 12 in both cards and the short hand moving from near 12 to about 5 (clockwise) for the 5 h pair, plus a thin sweep hand near 3; the page applies the same hand roles to the 2, 3 and 4 h separations (inferred). The page draws the whole face with all 12 numerals visible (Fig. 3 shows it nearly filling the frame) but cannot reproduce the perspective of the photo; the paper lists only 4 separations (2, 3, 4, 5 h) for 6 pairs, so pairs 5-6 (2 h, 3 h) are assumed. Rectangles are drawn as dark lines on a white-ish card (line drawings on the tachistoscope cards, p. 261; card tone assumed). Text says the large rectangle is oblique, Fig. 3 draws the small one oblique; this page follows the figure (small oblique rectangle left of the large one in card 1, right of it in card 2, large fixed, drawn dashed as in the figure only schematically). Sizes, tilt, and the positions for rectangle pairs 2-4 are assumed. Within a block, SOAs of a pair are shown consecutively in ascending or descending order (the paper says only that SOA order was ascending for some observers and descending for others; ordering of sheets across pairs is not stated); 1000 ms blank between trials is assumed; a trial ends when the observer presses an answer. The two-session or between-subject counterbalancing (5 ascending / 4 or 5 descending) is not enforced.</td><td>258-262</td></tr>
       <tr class="tag"><td>Timing implementation</td><td>The refresh rate is measured at load (median of ~60 rAF intervals); every duration is converted to a whole number of frames at that rate and scheduled by counting animation frames; realised ms and a non-whole-frame warning are shown. E.g. the 20 ms ISI of the head pair is 1 frame (16.7 ms) at 60 Hz. The tachistoscope itself had exact timing.</td><td>—</td></tr>
     </table>
   </div>
 
 <script>
-const c=document.getElementById('c'), ctx=c.getContext('2d');
+const c=document.getElementById('c'); let ctx=c.getContext('2d');
 let W=c.width,H=c.height; const FIELD='#c4c4c4';
 // ---------- drawn stand-ins for the body photographs ----------
 // figure coordinates: neck base origin, y down. Viewer-left arm = model's right arm.
@@ -167,12 +172,12 @@ function drawBody(p){
   const skin='#d9b08c',shirt='#c9c1b0',pants='#46546e',shoe='#222';
   const legsView=p.view==='legs';
   // photo-like background filling the whole square frame
-  if(legsView){ctx.fillStyle='#d8d8d4';ctx.fillRect(0,0,W,H);ctx.fillStyle='#2a2a30';ctx.fillRect(0,H*0.58,W,H*0.42);}
+  if(legsView){ctx.fillStyle='#d8d8d4';ctx.fillRect(0,0,W,H);ctx.fillStyle='#2a2a30';ctx.fillRect(0,H*0.55,W,H*0.45);}
   else{ctx.fillStyle='#4a3a2c';ctx.fillRect(0,0,W,H);ctx.fillStyle='#3a2c20';for(let x=0;x<W;x+=46)ctx.fillRect(x,0,3,H);}
   ctx.save();
-  if(legsView){ctx.translate(W/2,H*0.88);ctx.scale(3.2,3.2);ctx.translate(0,-178);}
+  if(legsView){ctx.translate(W/2,H*0.73);ctx.scale(6.2,6.2);ctx.translate(0,-174);}
   else if(p.zoom){ctx.translate(W/2,H/2);ctx.scale(p.zoom[0],p.zoom[0]);ctx.translate(-p.zoom[1],-p.zoom[2]);}
-  else{ctx.translate(W/2,150);ctx.scale(1.55,1.55);}
+  else{ctx.translate(W/2,190);ctx.scale(1.55,1.55);}
   const sh1=[-34,0],sh2=[34,0],hx=legsView?12:14,hip1=[-hx,100],hip2=[hx,100],LW=legsView?15:24,SH=legsView?[11,6,4]:[16,8,8];
   if(!legsView)[[sh1,p.aL],[sh2,p.aR]].forEach(([s,a])=>{if(a.behind)drawArm(s,a,shirt,skin);});
   const legs=()=>{
@@ -183,14 +188,13 @@ function drawBody(p){
     if(p.legBack){limb(hip2,p.fR,LW,'#33405a');}
     if(p.cross){limb(hip2,p.fR,LW,'#3b4860');limb(hip1,p.fL,LW,pants);ctx.fillStyle=shoe;[p.fL,p.fR].forEach(f=>{ctx.beginPath();ctx.ellipse(f[0],f[1]+SH[2],SH[0],SH[1],0,0,7);ctx.fill();});}
     else legs();
-    ctx.fillStyle=shirt;ctx.fillRect(-24,55,48,48);
-    ctx.fillStyle=pants;ctx.fillRect(-21,100,42,10);
+    ctx.fillStyle=pants;ctx.fillRect(-19,20,38,90);   // waist crop: pants run from the top edge (hem is above the frame)
     if(p.legFront){limb(hip2,p.fR,LW+1,'#5a6a88');ctx.fillStyle=shoe;ctx.beginPath();ctx.ellipse(p.fR[0],p.fR[1]+SH[2],SH[0],SH[1],0,0,7);ctx.fill();}
-    [-1,1].forEach(sg=>{limb([sg*28,62],[sg*30,112],9,shirt);ctx.fillStyle=skin;ctx.beginPath();ctx.arc(sg*30,121,6,0,7);ctx.fill();});
+    [-1,1].forEach(sg=>{limb([sg*28,40],[sg*30,112],9,shirt);ctx.fillStyle=skin;ctx.beginPath();ctx.arc(sg*30,121,6,0,7);ctx.fill();});
     ctx.restore();return;
   }
-  ctx.fillStyle=pants;ctx.fillRect(-34,100,68,400);   // thigh runs to the bottom frame edge (cropped by the frame, as in Fig. 1)
-  ctx.fillStyle=shirt;ctx.beginPath();ctx.moveTo(-38,-4);ctx.lineTo(38,-4);ctx.lineTo(30,108);ctx.lineTo(-30,108);ctx.closePath();ctx.fill();
+  ctx.fillStyle=pants;ctx.fillRect(-34,144,68,400);   // thigh runs to the bottom frame edge (cropped by the frame, as in Fig. 1)
+  ctx.fillStyle=shirt;ctx.beginPath();ctx.moveTo(-38,-4);ctx.lineTo(38,-4);ctx.lineTo(30,144);ctx.lineTo(-30,144);ctx.closePath();ctx.fill();
   limb([0,-4],[0,-22],14,skin);
   ctx.save();ctx.translate(p.head[0],p.head[1]);ctx.rotate(p.head[2]);
   ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(0,0,22,28,0,0,7);ctx.fill();
@@ -216,9 +220,9 @@ function drawClock(n,second){
   hand(second?n:0,r*0.45,13,'#111'); // short hand: near 12 in card 1, n hours clockwise in card 2 (Fig. 3 for n=5)
   ctx.fillStyle='#111';ctx.beginPath();ctx.arc(cx,cy,11,0,7);ctx.fill();
 }
-// ---------- rectangles (drawn on the card; same field colour as the blank) ----------
+// ---------- rectangles (drawn on the card; white card as in Fig. 3) ----------
 function drawRect(variant,second){
-  ctx.fillStyle=FIELD;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#f4f4f0";ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='#111';ctx.lineWidth=4;ctx.lineJoin='round';ctx.setLineDash([14,9]);
   ctx.strokeRect(W/2-130,H/2-57,260,115);               // large rectangle, fixed (assumed size, ratio ~2.3 from Fig. 3)
   // small oblique rectangle; pair 1 follows Fig. 3 (left in card 1, right and slightly lower in card 2); pairs 2-4 assumed
@@ -286,9 +290,84 @@ function drawFrame(which){ // 0 = picture 1, 1 = picture 2, -1 = blank
   else if(e==='clock'){drawClock(CLOCK_N[i],which);}
   else drawRect(i,which);
 }
+// ---------- answer sheet (line drawing of the stimulus with paths A (short) and B (longer) diagrammed; schematic, see methods) ----------
+function figToCv(p,pt){
+  if(p.view==='legs')return [W/2+6.2*pt[0],H*0.73+6.2*(pt[1]-174)];
+  if(p.zoom){const z=p.zoom;return [W/2+z[0]*(pt[0]-z[1]),H/2+z[0]*(pt[1]-z[2])];}
+  return [W/2+1.55*pt[0],190+1.55*pt[1]];
+}
+// moving part start s, end e (figure coords), optional via point for the longer path B, side (+1 up / -1 down) and bulge k
+const SP={
+ joint:[{s:[-120,12],e:[-8,78],via:[-90,90]},{s:[-110,-70],e:[-60,-72],via:[-85,-95]},{s:[-150,28],e:[-135,-22],via:[-172,3]},
+        {s:[-22,-78],e:[22,-78],via:[0,-112]},{s:[-52,118],e:[-160,-60],via:[-150,40]}],
+ solid:[{s:[-22,170],e:[16,170],side:-1,k:.4},{s:[-45,-60],e:[40,-70],via:[0,-115]},{s:[-25,60],e:[30,60],via:[0,88]},{s:[-5,50],e:[22,50],via:[8,15]},
+        {s:[-24,-56],e:[-72,-56],via:[-48,-92]},{s:[-22,54],e:[46,48],via:[12,95]},{s:[-40,-79],e:[35,-79],via:[0,-125]},{s:[-11,-69],e:[38,-69],via:[14,-115]},
+        {s:[0,-6],e:[10,40],via:[-35,17]},{s:[30,128],e:[-14,128],via:[8,172]}]
+};
+function arrowHead(x,tip,from,col){
+  const a=Math.atan2(tip[1]-from[1],tip[0]-from[0]);x.fillStyle=col;x.beginPath();x.moveTo(tip[0],tip[1]);
+  x.lineTo(tip[0]-11*Math.cos(a-0.4),tip[1]-11*Math.sin(a-0.4));x.lineTo(tip[0]-11*Math.cos(a+0.4),tip[1]-11*Math.sin(a+0.4));x.closePath();x.fill();
+}
+function tag(x,txt,p,col){x.fillStyle='#fff';x.beginPath();x.arc(p[0],p[1],10,0,7);x.fill();x.strokeStyle=col;x.lineWidth=1.5;x.stroke();x.fillStyle=col;x.font='bold 14px Georgia,serif';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,p[0],p[1]+1);}
+function lineA(x,s,e,col){x.strokeStyle=col;x.lineWidth=2.5;x.beginPath();x.moveTo(s[0],s[1]);x.lineTo(e[0],e[1]);x.stroke();arrowHead(x,e,s,col);tag(x,'A',[(s[0]+e[0])/2,(s[1]+e[1])/2-(Math.abs(e[0]-s[0])>=Math.abs(e[1]-s[1])?14:0)+(Math.abs(e[0]-s[0])<Math.abs(e[1]-s[1])?0:0)],col);}
+function quadB(x,s,e,ctrl,col){x.strokeStyle=col;x.lineWidth=2.5;x.beginPath();x.moveTo(s[0],s[1]);x.quadraticCurveTo(ctrl[0],ctrl[1],e[0],e[1]);x.stroke();arrowHead(x,e,ctrl,col);
+  tag(x,'B',[.25*s[0]+.5*ctrl[0]+.25*e[0],.25*s[1]+.5*ctrl[1]+.25*e[1]],col);}
+function renderStim(which){ // draw picture 1 or 2 of the current condition on an offscreen canvas of the current size
+  const o=document.createElement('canvas');o.width=W;o.height=H;
+  const sc=ctx;ctx=o.getContext('2d');
+  try{drawFrame(which);}finally{ctx=sc;}
+  return o;
+}
+function edgeLayer(src,SW,SH,rgb){
+  const t=document.createElement('canvas');t.width=SW;t.height=SH;const tx=t.getContext('2d');tx.drawImage(src,0,0,SW,SH);
+  const d=tx.getImageData(0,0,SW,SH).data,g=new Float32Array(SW*SH);
+  for(let k=0;k<SW*SH;k++)g[k]=0.3*d[4*k]+0.59*d[4*k+1]+0.11*d[4*k+2];
+  const out=tx.createImageData(SW,SH);
+  for(let y=1;y<SH-1;y++)for(let xx=1;xx<SW-1;xx++){
+    const k=y*SW+xx;
+    const gx=-g[k-SW-1]-2*g[k-1]-g[k+SW-1]+g[k-SW+1]+2*g[k+1]+g[k+SW+1];
+    const gy=-g[k-SW-1]-2*g[k-SW]-g[k-SW+1]+g[k+SW-1]+2*g[k+SW]+g[k+SW+1];
+    if(Math.hypot(gx,gy)>110){out.data[4*k]=rgb[0];out.data[4*k+1]=rgb[1];out.data[4*k+2]=rgb[2];out.data[4*k+3]=255;}
+  }
+  tx.putImageData(out,0,0);return t;
+}
+function buildSheet(){
+  const SW=300,k=SW/W,SH=Math.round(H*k),cv=$('sc');
+  cv.width=SW;cv.height=SH;const x=cv.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,SW,SH);
+  try{
+    x.drawImage(edgeLayer(renderStim(1),SW,SH,[150,150,150]),0,0);
+    x.drawImage(edgeLayer(renderStim(0),SW,SH,[20,20,20]),0,0);
+  }catch(err){}
+  const e=cur.e,i=cur.i,cA='#1d3f9e',cB='#a8201a';
+  let s,en,ctrl,sc=1;
+  if(e==='clock'){
+    const n=CLOCK_N[i],cx=W/2*k,cy=(H/2+10)*k,pt=(h,r)=>{const a=h*Math.PI/6;return [cx+Math.sin(a)*r*k,cy-Math.cos(a)*r*k];};
+    const arc=(r,from,to,ccw,col,lab)=>{x.strokeStyle=col;x.lineWidth=2.5;x.beginPath();
+      const a0=from*Math.PI/6-Math.PI/2,a1=to*Math.PI/6-Math.PI/2;x.arc(cx,cy,r*k,a0,a1,ccw);x.stroke();
+      const q=pt(to,r),q2=pt(to+(ccw?-0.25:0.25),r);arrowHead(x,q,q2,col);
+      const mid=ccw?(from+to-12)/2:(from+to)/2;const m=pt(mid,r);tag(x,lab,m,col);};
+    arc(150,0,n,false,cA,'A');arc(180,0,n,true,cB,'B');
+    return;
+  }
+  if(e==='rect'){
+    const pos=[[[-195,-5],[195,15]],[[-195,-50],[195,50]],[[-190,40],[190,-35]],[[-195,-20],[195,25]]][i];
+    s=[(W/2+pos[0][0])*k,(H/2+pos[0][1])*k];en=[(W/2+pos[1][0])*k,(H/2+pos[1][1])*k];
+    ctrl=[(s[0]+en[0])/2,(s[1]+en[1])/2-170*k];
+    lineA(x,s,en,cA);quadB(x,s,en,ctrl,cB);return;
+  }
+  const sp=SP[e][i],p=BODY[e][i].A;
+  s=figToCv(p,sp.s).map(v=>v*k);en=figToCv(p,sp.e).map(v=>v*k);
+  const m=[(s[0]+en[0])/2,(s[1]+en[1])/2];
+  if(sp.via){const v=figToCv(p,sp.via).map(v=>v*k);ctrl=[2*v[0]-m[0],2*v[1]-m[1]];}
+  else{const dx=en[0]-s[0],dy=en[1]-s[1],len=Math.hypot(dx,dy)||1;let px=-dy/len,py=dx/len;if((py<0)!==((sp.side||1)>0)){px=-px;py=-py;}
+    ctrl=[m[0]+px*len*(sp.k||.8),m[1]+py*len*(sp.k||.8)];}
+  lineA(x,s,en,cA);quadB(x,s,en,ctrl,cB);
+}
 function setCond(e,i,L){
   cur=e?{e:e,i:i,L:L}:null;
-  if(cur){const d=dimsOf(e,i);if(c.width!==d[0]||c.height!==d[1]){c.width=d[0];c.height=d[1];W=d[0];H=d[1];applyScale();}}
+  if(cur){const d=dimsOf(e,i);if(c.width!==d[0]||c.height!==d[1]){c.width=d[0];c.height=d[1];W=d[0];H=d[1];applyScale();}
+    W=c.width;H=c.height;}
   seq=[-1];
   if(cur){
     const t=timingOf(e,i,L),a=fr(t.sd),b=fr(t.isi);
@@ -299,6 +378,8 @@ function setCond(e,i,L){
     for(let k=0;k<b;k++)seq.push(-1);
   }
   pos=0;lastT=null;gaps=0;$('gapwarn').textContent='';shown=seq[0];drawFrame(shown);
+  if(cur)buildSheet();
+  $('sheet').style.visibility=cur?'visible':'hidden';
 }
 function showTiming(e,i,L){
   const t=timingOf(e,i,L),a=fr(t.sd),b=fr(t.isi);
