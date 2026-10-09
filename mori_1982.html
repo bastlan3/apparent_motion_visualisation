@@ -3,227 +3,391 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mori (1982) — Apparent-motion path probe technique</title>
+<title>Mori (1982) — Probe judgement task</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
          display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
   .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
   .back:hover { color:#8aa0ff; }
-  h1 { font-size:15px; font-weight:600; color:#e8e8e8; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:740px; text-align:center; line-height:1.5; }
-  canvas { background:#000; display:block; border-radius:3px; }
-
-  .participant { margin-top:12px; width:740px; max-width:96vw; text-align:center; }
-  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; }
-  .prow { margin-top:10px; display:flex; gap:22px; align-items:center; justify-content:center; flex-wrap:wrap; }
-
-  .panel { margin-top:20px; width:740px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  canvas { background:#000; display:block; border-radius:3px; margin:0 auto; }
+  .cvwrap { overflow-x:auto; }
+  #cal { height:14px; background:#888; border-radius:2px; margin-top:4px; }
+  input[type=range] { width:200px; }
+  .wrap { width:740px; max-width:96vw; }
+  .instr { margin-top:12px; font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; min-height:36px; }
+  .prow { margin-top:10px; display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .status { margin-top:8px; font-size:11px; color:#666; text-align:center; font-variant-numeric:tabular-nums; }
+  .panel { margin-top:20px; border-top:1px solid #2a2a30; padding-top:14px; }
   .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
-  .grid { display:flex; gap:20px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .grid { display:flex; gap:14px 22px; flex-wrap:wrap; align-items:flex-end; }
   .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
-  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
   .seg { display:flex; gap:5px; flex-wrap:wrap; }
-  input[type=range] { width:150px; accent-color:#8a93b8; }
-  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:6px 13px;
            border-radius:4px; cursor:pointer; font-size:12px; }
-  button:hover { background:#26262e; }
+  button:hover:not(:disabled) { background:#26262e; }
+  button:disabled { opacity:.35; cursor:default; }
   button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
-  .timing { margin-top:16px; display:flex; gap:14px 20px; flex-wrap:wrap; }
-  .timing .ctrl { font-size:11px; }
-  .timing input[type=range] { width:120px; }
-  .meta { margin-top:20px; width:740px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+  input[type=number] { width:60px; background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; border-radius:4px; padding:4px; }
+  table { border-collapse:collapse; width:100%; font-size:11px; margin-top:6px; }
+  th, td { text-align:left; padding:3px 8px 3px 0; border-bottom:1px solid #1c1c22; vertical-align:top; color:#8a8a8a; }
+  th { color:#6b6b75; font-weight:600; }
+  td.a { color:#b08a5a; }
+  .meta { margin-top:10px; font-size:10.5px; color:#666; line-height:1.6; }
 </style>
 </head>
 <body>
+<div class="wrap">
   <a class="back" href="index.html">← back to experiments</a>
-  <h1>Mori (1982) — Apparent motion path: serial concatenation of translations &amp; rotations</h1>
-  <div class="sub">A line is flashed in two positions/orientations (vertical→horizontal); a dim probe line is then flashed
-    between them. The observer judges the probe to map out the perceived motion path.</div>
+  <h1>Mori (1982) — Probe judgement task for an apparent-motion line</h1>
+  <div class="sub">Line AB flashes, then line A′B′, then after a blank a dim probe line CD flashes once. On each trial you judge the probe's orientation (or height) relative to the line you saw moving at the probe's horizontal position.</div>
 
-  <canvas id="c" width="740" height="300"></canvas>
+  <div class="cvwrap"><canvas id="c" width="740" height="300"></canvas></div>
+  <div class="instr" id="instr">Choose a block and press Start. Look at the screen, watch the moving line, then judge the briefly flashed probe.</div>
+  <div class="prow">
+    <button id="bA" disabled></button>
+    <button id="bB" disabled></button>
+  </div>
+  <div class="instr" id="rule" style="display:none"></div>
+  <div class="status" id="status">&nbsp;</div>
 
-  <div class="participant">
-    <div class="instr">
-      Watch the apparent motion of the line, then judge the briefly-flashed <b>probe</b>. Here you set the probe
-      to <b>match the orientation &amp; height of the moving line</b> where the probe appears.
+  <div class="panel">
+    <h2>Display setup</h2>
+    <div class="grid">
+      <div class="ctrl">Calibration bar: resize to your credit card's width (8.56 cm)
+        <input type="range" id="calw" min="150" max="700" step="1" value="324">
+        <div id="cal" style="width:324px"></div></div>
+      <div class="ctrl">Viewing distance (cm)
+        <input type="number" id="vd" min="20" max="200" value="50"></div>
+      <div class="ctrl"><span id="ppinfo"></span></div>
     </div>
-    <div class="prow">
-      <div class="ctrl">Probe orientation: <span class="v" id="poLbl">135°</span>
-        <input type="range" id="po" min="0" max="180" step="1" value="135"></div>
-      <div class="ctrl">Probe vertical position: <span class="v" id="pvLbl">0.00°</span>
-        <input type="range" id="pv" min="-0.4" max="0.8" step="0.01" value="0"></div>
-      <div class="ctrl">&nbsp;<button id="pause">Pause &amp; show layout</button></div>
-    </div>
+    <div class="meta" id="dispinfo">Measuring refresh rate…</div>
   </div>
 
   <div class="panel">
-    <h2>Experimenter parameters</h2>
+    <h2>Block</h2>
     <div class="grid">
-      <div class="ctrl">Apparent-motion direction
+      <div class="ctrl">Judgement
+        <div class="seg" id="task">
+          <button data-v="orient" class="on">Orientation (clockwise / counterclockwise)</button>
+          <button data-v="vert">Vertical position (above / below)</button>
+        </div>
+      </div>
+      <div class="ctrl">Apparent-motion direction (first half / later half)
         <div class="seg" id="dir">
           <button data-v="left" class="on">Leftward (AB first)</button>
           <button data-v="right">Rightward (A′B′ first)</button>
         </div>
       </div>
-      <div class="ctrl">Separation BB′: <span class="v" id="bbLbl">3.40°</span>
-        <input type="range" id="bb" min="0" max="5" step="0.1" value="3.4"></div>
-      <div class="ctrl">Angular disparity: <span class="v" id="dispLbl">90°</span>
-        <input type="range" id="disp" min="0" max="180" step="5" value="90"></div>
-      <div class="ctrl">Probe position (BD)
-        <div class="seg" id="bd">
-          <button data-cm="0.75">0.75</button>
-          <button data-cm="1.50">1.50</button>
-          <button data-cm="2.25" class="on">2.25</button>
-          <button data-cm="2.63">2.63</button>
-          <button data-cm="2.85">2.85</button>
+      <div class="ctrl">Trials per staircase (assumed)
+        <input type="number" id="ntr" min="2" max="40" value="20"></div>
+      <div class="ctrl">Inter-trial interval
+        <div class="seg" id="itiSeg">
+          <button data-v="paper" class="on"><span id="itiA">Paper: 4000 ms</span></button>
+          <button data-v="quick">1000 ms (quick demo)</button>
         </div>
       </div>
+      <div class="ctrl">&nbsp;<div class="seg"><button id="start">Start block</button><button id="stop" disabled>Stop</button><button id="layout">Show layout</button></div></div>
     </div>
-
-    <div class="timing">
-      <div class="ctrl">Stim 1 dur: <span class="v" id="d1Lbl">100</span> ms
-        <input type="range" id="d1" min="20" max="400" step="10" value="100"></div>
-      <div class="ctrl">ISI 1→2: <span class="v" id="isiLbl">70</span> ms
-        <input type="range" id="isi" min="0" max="400" step="10" value="70"></div>
-      <div class="ctrl">Stim 2 dur: <span class="v" id="d2Lbl">50</span> ms
-        <input type="range" id="d2" min="20" max="400" step="10" value="50"></div>
-      <div class="ctrl">Probe delay: <span class="v" id="pdLbl">500</span> ms
-        <input type="range" id="pd" min="0" max="1000" step="50" value="500"></div>
-      <div class="ctrl">Probe dur: <span class="v" id="pdurLbl">10</span> ms
-        <input type="range" id="pdur" min="10" max="200" step="10" value="10"></div>
-      <div class="ctrl">Inter-trial: <span class="v" id="itiLbl">1000</span> ms
-        <input type="range" id="iti" min="200" max="4000" step="100" value="1000"></div>
-    </div>
+    <div class="meta" id="blockInfo"></div>
   </div>
 
-  <div class="meta">
-    Faithful reconstruction of the stimulus &amp; apparatus in Mori, T. (1982), <i>Biol. Cybern.</i> 44, 31–34.
-    Line segments 1.1 cm = <b>1.26°</b>; BB′ = 3.0 cm = <b>3.4°</b>; viewing 50 cm; dark room. Inducing lines bright (5.8 mL),
-    probe dim (2.6 mL). The interpolated rotating/translating line is the observer's <i>percept</i> and is deliberately
-    <b>not drawn</b> — only the discrete flashes (stim 1, stim 2, then one probe) appear, since drawing a connecting path
-    would impose one of the very motion schemes Mori set out to test. The original probe was a 10 ms flash judged
-    CW/CCW with an interleaved staircase; here it is rendered slightly longer and set by adjustment. The "70 ms" ISI is
-    read from Fig. 1b (OCR-ambiguous) and left adjustable. ITI defaults below the paper's 4000 ms for watchability.
+  <div class="panel">
+    <h2>Methods (paper values with page; assumptions in amber)</h2>
+    <table>
+      <tr><th>Parameter</th><th>Value</th><th>Source</th></tr>
+      <tr><td>Display</td><td>Megraphic 5000 monitor (phosphor code garbled in the text layer), driven by a NOVA-3 minicomputer; darkened room. Probably a vector-type display with a fast phosphor, so this raster page can only approximate its temporal characteristics (e.g. the 10 ms probe)</td><td>p. 31</td></tr>
+      <tr><td>Viewing</td><td>50 cm, head upright, chin rest</td><td>p. 31</td></tr>
+      <tr><td>Line segments</td><td>1.1 cm = 1.26 deg each: AB vertical (A above B), A′B′ horizontal, probe CD oblique with D as the end point that defines horizontal position</td><td>p. 31, Fig. 1a</td></tr>
+      <tr><td>Separation BB′</td><td>3.0 cm = 3.4 deg (B and B′ at the same height; B′ left of B); angular disparity AB vs A′B′ 90 deg</td><td>pp. 31–32, Fig. 1a</td></tr>
+      <tr><td>Probe positions</td><td>BD = 0.75, 1.50, 2.25, 2.63, 2.85 cm (measured from B toward B′); order of the five conditions randomised</td><td>pp. 31–32</td></tr>
+      <tr><td>Luminance</td><td>Inducing lines 5.8 mL; probe 2.6 mL; background &lt; 0.01 mL</td><td>p. 31</td></tr>
+      <tr><td>Timing (Fig. 1b)</td><td>Stim 1 100 ms; interval 70 ms (label between the pulses); stim 2 50 ms; blank 500 ms after stim 2 offset; probe 10 ms; 4000 ms after the probe</td><td>p. 31, Fig. 1b (readings of 70 ms as the interval between pulses and 4000 ms as the post-probe interval are interpretations of the figure labels)</td></tr>
+      <tr><td>Order</td><td>Leftward motion (AB first) in the first half; first/second order swapped (A′B′ first) in the later half</td><td>p. 32, Fig. 1</td></tr>
+      <tr><td>Task</td><td>On each trial: is the probe on the clockwise or counterclockwise side of the observed orientation at the horizontal position of D?</td><td>pp. 31–32</td></tr>
+      <tr><td>Procedure</td><td>Double, randomly interleaved staircase; five horizontal positions; vertical positions measured after the orientations</td><td>p. 32</td></tr>
+      <tr><td>Instruction</td><td>If the probe matches many orientations, choose the most rightward orientation</td><td>p. 32</td></tr>
+      <tr><td>Instruction (later half)</td><td>Two kinds of motion path were seen (not simultaneously); subjects were told to match just one path per measurement. Shown here as a standing line under the canvas for the whole rightward block</td><td>p. 33</td></tr>
+      <tr><td>Observers</td><td>Three, normal or corrected vision</td><td>p. 32</td></tr>
+      <tr><td>Fixation</td><td>None described; none shown</td><td>—</td></tr>
+      <tr><td class="a">Frame rate</td><td class="a">Refresh rate measured at load (median requestAnimationFrame interval); every duration is converted to a whole number of frames at that rate and scheduled by counting frames. Realised durations are shown in the Display setup panel; a warning appears when a paper duration is not a whole number of frames. The 10 ms probe becomes at least one whole frame (16.7 ms at 60 Hz). To keep probe energy near the paper's, its luminance is scaled by 10 ms / realised duration (Bloch's law, assumed), on top of the 2.6/5.8 ratio. If the refresh cannot be measured (hidden tab, 3 s timeout), 60 Hz is assumed and a note is shown; measurement is retried when the tab becomes visible. Frames are counted from rAF timestamps, so a lag of 2-5 frames does not lengthen a phase. If the tab is hidden or a stall exceeds 5 frames during a trial, that trial restarts from stimulus 1 with no response recorded and the staircase unchanged.</td><td class="a">assumption</td></tr>
+      <tr><td class="a">Pixel scale</td><td class="a">Pixels per degree computed from the calibrated screen pixels-per-cm (default 37.8) and viewing distance (default 50 cm, the paper's); stimuli are drawn in degrees. Calibration stored in localStorage key am_display.</td><td class="a">assumption</td></tr>
+      <tr><td class="a">Line width, stroke</td><td class="a">3 px round-capped lines; not specified</td><td class="a">assumption</td></tr>
+      <tr><td class="a">Pixel levels</td><td class="a">Inducing #f0f0f0; probe relative luminance = (2.6/5.8) x min(1, 10 ms / realised probe duration), the second factor being the Bloch scaling described under Frame rate; grey level = 240 x luminance^(1/2.2) assuming gamma 2.2. At 60 Hz this gives about rgb(132,132,132); it varies with refresh rate and the realised value is shown in the display line. Black background</td><td class="a">assumption</td></tr>
+      <tr><td class="a">Staircase</td><td class="a">Two interleaved staircases per condition, random choice of staircase each trial. Orientation (usual notation, 0–180 deg, measured counterclockwise from horizontal; the paper's own range is ambiguous: Fig. 2 axis labels run from 90 deg downward whereas the instruction example speaks of 90–180 deg, so the full 0–180 range is used here and for angles below 90 deg C lies right of D): starts 10 and 170 deg, step 20 deg halved at each reversal (minimum 2.5). Vertical (relative to B/B′ level): starts −1.0 and +1.0 deg, step 0.4 deg halved at each reversal (minimum 0.05). Fixed number of trials (20 per staircase, assumed); steps, starts, stopping rule, response device and feedback are not given in the paper.</td><td class="a">assumption</td></tr>
+      <tr><td class="a">Vertical block</td><td class="a">Wording and probe orientation not given; here the probe is held at 135 deg (assumption; the paper gives no value) and you judge whether it is above or below the moving line at D.</td><td class="a">assumption</td></tr>
+      <tr><td class="a">Response timing</td><td class="a">Buttons or ← (counterclockwise/below) and → (clockwise/above) keys after the probe; next trial starts at 4000 ms after the probe, or after the response if later.</td><td class="a">assumption</td></tr>
+    </table>
+    <div class="meta">Only the discrete flashes are drawn; no interpolated line, path or probe estimate is shown, and no results are displayed.</div>
   </div>
+</div>
 
 <script>
-const c = document.getElementById('c');
-const ctx = c.getContext('2d');
-const W = c.width, H = c.height;
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+const $ = id => document.getElementById(id);
+let W = 740, H = 300, PX = 33, Lpx = 0, Bx = 0, By = 0;
+const CM2DEG = 3.4/3.0;
+const STIM = '#f0f0f0'; let PROBE = '#a7a7a7';
+const BD_CM = [0.75, 1.50, 2.25, 2.63, 2.85];
+const MS = { s1:100, isi:70, s2:50, blank:500, probe:10, iti:4000, ready:1500 };
+const SCENE_W = 6.9, SCENE_H = 3.6, BX_DEG = 5.46, BY_DEG = 2.3;   // deg
 
-// ---- units ----
-const PX = 72;                 // px per degree
-const CM_TO_DEG = 3.4 / 3.0;   // BB' = 3.0 cm = 3.4°
-const Ldeg = 1.26;             // line length (deg)
-const Lpx = Ldeg * PX;
-const Bx = 548, By = 210;      // anchor: point B (stim-1 lower end) in canvas px
-
-const STIM  = '#f0f0f0';       // 5.8 mL inducing lines
-const PROBE = '#8a8a8a';       // 2.6 mL dim probe
-
-const st = {
-  dir:'left', BBdeg:3.4, dispDeg:90, BDcm:2.25,
-  probeOrient:135, probeVoff:0,
-  d1:100, isi:70, d2:50, pd:500, pdur:10, iti:1000
-};
-
-// ---- geometry (canvas coords; +deg up => canvas y decreases) ----
-function geom() {
-  const BBpx = st.BBdeg * PX;
-  const B  = { x:Bx, y:By };
-  const A  = { x:Bx, y:By - Lpx };                 // stim 1 vertical, A above B
-  const Bp = { x:Bx - BBpx, y:By };                // B' : BB' to the left
-  const phi2 = (90 + st.dispDeg) * Math.PI/180;    // stim-2 direction (math, CCW); 90°+90°=180°=left
-  const Ap = { x:Bp.x + Lpx*Math.cos(phi2), y:Bp.y - Lpx*Math.sin(phi2) };
-  const BDpx = st.BDcm * CM_TO_DEG * PX;
-  const D  = { x:Bx - BDpx, y:By - st.probeVoff*PX };
-  const th = st.probeOrient * Math.PI/180;
-  const Cp = { x:D.x + Lpx*Math.cos(th), y:D.y - Lpx*Math.sin(th) };
-  return { A, B, Ap, Bp, C:Cp, D };
+// ---- display calibration (shared key am_display) ----
+const DISP = { ppcm:37.8, dist:50 };
+try { const d = JSON.parse(localStorage.getItem('am_display')||'null'); if (d && d.ppcm>0 && d.dist>0) { DISP.ppcm = d.ppcm; if (d.distSet) DISP.dist = d.dist; DISP.distSet = d.distSet; } } catch(e){}
+let A, B, Bp, Ap;
+function applyScale() {
+  PX = DISP.ppcm * DISP.dist * Math.tan(Math.PI/180);
+  c.width = W = Math.round(SCENE_W*PX); c.height = H = Math.round(SCENE_H*PX);
+  Lpx = 1.26*PX; Bx = BX_DEG*PX; By = BY_DEG*PX;
+  A = {x:Bx, y:By-Lpx}; B = {x:Bx, y:By};
+  Bp = {x:Bx-3.4*PX, y:By}; Ap = {x:Bp.x-Lpx, y:By};
+  $('calw').value = Math.round(DISP.ppcm*8.56); $('cal').style.width = Math.round(DISP.ppcm*8.56)+'px';
+  $('vd').value = DISP.dist;
+  $('ppinfo').textContent = DISP.ppcm.toFixed(1)+' px/cm, '+DISP.dist+' cm: '+PX.toFixed(1)+' px/deg (1.26 deg line = '+Lpx.toFixed(0)+' px)';
+  draw();
 }
-
-function drawLine(p1, p2, color, w) {
-  ctx.strokeStyle = color; ctx.lineWidth = w || 3; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+// always share ppcm; store dist (distSet:true) only when the user edits the distance field
+function saveDisp(distEdited) {
+  try {
+    let d = null; try { d = JSON.parse(localStorage.getItem('am_display')||'null'); } catch(e){}
+    d = d && typeof d === 'object' ? d : {};
+    d.ppcm = DISP.ppcm;
+    if (distEdited) { d.dist = DISP.dist; d.distSet = true; }
+    localStorage.setItem('am_display', JSON.stringify(d));
+  } catch(e){}
 }
-function label(p, txt, color) {
-  ctx.fillStyle = color; ctx.font = '11px monospace';
-  ctx.fillText(txt, p.x + 5, p.y - 4);
+$('calw').addEventListener('input', e => { DISP.ppcm = +e.target.value/8.56; applyScale(); saveDisp(false); });
+$('vd').addEventListener('change', e => { DISP.dist = Math.min(200, Math.max(20, +e.target.value||50)); applyScale(); saveDisp(true); });
+
+// ---- refresh measurement and frame durations ----
+let FM = 1000/60, F = {};
+function ms2f(ms) { return Math.max(1, Math.round(ms/FM)); }
+function setFrames() {
+  F = { s1:ms2f(MS.s1), isi:ms2f(MS.isi), s2:ms2f(MS.s2), blank:ms2f(MS.blank), probe:ms2f(MS.probe), iti:ms2f(MS.iti), ready:ms2f(MS.ready) };
+  const names = [['stim 1','s1'],['interval','isi'],['stim 2','s2'],['blank','blank'],['probe','probe'],['post-probe','iti']];
+  const warn = [];
+  const txt = names.map(([n,k]) => { const exact = MS[k]/FM; if (Math.abs(exact-Math.round(exact))>0.1) warn.push(n+' '+MS[k]+' ms = '+exact.toFixed(2)+' frames'); return n+' '+F[k]+' f ('+(F[k]*FM).toFixed(1)+' ms vs '+MS[k]+')'; }).join('; ');
+  $('dispinfo').textContent = 'Display: ' + (1000/FM).toFixed(1) + ' Hz measured (' + FM.toFixed(2) + ' ms/frame). Realised: ' + txt + '.' +
+    (warn.length ? ' Warning, not a whole number of frames at this rate: ' + warn.join('; ') + '.' : '');
+  const pr = F.probe*FM, lum = Math.min(1, (2.6/5.8)*Math.min(1, MS.probe/pr));
+  const v = Math.round(0xf0*Math.pow(lum, 1/2.2)); PROBE = 'rgb('+v+','+v+','+v+')';
+  $('dispinfo').textContent += ' Probe grey level: ' + PROBE + ' (inducing ' + STIM + ', probe luminance ' + (lum*100).toFixed(1) + '% of inducing, gamma 2.2).';
+  $('itiA').textContent = 'Paper: 4000 ms';
 }
-
-// ---- timing / phase machine ----
-function phaseNow() {
-  const pdurVis = Math.max(st.pdur, 50);   // 10 ms is <1 frame; render ≥50 ms (noted compromise)
-  const segs = [st.d1, st.isi, st.d2, st.pd, pdurVis, st.iti];
-  const cycle = segs.reduce((a,b)=>a+b, 0);
-  let t = clock % cycle;
-  const names = ['first','isi','second','delay','probe','iti'];
-  for (let i=0;i<segs.length;i++){ if (t < segs[i]) return names[i]; t -= segs[i]; }
-  return 'iti';
+let measured = false, measuring = false;
+function measure() {
+  if (measured || measuring) return;
+  measuring = true;
+  const ts = []; let timer = null;
+  function m(t) {
+    if (measured) return;
+    if (document.hidden) { measuring = false; clearTimeout(timer); return; }
+    ts.push(t);
+    if (ts.length < 61) requestAnimationFrame(m); else {
+    const d = []; for (let i=1;i<ts.length;i++) d.push(ts[i]-ts[i-1]); d.sort((a,b)=>a-b);
+    FM = d[Math.floor(d.length/2)] || 1000/60; measured = true; measuring = false; clearTimeout(timer);
+    setFrames(); $('start').disabled = false; } }
+  requestAnimationFrame(m);
+  timer = setTimeout(() => {
+    if (measured) return;
+    if (document.hidden) return;
+    measured = true; measuring = false; FM = 1000/60; setFrames();
+    $('dispinfo').textContent += ' Note: refresh measurement did not finish; 60 Hz assumed.';
+    $('start').disabled = false; }, 3000);
 }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !measured) { measuring = false; measure(); } });
+setFrames();
 
-let clock = 0, lastTs = 0, paused = false;
+const S = { task:'orient', dir:'left', quick:false };
+let probeSpec = null;
+let phase = 'idle';        // idle ready first isi second blank probe resp
+let fcount = 0, itiTarget = 0;
+let layoutOn = false;
 
+function line(p, q, col) {
+  ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+}
+function lab(p, t) { ctx.fillStyle = '#777'; ctx.font = '11px monospace'; ctx.fillText(t, p.x+5, p.y-4); }
+function probeEnds(ps) {
+  const D = { x: Bx - ps.cm*CM2DEG*PX, y: By - ps.voff*PX };
+  const th = ps.ang*Math.PI/180;
+  return { D, C: { x: D.x + Lpx*Math.cos(th), y: D.y - Lpx*Math.sin(th) } };
+}
 function draw() {
-  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-  const g = geom();
-  // first/second presented depend on direction (leftward = AB first)
-  const stim1 = { a:g.A, b:g.B };          // vertical line (AB)
-  const stim2 = { a:g.Ap, b:g.Bp };        // horizontal line (A'B')
-  const firstS  = st.dir==='left' ? stim1 : stim2;
-  const secondS = st.dir==='left' ? stim2 : stim1;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  if (layoutOn && phase === 'idle') {
+    line(A, B, STIM); line(Ap, Bp, STIM);
+    lab(A,'A'); lab(B,'B'); lab(Ap,"A'"); lab(Bp,"B'");
+    BD_CM.forEach(cm => { const x = Bx - cm*CM2DEG*PX; ctx.fillStyle='#555'; ctx.fillRect(x-1, By+8, 2, 8); });
+    return;
+  }
+  const first  = S.dir==='left' ? [A,B] : [Ap,Bp];
+  const second = S.dir==='left' ? [Ap,Bp] : [A,B];
+  if (phase==='first')  line(first[0], first[1], STIM);
+  if (phase==='second') line(second[0], second[1], STIM);
+  if (phase==='probe' && probeSpec) { const e = probeEnds(probeSpec); line(e.C, e.D, PROBE); }
+}
 
-  if (paused) {
-    // static layout with labels so the configuration is legible
-    drawLine(stim1.a, stim1.b, STIM, 3);
-    drawLine(stim2.a, stim2.b, STIM, 3);
-    drawLine(g.C, g.D, PROBE, 3);
-    label(g.A,'A','#888'); label(g.B,'B','#888');
-    label(g.Ap,"A'",'#888'); label(g.Bp,"B'",'#888');
-    label(g.C,'C','#777'); label(g.D,'D','#777');
-  } else {
-    const ph = phaseNow();
-    if (ph==='first')  drawLine(firstS.a,  firstS.b,  STIM, 3);
-    if (ph==='second') drawLine(secondS.a, secondS.b, STIM, 3);
-    if (ph==='probe')  drawLine(g.C, g.D, PROBE, 3);
+// ---- trial sequencer: one step per display frame; a phase drawn for exactly its frame count ----
+const seq = ['first','isi','second','blank','probe'];
+const seqKey = ['s1','isi','s2','blank','probe'];
+let seqIdx = 0, pendingTrial = false;
+function startTrial() { phase = 'first'; seqIdx = 0; fcount = 0; }
+function tick(n) {
+  if (phase==='idle' || phase==='blank0') return;
+  if (phase==='ready') { if ((fcount += n) >= F.ready) nextTrial(); return; }
+  fcount += n;
+  if (phase==='resp') { if (fcount >= itiTarget && responded) nextTrial(); return; }
+  if (fcount >= F[seqKey[seqIdx]]) {
+    fcount = Math.max(0, fcount - F[seqKey[seqIdx]]); seqIdx++;
+    if (seqIdx >= seq.length) { phase = 'resp'; itiTarget = S.quick ? ms2f(1000) : F.iti; enableResp(true); setInstr(); return; }
+    phase = seq[seqIdx];
   }
 }
-
-function frame(ts) {
-  const dt = lastTs ? ts - lastTs : 16; lastTs = ts;
-  if (!paused) clock += dt;
+const STIM_PH = ['first','isi','second','blank','probe'];
+// a trial interrupted by a hidden tab or a long stall is restarted without recording a response
+function abortTrial() { phase = 'blank0'; pendingTrial = true; fcount = 0; seqIdx = 0; }
+document.addEventListener('visibilitychange', () => { if (document.hidden && STIM_PH.indexOf(phase) >= 0) abortTrial(); });
+let lastT = null;
+function loop(t) {
+  const n = (lastT===null || t===undefined) ? 1 : Math.max(1, Math.round((t-lastT)/FM));
+  lastT = t===undefined ? null : t;
+  if (STIM_PH.indexOf(phase) >= 0 && (document.hidden || n > 5)) abortTrial();
+  else tick(Math.min(n, 600));
+  if (pendingTrial) { pendingTrial = false; startTrial(); }
   draw();
-  requestAnimationFrame(frame);
+  requestAnimationFrame(loop);
 }
-requestAnimationFrame(frame);
+requestAnimationFrame(loop);
 
-// ---- controls ----
+// ---- staircases ----
+function mkStair(start, step, min) { return { v:start, step, min, last:0, n:0 }; }
+let conds = [], order = [], ci = 0, responded = false, running = false, tTotal = 0, tDone = 0;
+let curStair = null;
+
+function buildBlock() {
+  const ntr = Math.max(2, +$('ntr').value || 20);
+  order = BD_CM.slice();
+  for (let i = order.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [order[i],order[j]] = [order[j],order[i]]; }
+  conds = order.map(cm => ({
+    cm, left: ntr*2, cap: ntr, stairs: S.task==='orient'
+      ? [ mkStair(10, 20, 2.5), mkStair(170, 20, 2.5) ]
+      : [ mkStair(-1.0, 0.4, 0.05), mkStair(1.0, 0.4, 0.05) ]
+  }));
+  ci = 0; tTotal = ntr*2*5; tDone = 0;
+}
+function nextTrial() {
+  while (ci < conds.length && conds[ci].left === 0) ci++;
+  if (ci >= conds.length) { finish(); return; }
+  const cd = conds[ci];
+  let si = Math.random() < 0.5 ? 0 : 1;
+  if (cd.stairs[si].n >= cd.cap) si = 1 - si;
+  curStair = cd.stairs[si];
+  probeSpec = S.task==='orient' ? { cm:cd.cm, ang:curStair.v, voff:0 } : { cm:cd.cm, ang:135, voff:curStair.v };
+  responded = false; enableResp(false);
+  phase = 'blank0'; pendingTrial = true;
+  $('status').textContent = 'Trial ' + (tDone+1) + ' of ' + tTotal;
+  setInstr();
+}
+function respond(sideA) {
+  if (phase !== 'resp' || responded) return;
+  responded = true; enableResp(false);
+  const s = curStair;
+  const dirv = S.task==='orient' ? (sideA ? +1 : -1) : (sideA ? -1 : +1);
+  if (s.last !== 0 && dirv !== s.last) s.step = Math.max(s.min, s.step/2);
+  s.last = dirv;
+  s.v += dirv * s.step;
+  if (S.task==='orient') s.v = Math.min(180, Math.max(0, s.v));
+  s.n++; conds[ci].left--; tDone++;
+  if (fcount >= itiTarget) nextTrial();
+  else $('instr').textContent = 'Response recorded. Next trial follows.';
+}
+function finish() {
+  phase = 'idle'; running = false; probeSpec = null;
+  $('status').textContent = 'Block complete (' + tDone + ' trials). Results are not shown.';
+  $('instr').textContent = 'Block finished.';
+  setRunUI(false);
+}
+function stopBlock() {
+  phase = 'idle'; running = false; probeSpec = null; pendingTrial = false;
+  $('status').textContent = 'Stopped.';
+  $('instr').textContent = 'Stopped.';
+  setRunUI(false);
+}
+
+// ---- UI ----
+const bA = $('bA'), bB = $('bB');
+function labels() {
+  if (S.task==='orient') { bA.textContent = 'Clockwise →'; bB.textContent = '← Counterclockwise'; }
+  else { bA.textContent = 'Above →'; bB.textContent = '← Below'; }
+}
+function enableResp(on) { bA.disabled = bB.disabled = !on; }
+function setRule() {
+  const el = $('rule');
+  if (!running) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.textContent = (S.task==='orient' ? 'Standing instruction (orientation): if several orientations match the moving line, choose the most rightward. ' : '') +
+    (S.dir==='right' ? 'Standing instruction (rightward block): you may see two motion paths, not at once; match just one path per measurement.' : '');
+  if (!el.textContent) el.style.display = 'none';
+}
+function setInstr() {
+  const el = $('instr');
+  setRule();
+  if (!running) return;
+  if (phase==='ready') {
+    el.textContent = 'Get ready. The first trial starts shortly.';
+  } else if (phase==='resp') {
+    el.textContent = S.task==='orient'
+      ? 'Is the probe line on the clockwise or counterclockwise side of the orientation of the moving line at the horizontal position of its end D? If several orientations match, choose the most rightward.'
+      : 'Was the probe line above or below the moving line at the horizontal position of its end D?';
+  } else {
+    el.textContent = 'Watch…';
+  }
+}
+function setRunUI(r) {
+  $('start').disabled = r; $('stop').disabled = !r; setRule();
+  if (!r) enableResp(false);
+}
 function seg(id, fn) {
   document.querySelectorAll('#'+id+' button').forEach(b => b.addEventListener('click', () => {
+    if (running) return;
     document.querySelectorAll('#'+id+' button').forEach(x => x.classList.remove('on'));
-    b.classList.add('on'); fn(b.dataset);
+    b.classList.add('on'); fn(b.dataset.v); info(); labels();
   }));
 }
-function rng(id, lblId, fmt, fn) {
-  const el = document.getElementById(id), lbl = document.getElementById(lblId);
-  el.addEventListener('input', () => { const v = +el.value; if (lbl) lbl.textContent = fmt(v); fn(v); });
+seg('task', v => S.task = v);
+seg('dir',  v => S.dir = v);
+seg('itiSeg', v => S.quick = (v==='quick'));
+function info() {
+  $('blockInfo').textContent =
+    'Block: ' + (S.task==='orient' ? 'orientation' : 'vertical position') + ', ' +
+    (S.dir==='left' ? 'leftward (AB first)' : 'rightward (A′B′ first)') +
+    '; five BD positions in random order, two interleaved staircases each. In the paper the vertical block follows the orientation blocks, and the rightward order is the later half. Responses are stored internally only.';
 }
-seg('dir',  d => st.dir = d.v);
-seg('bd',   d => st.BDcm = +d.cm);
-rng('bb','bbLbl', v=>v.toFixed(2)+'°', v=>st.BBdeg=v);
-rng('disp','dispLbl', v=>v+'°', v=>st.dispDeg=v);
-rng('po','poLbl', v=>v+'°', v=>st.probeOrient=v);
-rng('pv','pvLbl', v=>v.toFixed(2)+'°', v=>st.probeVoff=v);
-rng('d1','d1Lbl', v=>v, v=>st.d1=v);
-rng('isi','isiLbl', v=>v, v=>st.isi=v);
-rng('d2','d2Lbl', v=>v, v=>st.d2=v);
-rng('pd','pdLbl', v=>v, v=>st.pd=v);
-rng('pdur','pdurLbl', v=>v, v=>st.pdur=v);
-rng('iti','itiLbl', v=>v, v=>st.iti=v);
-document.getElementById('pause').addEventListener('click', e => {
-  paused = !paused; e.target.textContent = paused ? 'Resume' : 'Pause & show layout';
+$('start').addEventListener('click', () => {
+  layoutOn = false; $('layout').textContent = 'Show layout';
+  running = true; setRunUI(true); buildBlock();
+  phase = 'ready'; fcount = 0; setInstr();
+  $('status').textContent = 'Ready';
 });
+$('stop').addEventListener('click', stopBlock);
+$('layout').addEventListener('click', e => {
+  if (running) return; layoutOn = !layoutOn; e.target.textContent = layoutOn ? 'Hide layout' : 'Show layout';
+  $('status').textContent = layoutOn ? 'Layout: ticks mark the five horizontal positions of D (BD = 0.75 to 2.85 cm).' : ' ';
+});
+bA.addEventListener('click', () => respond(true));
+bB.addEventListener('click', () => respond(false));
+document.addEventListener('keydown', e => {
+  if (!running || phase !== 'resp' || responded) return;
+  if (e.key==='ArrowRight') { e.preventDefault(); respond(true); }
+  else if (e.key==='ArrowLeft') { e.preventDefault(); respond(false); }
+});
+labels(); info(); applyScale();
+$('start').disabled = true; measure();
 </script>
 </body>
 </html>

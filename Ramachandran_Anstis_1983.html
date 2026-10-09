@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ramachandran &amp; Anstis (1983) — Extrapolation of motion path (visual momentum)</title>
+<title>Ramachandran &amp; Anstis (1983) — Extrapolation of motion path</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
@@ -13,14 +13,14 @@
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
   canvas { background:#000; display:block; border-radius:3px; }
-
+  .stage { max-width:96vw; overflow:auto; }
+  #card { height:22px; background:#3a3a3a; border:1px solid #777; border-radius:3px; margin:6px 0 4px; }
+  .warn { color:#c9a24a; }
+  input[type=number] { width:70px; background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; border-radius:4px; padding:3px 5px; }
   .participant { margin-top:12px; width:720px; max-width:96vw; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
   .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
-  .prow .lab { font-size:11px; color:#777; margin-right:4px; }
-  .aBig { text-align:center; margin-top:8px; font-size:16px; color:#e8e8e8; font-variant-numeric:tabular-nums; }
-  .aBig small { font-size:12px; color:#777; }
-
+  .status { margin-top:8px; text-align:center; font-size:11px; color:#777; }
   .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
   .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
   .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
@@ -32,164 +32,244 @@
            border-radius:4px; cursor:pointer; font-size:12px; }
   button:hover { background:#26262e; }
   button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
-  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
+  .readouts { margin-top:14px; font-size:12px; color:#888; line-height:1.6; }
   .readouts b { color:#cfcfcf; font-weight:600; }
-  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+  table { border-collapse:collapse; width:100%; margin-top:6px; font-size:11px; }
+  td, th { border-top:1px solid #23232a; padding:4px 6px; text-align:left; vertical-align:top; color:#8a8a8a; }
+  th { color:#6b6b75; font-weight:600; }
+  td:first-child { color:#bdbdbd; white-space:nowrap; }
+  .assume { color:#c9a24a; }
+  .meta { margin-top:16px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
 </style>
 </head>
 <body>
   <a class="back" href="index.html">← back to experiments</a>
-  <h1>Ramachandran &amp; Anstis (1983) — extrapolation of motion path (&ldquo;visual momentum&rdquo;)</h1>
-  <div class="sub">Two dot streams move in opposite directions along parallel rows and meet at an ambiguous quartet. Established
-    motion biases the crossing toward <b>streaming</b> (straight-through) over <b>bouncing</b> — even against proximity.</div>
+  <h1>Ramachandran &amp; Anstis (1983) — Extrapolation of motion path</h1>
+  <div class="sub">Four dots alternate as two diagonal pairs, shown alone or embedded in two rows of dots flashed one after another (or in two static rows). Fixate the central dot and do not track the motion with your eyes.</div>
 
-  <canvas id="c" width="600" height="420"></canvas>
+  <div class="stage"><canvas id="c"></canvas></div>
 
   <div class="participant">
     <div class="instr">
-      Fixate the centre dot. At the crossing, do the streams pass <b>straight through</b> (streaming) or <b>bounce</b> apart?
-      Press what you see — it nudges the row separation toward the balance point.
+      Fixate the central dot. Report whether the four central dots appear as <b>streaming</b> (two parallel straight paths) or <b>bouncing</b> (two U-shaped paths).
+      Keys: <b>S</b> = streaming, <b>B</b> = bouncing.
     </div>
-    <div class="aBig">row separation a = <span id="aVal">1.00</span> · b <small>(b = within-row spacing)</small></div>
     <div class="prow">
-      <button id="stream">I see streaming →→</button>
-      <button id="bounce">I see bouncing ⤢</button>
-      <span class="lab" style="margin-left:8px">balance a/b:</span> <b id="balVal" style="color:#cfcfcf">—</b>
-      <button id="record">Record</button><button id="export">Export CSV</button>
+      <button id="start">Start</button>
+      <button id="stream">Streaming (S)</button>
+      <button id="bounce">Bouncing (B)</button>
+      <button id="export">Export responses CSV</button>
     </div>
+    <div class="status" id="status">Press Start when ready.</div>
   </div>
 
   <div class="panel">
-    <h2>Experimenter parameters</h2>
+    <h2>Display setup</h2>
+    <div style="font-size:11px;color:#777">Resize the bar to match a credit card (8.56 cm) held against the screen, then set your eye-to-screen distance (default = paper's 100 cm).</div>
+    <div id="card"></div>
     <div class="grid">
-      <div class="ctrl">Biasing context
+      <label class="ctrl">Card width <input type="range" id="cardw" min="150" max="700" step="1"></label>
+      <label class="ctrl">Viewing distance (cm) <input type="number" id="vd" min="20" max="400" step="1"></label>
+      <button id="calreset">Reset</button>
+    </div>
+    <div class="readouts" id="geo"></div>
+    <div class="readouts" id="dispLine"></div>
+
+    <h2 style="margin-top:18px">Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Condition
         <div class="seg" id="mode">
-          <button data-v="motion" class="on">Moving rows</button>
-          <button data-v="none">Quartet only</button>
+          <button data-v="quartet">Quartet alone</button>
+          <button data-v="moving" class="on">Moving rows</button>
           <button data-v="static">Stationary rows</button>
         </div>
       </div>
-      <div class="ctrl">Presentation rate
+      <div class="ctrl">Presentation rate (spots/s)
         <div class="seg" id="rate">
           <button data-v="2">2</button><button data-v="4">4</button>
-          <button data-v="8" class="on">8</button><button data-v="16">16 /s</button>
+          <button data-v="8" class="on">8</button><button data-v="16">16</button>
         </div>
       </div>
-      <div class="ctrl">Row separation a: <span class="v" id="aLbl">1.00</span> · b
-        <input type="range" id="a" min="0.3" max="1.6" step="0.02" value="1.0"></div>
-      <div class="ctrl">Within-row spacing b: <span class="v" id="bLbl">1.0</span>°
-        <input type="range" id="b" min="0.6" max="1.6" step="0.05" value="1.0"></div>
+      <div class="ctrl">Procedure
+        <div class="seg" id="proc">
+          <button data-v="stair" class="on">Staircase (10 reversals)</button>
+          <button data-v="fixed">Fixed a (demonstration)</button>
+        </div>
+      </div>
+      <label class="ctrl">Fixed a (deg), demonstration only <input type="number" id="afix" min="0.2" max="1.6" step="0.05" value="1.00"></label>
     </div>
-
     <div class="readouts">
-      <div>a / b = <b id="ratioLbl">1.00</b></div>
-      <div>SOA (ISI = 0): <b id="soaLbl">125 ms</b></div>
-      <div>Paper balance points: <b>none ≈ 1.0 · moving ≈ 0.6 · stationary ≈ 0.8</b> (a/b)</div>
-      <div>Trials logged: <b id="nLog">0</b></div>
+      Within-row spacing b = <b>1.00°</b> (fixed) · ISI = 0 · changing condition, rate or procedure stops the current run; a new run starts only with Start.
     </div>
+
+    <h2 style="margin-top:18px">Methods (from the paper)</h2>
+    <table>
+      <tr><th>Parameter</th><th>Value</th><th>Source</th></tr>
+      <tr><td>Display</td><td>p4-phosphor CRT, Apple 2 microcomputer</td><td>p. 83</td></tr>
+      <tr><td>Viewing distance</td><td>1 m</td><td>p. 83</td></tr>
+      <tr><td>Dot diameter</td><td>about 4 arcmin</td><td>p. 83</td></tr>
+      <tr><td>Quartet geometry</td><td>Four dots at the corners of a diamond (oblique sides, not vertical); a = distance between rows, b = distance within a row; a and b varied independently; sides of the square subtended 1°</td><td>p. 83, Fig. 1c</td></tr>
+      <tr><td>Rows</td><td>Quartet embedded in two long parallel rows of 8 dots each; the quartet is dots 4 and 5 of each row; b = 1° fixed; rows oblique</td><td>p. 83, Fig. 1e</td></tr>
+      <tr><td>Sequence</td><td>Dots numbered 1–8; the top row starts at its left end, the bottom row at its right end, so the two streams run in opposite directions; only two dots lit at a time (one per row)</td><td>p. 83, Fig. 1e</td></tr>
+      <tr><td>Fixation</td><td>Stationary dot at the centre of the display, always present; observers told not to track the motion</td><td>p. 83–84</td></tr>
+      <tr><td>Rate</td><td>2, 4, 8, 16 spots/s, ISI = 0, SOA varied by changing stimulus duration alone (ms values: see assumption below)</td><td>p. 84, Fig. 2 axis (spots per sec)</td></tr>
+      <tr><td>Conditions</td><td>Quartet alone (biasing dots occluded); sequentially flashed rows; stationary rows (all row dots on together, the four test dots oscillating among them)</td><td>p. 84–85</td></tr>
+      <tr><td>Response</td><td>Two computer keys: streaming or bouncing; each press moves the two rows slightly closer (streaming) or further apart (bouncing); staircase of ten reversals; presentation rate constant within a staircase. The observer saw no numeric value of a (not shown here either)</td><td>p. 84</td></tr>
+      <tr><td>Observers</td><td>Five naive observers per rate; eight naive observers for the a = b demonstration (fixed-a mode here, no staircase)</td><td>p. 84</td></tr>
+      <tr><td>Not implemented</td><td>Orthogonal-displays eye-movement control (no parameters given)</td><td>p. 85</td></tr>
+      <tr class="assume"><td class="assume">Assumption</td><td>Rate to SOA: the paper gives only "spots per sec" and says SOA was varied by changing stimulus duration alone; it gives no ms values. Here SOA = 1/rate (one new dot per row per step; 2, 4, 8, 16 spots/s = 500, 250, 125, 62.5 ms), and the same reading is applied to the quartet-alone and stationary-row conditions</td><td>—</td></tr>
+      <tr class="assume"><td class="assume">Assumption</td><td>Starting a = 1.00° (a = b); staircase step = 0.05° per key press, a clamped to 0.2–1.6°; not stated in the paper</td><td>—</td></tr>
+      <tr class="assume"><td class="assume">Assumption</td><td>Row angle 45° (down-right), as drawn in Fig. 1e; white dots on black; luminance, contrast, room lighting not stated</td><td>—</td></tr>
+      <tr class="assume"><td class="assume">Assumption</td><td>Fixation dot drawn grey, same size as test dots (paper: only "a stationary dot at the centre")</td><td>—</td></tr>
+      <tr class="assume"><td class="assume">Assumption</td><td>Stationary rows: the 12 non-quartet row positions stay on continuously and the four quartet positions oscillate as two diagonal pairs (reading of "same positions but stationary, all present simultaneously")</td><td>—</td></tr>
+      <tr class="assume"><td class="assume">Assumption</td><td>Moving rows: the 8-step sequence repeats, followed by one blank SOA; quartet alone: the two diagonal pairs alternate indefinitely. The paper does not state loop behaviour</td><td>—</td></tr>
+      <tr class="assume"><td class="assume">Assumption</td><td>Trial structure: the observer starts a run, the stimulus cycles continuously and a judgement is made at will (no time limit, no onset marker, one judgement per key press, auto-repeat ignored, minimum 250 ms between judgements). A run ends after 10 reversals. Not stated in the paper</td><td>—</td></tr>
+      <tr class="assume"><td class="assume">Assumption</td><td>Timing: display refresh measured at load; each SOA is rounded to a whole number of frames and counted frame by frame (realised durations shown in the display line)</td><td>—</td></tr>
+    </table>
   </div>
 
-  <div class="meta">
-    Faithful reconstruction of Ramachandran, V. S. &amp; Anstis, S. M. (1983), <i>Vision Research</i> 23, 83–85. Four test dots form an
-    ambiguous motion quartet (two diagonal pairs alternating); it is embedded between two long parallel rows of dots flashed
-    sequentially in opposite directions (only two lit at a time; ISI = 0, SOA set by duration; viewing 1 m, dots ≈ 4′, within-row
-    spacing b ≈ 1°). With the quartet alone, streaming and bouncing are equiprobable near a = b. When the rows are in <i>motion</i>,
-    observers overwhelmingly see straight-line <b>streaming</b> — the row separation a must be cut to ≈ 60% of b before bouncing
-    becomes equiprobable (≈ 80% for merely <i>stationary</i> rows). This &ldquo;visual momentum&rdquo; overrides the proximity rule: once
-    motion is established in a direction, it tends to continue. The percept (streaming vs bouncing) is the observer's — only the real
-    flashed dots are drawn. Balance found by a streaming/bouncing staircase.
-  </div>
+  <div class="meta">Reconstruction of the displays and response procedure of Ramachandran, V. S. &amp; Anstis, S. M. (1983), <i>Vision Research</i> 23, 83–85. Screen size and refresh differ from the original; sizes are drawn in degrees from your calibration.</div>
 
 <script>
-const c = document.getElementById('c');
-const ctx = c.getContext('2d');
-const W = c.width, H = c.height;
-const CX = W/2, CY = H/2;
-const PXDEG = 52;                // px per degree
-const TH = -18*Math.PI/180;      // oblique row angle
-const DIR = { x: Math.cos(TH), y: Math.sin(TH) };
-const PERP = { x: -Math.sin(TH), y: Math.cos(TH) };   // mostly vertical
-const K = 4;                     // dots each side of centre per row
+const $ = id => document.getElementById(id);
+const c = $('c'), ctx = c.getContext('2d');
+const CARD_CM = 8.56;
+let ppcm = 37.8, vd = 100;
+let hz = 60, frameMs = 1000/60, measured = false;
 
-const st = { mode:'motion', rate:8, aRatio:1.0, bDeg:1.0, balance:null };
+function loadDisp(){ try {
+  const o = JSON.parse(localStorage.getItem('am_display')||'{}')||{};
+  const p = o.ppcm || o.pxPerCm, d = o.dist || o.viewDistCm;
+  if (p>5 && p<200) ppcm = p;
+  if (d>=20 && d<=400) vd = d;
+} catch(e){} }
+function saveDisp(){ try {
+  let o = {}; try { o = JSON.parse(localStorage.getItem('am_display')||'{}')||{}; } catch(e){}
+  o.ppcm = ppcm; o.dist = vd; o.pxPerCm = ppcm; o.viewDistCm = vd;
+  localStorage.setItem('am_display', JSON.stringify(o));
+} catch(e){} }
+function pxDeg(){ return ppcm*vd*Math.tan(Math.PI/180); }
 
-// position on a row: k = index along row (× b), side = -1 top / +1 bottom
-function posOnRow(k, side) {
-  const b = st.bDeg*PXDEG, a = st.aRatio*st.bDeg*PXDEG;
-  const bx = CX + side*(a/2)*PERP.x, by = CY + side*(a/2)*PERP.y;
-  return { x: bx + k*b*DIR.x, y: by + k*b*DIR.y };
+const TH = 45*Math.PI/180;
+const D = { x: Math.cos(TH), y: Math.sin(TH) };
+const N = { x: -Math.sin(TH), y: Math.cos(TH) };
+const B_DEG = 1.0, DOT_DEG = 4/60;
+const START_A = 1.0, STEP = 0.05, MAX_REV = 10, MIN_RESP_MS = 250;
+const FIELD_W = 9, FIELD_H = 8;           // canvas field in degrees
+let W = 0, H = 0, CX = 0, CY = 0;
+
+const st = { mode:'moving', rate:8, proc:'stair', a:START_A };
+let running = false, frame = 0;
+
+function layout(){
+  const dpr = window.devicePixelRatio || 1, pd = pxDeg();
+  W = Math.round(FIELD_W*pd); H = Math.round(FIELD_H*pd); CX = W/2; CY = H/2;
+  c.style.width = W+'px'; c.style.height = H+'px';
+  c.width = Math.round(W*dpr); c.height = Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  $('card').style.width = (CARD_CM*ppcm)+'px';
+  $('geo').textContent = ppcm.toFixed(1)+' px/cm · '+vd+' cm → '+pd.toFixed(1)+' px/deg · dot diameter 4 arcmin = '+(DOT_DEG*pd).toFixed(1)+' px · b = 1° = '+pd.toFixed(1)+' px';
+  draw();
 }
-function dot(p, r, on) {
-  ctx.fillStyle = on ? '#ff5a4a' : '#3a1414';
-  ctx.beginPath(); ctx.arc(p.x, p.y, r||4, 0, 2*Math.PI); ctx.fill();
-}
 
-let clock = 0, lastTs = 0;
-function drawFrame() {
+function pos(row, i){
+  const pd = pxDeg(), side = row === 0 ? -1 : 1;
+  const t = (i-4.5)*B_DEG*pd, off = side*st.a*pd/2;
+  return { x: CX + t*D.x + off*N.x, y: CY + t*D.y + off*N.y };
+}
+function dot(p, col){ ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(1, DOT_DEG*pxDeg()/2), 0, 2*Math.PI); ctx.fill(); }
+
+// ---- frame-counted timing ----
+function framesPerStep(){ return Math.max(1, Math.round((1000/st.rate)/frameMs)); }
+function stepOf(f){ return Math.floor(f/framesPerStep()); }
+
+function draw(){
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-  const stepMs = 1000/st.rate;
-  const s = Math.floor(clock/stepMs);
-  const cyc = 2*K + 1;
-
-  if (st.mode === 'none') {
-    // bare quartet: alternate diagonal pairs (TL,BR) / (TR,BL)
-    const TL=posOnRow(-0.5,-1), TR=posOnRow(0.5,-1), BL=posOnRow(-0.5,1), BR=posOnRow(0.5,1);
-    if (s % 2 === 0) { dot(TL,5,true); dot(BR,5,true); }
-    else             { dot(TR,5,true); dot(BL,5,true); }
-  } else {
-    if (st.mode === 'static') {
-      // all row dots present (dim), plus the alternating central quartet (bright)
-      for (let k=-K;k<=K;k++){ dot(posOnRow(k,-1),3,false); dot(posOnRow(k,1),3,false); }
-      const TL=posOnRow(-0.5,-1), TR=posOnRow(0.5,-1), BL=posOnRow(-0.5,1), BR=posOnRow(0.5,1);
-      if (s % 2 === 0) { dot(TL,5,true); dot(BR,5,true); } else { dot(TR,5,true); dot(BL,5,true); }
+  const WHITE = '#fff';
+  if (running) {
+    const s = stepOf(frame);
+    if (st.mode === 'quartet') {
+      if (s % 2 === 0) { dot(pos(0,4),WHITE); dot(pos(1,5),WHITE); }
+      else             { dot(pos(0,5),WHITE); dot(pos(1,4),WHITE); }
+    } else if (st.mode === 'static') {
+      for (let i=1;i<=8;i++) { if (i===4||i===5) continue; dot(pos(0,i),WHITE); dot(pos(1,i),WHITE); }
+      if (s % 2 === 0) { dot(pos(0,4),WHITE); dot(pos(1,5),WHITE); }
+      else             { dot(pos(0,5),WHITE); dot(pos(1,4),WHITE); }
     } else {
-      // moving rows: one lit dot streams each way (top L→R, bottom R→L)
-      const kTop = -K + (s % cyc);
-      const kBot =  K - (s % cyc);
-      dot(posOnRow(kTop,-1),5,true);
-      dot(posOnRow(kBot, 1),5,true);
+      const k = s % 9;                    // steps 0..7 = dots 1..8, step 8 = blank
+      if (k < 8) { dot(pos(0,k+1),WHITE); dot(pos(1,8-k),WHITE); }
     }
   }
-
-  // fixation
-  ctx.fillStyle = '#5a6acc';
-  ctx.beginPath(); ctx.arc(CX, CY, 2.5, 0, 2*Math.PI); ctx.fill();
-
-  document.getElementById('soaLbl').textContent = Math.round(stepMs)+' ms';
-  document.getElementById('ratioLbl').textContent = st.aRatio.toFixed(2);
+  dot({x:CX,y:CY}, '#8a8f9a');
 }
-function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
-requestAnimationFrame(loop);
+function loop(){ if (running) frame++; draw(); requestAnimationFrame(loop); }
 
-// ---- staircase: streaming -> rows closer (a down); bouncing -> apart (a up) ----
-function setA(v){ st.aRatio = Math.max(0.3, Math.min(1.6, v));
-  document.getElementById('a').value = st.aRatio;
-  document.getElementById('aLbl').textContent = st.aRatio.toFixed(2);
-  document.getElementById('aVal').textContent = st.aRatio.toFixed(2);
+function updateTiming(){
+  const f = framesPerStep(), soa = 1000/st.rate, exact = soa/frameMs;
+  const whole = Math.abs(exact - Math.round(exact)) < 0.05;
+  $('dispLine').innerHTML = 'display: ' + (measured ? hz.toFixed(1)+' Hz measured' : 'measuring…') +
+    ' (frame ' + frameMs.toFixed(2) + ' ms) · SOA = duration = ' + soa + ' ms → ' + f + ' frames = ' + (f*frameMs).toFixed(1) + ' ms realised · ISI = 0' +
+    (whole ? '' : ' <span class="warn">· warning: ' + soa + ' ms is ' + exact.toFixed(2) + ' frames at this refresh, not a whole number; rounded</span>');
 }
-let reversals=[], lastDir=0;
-function judge(dir){                  // dir -1 = streaming (a down), +1 = bouncing (a up)
-  if (lastDir && dir!==lastDir) reversals.push(st.aRatio);
-  lastDir = dir;
-  setA(st.aRatio + dir*0.05);
-  if (reversals.length >= 4){
-    const last = reversals.slice(-6);
-    st.balance = last.reduce((a,b)=>a+b,0)/last.length;
-    document.getElementById('balVal').textContent = st.balance.toFixed(2);
+function measureRefresh(){
+  const ts = [];
+  function f(t){
+    ts.push(t);
+    if (ts.length < 62) { requestAnimationFrame(f); return; }
+    const d = []; for (let i=1;i<ts.length;i++) d.push(ts[i]-ts[i-1]);
+    d.sort((a,b)=>a-b);
+    const m = d[Math.floor(d.length/2)];
+    if (m > 4 && m < 50) { frameMs = m; hz = 1000/m; measured = true; }
+    updateTiming();
   }
+  requestAnimationFrame(f);
 }
-document.getElementById('stream').addEventListener('click', ()=>judge(-1));
-document.getElementById('bounce').addEventListener('click', ()=>judge(+1));
 
-// ---- logging ----
-const log=[];
-document.getElementById('record').addEventListener('click', ()=>{
-  log.push({ mode:st.mode, rate_per_s:st.rate, bDeg:+st.bDeg.toFixed(2),
-             a_over_b:+st.aRatio.toFixed(3), balance_a_over_b: st.balance!=null?+st.balance.toFixed(3):'' });
-  document.getElementById('nLog').textContent = log.length;
-  reversals=[]; lastDir=0; st.balance=null; document.getElementById('balVal').textContent='—';
+// ---- run / staircase ----
+let reversals = 0, lastDir = 0, done = false, runId = 0, respIdx = 0, runT0 = 0, lastRespT = 0;
+const log = [];
+function setA(v){ st.a = Math.max(0.2, Math.min(1.6, Math.round(v*100)/100)); }
+function status(){
+  let t;
+  if (!running && !done) t = 'Press Start when ready.';
+  else if (done) t = 'Run complete. Press Start for a new run.';
+  else t = st.proc === 'stair' ? 'Running. Keep fixating and respond with S or B.' : 'Running (fixed display). Respond with S or B.';
+  $('status').textContent = t + ' · responses logged: ' + log.length;
+}
+function startRun(){
+  runId++; respIdx = 0; reversals = 0; lastDir = 0; done = false;
+  setA(st.proc === 'fixed' ? (+$('afix').value || START_A) : START_A);
+  frame = 0; running = true; runT0 = performance.now(); lastRespT = 0;
+  status();
+}
+function stopRun(){ running = false; done = false; status(); }
+function judge(dir){                      // -1 streaming (rows closer), +1 bouncing (rows apart)
+  if (!running) return;
+  const now = performance.now();
+  if (lastRespT && now - lastRespT < MIN_RESP_MS) return;
+  lastRespT = now;
+  let rev = 0;
+  if (st.proc === 'stair' && lastDir && dir !== lastDir) { reversals++; rev = 1; }
+  if (st.proc === 'stair') lastDir = dir;
+  respIdx++;
+  log.push({ run_id:runId, resp_index:respIdx, procedure:st.proc, condition:st.mode, rate_per_s:st.rate,
+             a_deg:st.a.toFixed(2), b_deg:B_DEG, response: dir<0?'streaming':'bouncing', reversal:rev,
+             t_ms:Math.round(now-runT0), refresh_hz:hz.toFixed(1), px_per_deg:pxDeg().toFixed(1), wall_time:new Date().toISOString() });
+  if (st.proc === 'stair') {
+    if (reversals >= MAX_REV) { done = true; running = false; } else setA(st.a + dir*STEP);
+  }
+  status();
+}
+$('start').addEventListener('click', startRun);
+$('stream').addEventListener('click', ()=>judge(-1));
+$('bounce').addEventListener('click', ()=>judge(+1));
+document.addEventListener('keydown', e=>{
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target && e.target.tagName === 'INPUT') return;
+  const k = e.key.toLowerCase();
+  if (k==='s') { e.preventDefault(); judge(-1); } else if (k==='b') { e.preventDefault(); judge(+1); }
 });
-document.getElementById('export').addEventListener('click', ()=>{
+$('export').addEventListener('click', ()=>{
   if(!log.length) return;
   const cols=Object.keys(log[0]);
   const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
@@ -198,17 +278,24 @@ document.getElementById('export').addEventListener('click', ()=>{
   a.download='ramachandran_anstis_1983.csv'; a.click();
 });
 
-// ---- experimenter controls ----
 function seg(id, fn){
   document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
     document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on'); fn(b.dataset.v);
+    b.classList.add('on'); fn(b.dataset.v); stopRun(); updateTiming();
   }));
 }
 seg('mode', v=>st.mode=v);
 seg('rate', v=>st.rate=+v);
-document.getElementById('a').addEventListener('input', e=>{ setA(+e.target.value); });
-document.getElementById('b').addEventListener('input', e=>{ st.bDeg=+e.target.value; document.getElementById('bLbl').textContent=st.bDeg.toFixed(1); });
+seg('proc', v=>st.proc=v);
+
+$('cardw').value = 0; $('vd').value = vd;
+function initCal(){ loadDisp(); $('cardw').value = Math.round(CARD_CM*ppcm); $('vd').value = vd; }
+$('cardw').oninput = ()=>{ ppcm = (+$('cardw').value)/CARD_CM; saveDisp(); layout(); };
+$('vd').oninput = ()=>{ const v = +$('vd').value; if (v>=20 && v<=400) { vd = v; saveDisp(); layout(); } };
+$('calreset').onclick = ()=>{ ppcm = 37.8; vd = 100; $('cardw').value = Math.round(CARD_CM*ppcm); $('vd').value = vd; saveDisp(); layout(); };
+
+initCal(); layout(); updateTiming(); status(); measureRefresh();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>

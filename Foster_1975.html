@@ -3,281 +3,217 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Foster (1975) — Preferred paths in SO(3): probe technique</title>
+<title>Foster (1975) — probe matching display</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
-         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+         display:flex; flex-direction:column; align-items:center; padding:16px 16px 40px; }
   .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
-  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
-  .stage { display:flex; gap:20px; align-items:center; }
-  canvas { background:#000; display:block; border-radius:3px; }
-  .arrlbl { font-size:10px; color:#555; text-align:center; margin-top:4px; }
-
-  .participant { margin-top:12px; width:720px; max-width:96vw; }
+  .sub { font-size:11px; color:#777; margin:2px 0 12px; max-width:760px; text-align:center; line-height:1.5; }
+  canvas { display:block; border-radius:3px; background:#000; }
+  .cw { max-width:100%; overflow-x:auto; }
+  input[type=number]{ width:70px; background:#15151a; color:#ccc; border:1px solid #33333b; border-radius:3px; padding:2px 4px; }
+  .box { margin-top:14px; width:720px; max-width:100%; }
   .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
-  .prow { margin-top:10px; display:flex; gap:22px; align-items:flex-end; justify-content:center; flex-wrap:wrap; font-size:12px; color:#9a9a9a; }
+  .prow { margin-top:10px; display:flex; gap:22px; justify-content:center; flex-wrap:wrap; font-size:12px; color:#9a9a9a; }
   .knob { display:flex; flex-direction:column; gap:5px; align-items:center; }
-  .knob input[type=range] { width:200px; accent-color:#8a93b8; }
-
-  .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .knob input { width:240px; max-width:80vw; accent-color:#8a93b8; }
+  .panel { margin-top:20px; border-top:1px solid #2a2a30; padding-top:14px; }
   .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
-  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
-  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
-  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
-  .seg { display:flex; gap:5px; flex-wrap:wrap; }
-  .ctrl input[type=range] { width:150px; accent-color:#8a93b8; }
-  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
-           border-radius:4px; cursor:pointer; font-size:12px; }
-  button:hover { background:#26262e; }
-  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
-  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
-  .readouts b { color:#cfcfcf; font-weight:600; }
-  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+  .grid { display:flex; gap:14px 24px; flex-wrap:wrap; align-items:flex-end; font-size:12px; color:#9a9a9a; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+  button { background:#1a1a20; color:#bbb; border:1px solid #33333b; border-radius:4px; padding:4px 10px; font-size:12px; cursor:pointer; }
+  button.on { border-color:#6a7bd0; color:#fff; }
+  .meta { font-size:11px; color:#8a8a92; line-height:1.55; }
+  .meta table { border-collapse:collapse; width:100%; margin-top:6px; }
+  .meta td, .meta th { border-top:1px solid #23232a; padding:4px 6px; text-align:left; vertical-align:top; }
+  .meta th { color:#aaa; font-weight:600; }
+  .asm { color:#d9a95b; }
 </style>
 </head>
 <body>
-  <a class="back" href="index.html">← back to experiments</a>
-  <h1>Foster (1975) — preferred paths in the rotation group SO(3)</h1>
-  <div class="sub">A bar undergoes apparent motion (rotate + translate) between A and σ(A). In the upper array a probe bar B is
-    inserted; the observer places it so the upper motion A→B→σ(A) matches the lower reference motion A→σ(A).</div>
+<a class="back" href="index.html">← back to experiments</a>
+<h1>Foster (1975) — probe matching of two apparent-motion arrays</h1>
+<div class="sub">Two stacked arrays on a bright 11° field. Lower: A and σ(A). Upper: A, probe B and σ(A). Frame-counted timing at the measured refresh rate; drawn in degrees from the Display setup below.</div>
 
-  <canvas id="c" width="640" height="580"></canvas>
+<div class="cw"><canvas id="c"></canvas></div>
+<div id="hz" class="sub" style="margin-top:6px"></div>
 
-  <div class="participant">
-    <div class="instr">
-      Fixate an array centre. Adjust the <b>probe bar</b>'s vertical position and orientation until the motion in the
-      <b>upper</b> array looks identical (as a path) to the motion in the <b>lower</b> array. Then record.
-    </div>
-    <div class="prow">
-      <div class="ctrl">&nbsp;<button id="probeBtn" class="on">Probe: ON</button></div>
-      <div class="knob"><span>Probe vertical position</span>
-        <input type="range" id="p1" min="-2" max="2" step="0.02" value="0"></div>
-      <div class="knob"><span>Probe orientation</span>
-        <input type="range" id="p3" min="-90" max="105" step="1" value="30"></div>
-      <div class="ctrl">&nbsp;<button id="record">Record placement</button></div>
-      <div class="ctrl">&nbsp;<button id="export">Export CSV</button></div>
+<div class="box">
+  <div class="instr">Look (monocularly) at the centre of the <b id="fixTxt">top</b> array (the midpoint between its A and σ(A) bars). Adjust the probe's vertical position and orientation until the motion of the top array is visually indistinguishable, as a set of points (ignoring timing), from the motion of the bottom array. No time limit.</div>
+  <div class="prow">
+    <div class="knob"><span>Probe vertical position θ₁</span><input type="range" id="p1" min="-0.03" max="0.03" step="0.0002" value="0"></div>
+    <div class="knob"><span>Probe orientation θ₃</span><input type="range" id="p3" min="-1.5708" max="1.5708" step="0.005" value="0"></div>
+  </div>
+  <div class="prow">
+    <button id="match" disabled>Match → next</button>
+    <span id="tinfo">Free mode (no block running)</span>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter</h2>
+    <div class="grid">
+      <div>Stimulus pair (φ constants from Fig. 5 insets)
+        <div class="seg" id="pairs"></div></div>
+      <div>Probe horizontal position θ₂(ρ), set by experimenter (free mode)
+        <div class="seg" id="levels"></div></div>
+      <div>Fixated array
+        <div class="seg" id="fix"><button data-v="top" class="on">top</button><button data-v="bottom">bottom</button></div></div>
+      <div>Visible time per slot (assumption)
+        <div class="seg" id="onms"></div></div>
+      <div><label><input type="checkbox" id="mark"> show fixation mark (not in paper)</label></div>
+      <div><button id="blk">Start block (4 out-and-back sweeps)</button></div>
     </div>
   </div>
 
   <div class="panel">
-    <h2>Experimenter parameters</h2>
+    <h2>Display setup</h2>
     <div class="grid">
-      <div class="ctrl" style="flex-basis:100%">Stimulus pair preset (Foster Fig 5)
-        <div class="seg" id="preset">
-          <button data-k="a">a</button><button data-k="b">b</button><button data-k="c">c</button>
-          <button data-k="d">d</button><button data-k="e">e</button><button data-k="f">f</button>
-          <button data-k="g">g</button><button data-k="h">h</button>
-          <span style="color:#555; align-self:center; margin-left:6px">σ(A) derived from the panel's φ₁,φ₂,φ₃</span>
-        </div>
-      </div>
-      <div class="ctrl">Reference array
-        <div class="seg" id="ref"><button data-v="on">show</button><button data-v="off" class="on">hide</button></div>
-      </div>
-      <div class="ctrl">σ(A) rotation θ₃σ: <span class="v" id="t3sLbl">60</span>°
-        <input type="range" id="t3s" min="-90" max="90" step="5" value="60"></div>
-      <div class="ctrl">σ(A) horizontal θ₂σ: <span class="v" id="t2sLbl">-1.00</span>°
-        <input type="range" id="t2s" min="-1.5" max="1.5" step="0.05" value="-1.0"></div>
-      <div class="ctrl">σ(A) vertical θ₁σ: <span class="v" id="t1sLbl">0.80</span>°
-        <input type="range" id="t1s" min="-1.5" max="1.5" step="0.05" value="0.8"></div>
-      <div class="ctrl">Probe position θ₂ρ: <span class="v" id="fracLbl">0.50</span>·θ₂σ
-        <input type="range" id="frac" min="0" max="1" step="0.05" value="0.5"></div>
-      <div class="ctrl">Bar length: <span class="v" id="barLbl">0.90</span>°
-        <input type="range" id="bar" min="0.5" max="1.5" step="0.05" value="0.9"></div>
-      <div class="ctrl">Array separation: <span class="v" id="sepLbl">2.70</span>°
-        <input type="range" id="sep" min="1.5" max="4" step="0.1" value="2.7"></div>
-      <div class="ctrl">Stimulus cycle: <span class="v" id="cycLbl">2000</span> ms
-        <input type="range" id="cyc" min="1000" max="3000" step="100" value="2000"></div>
-      <div class="ctrl">Flash duration: <span class="v" id="durLbl">300</span> ms
-        <input type="range" id="dur" min="100" max="600" step="20" value="300"></div>
-      <div class="ctrl">Fixation array
-        <div class="seg" id="fix"><button data-v="top" class="on">top</button><button data-v="bottom">bottom</button></div>
-      </div>
-    </div>
-
-    <div class="readouts">
-      <div>Probe θ₂ρ: <b id="t2rLbl">0.00°</b></div>
-      <div>Probe setting (θ₁ρ, θ₃ρ): <b id="setLbl">0.00°, 30°</b></div>
-      <div>σ(A) = (θ₁σ, θ₂σ, θ₃σ): <b id="sigLbl">—</b></div>
-      <div>Trials logged: <b id="nLog">0</b></div>
+      <div>Calibrate: resize the bar to a credit card's width (8.56 cm)
+        <div><input type="range" id="cal" min="150" max="700" step="1" style="width:240px"></div>
+        <div style="margin-top:4px"><div id="calbar" style="height:14px;background:#8a93b8;border-radius:2px"></div></div></div>
+      <div>px per cm <input type="number" id="ppcm" step="0.1" min="10" max="200"></div>
+      <div>Viewing distance (cm) <input type="number" id="dist" step="1" min="10" max="300"> <span class="asm">57 cm assumed; paper gives none (Maxwellian view)</span></div>
+      <div id="ppd" class="meta"></div>
     </div>
   </div>
 
-  <div class="meta">
-    Faithful reconstruction of the Section 3 experiment in Foster, D. H. (1975), <i>Biol. Cybernetics</i> 18, 81–89. Two vertically
-    stacked arrays (corresponding points 2.7° apart; bars 0.9° long) shown in Maxwellian view. <b>Lower</b> array = reference beta motion
-    A ⇄ σ(A); <b>upper</b> array = A → B → σ(A) with an adjustable probe bar B. The observer fixes the probe's vertical position (θ₁ρ)
-    and orientation (θ₃ρ) — the experimenter fixes its horizontal position (θ₂ρ, swept 0→θ₂σ) — so the upper path matches the lower.
-    Coordinates are SO(3) rotations: θ₂ about the vertical axis (horizontal offset), θ₁ about the horizontal axis (vertical offset),
-    θ₃ about the line of sight (in-plane orientation, the large one). A is a vertical bar; σ(A) is displaced + rotated. The smooth
-    beta-motion path is the observer's <b>percept</b> and is deliberately <b>not drawn</b> — only the discrete flashes and the probe appear.
-    Stimulus cycle 2.0 s. (Scheme 1 / Scheme 2 predicted probe placements to be added as an experimenter readout.)
+  <div class="panel meta">
+    <h2>Methods (Foster 1975, Biol. Cybernetics 18, 81–89)</h2>
+    <table>
+      <tr><th>Parameter</th><th>Value</th><th>Source</th></tr>
+      <tr><td>Arrays</td><td>Two, stacked; corresponding points 2.7° apart. Lower: A, σ(A). Upper: A, σ(A), probe B</td><td>§3.1, Fig. 1 (p. 84)</td></tr>
+      <tr><td>Bar length</td><td>0.9° (long side). Initial object A: small bar, length 0.015 on the unit sphere (0.86°)</td><td>§3.1 p. 84; §2.2 p. 83</td></tr>
+      <tr><td>Bar width</td><td class="asm">not given in the text; drawn 0.2° (outer width measured from the to-scale Fig. 1: about 0.2°, 0.22° including the drawn outline, with the 0.9° side = 127 px at 600 dpi), hard-edged</td><td>Fig. 1 (measured)</td></tr>
+      <tr><td>Initial object A</td><td>vertical bar centred at (0,0,1) of the unit sphere</td><td>§2.2 p. 83</td></tr>
+      <tr><td>σ(A)</td><td>Rotation with coordinates (θ₁,θ₂,θ₃); |θ₃|&lt;π/2, |θ₁|,|θ₂|&lt;0.02 rad. Seven A/σ(A) pairs were used; presets a–h use the φ constants of the Fig. 5 insets (c and d are two observers' identical pair), converted to endpoint coordinates by Eq. 3 at t=1. <span class="asm">Sign of θ₁ follows the plotted endpoints of Fig. 5 (opposite to Eq. 3 as printed).</span></td><td>§2.2–2.3, Fig. 5 (p. 85–86)</td></tr>
+      <tr><td>Screen convention</td><td class="asm">Assumed: +θ₁ shifts down (the sign of Eq. 3 θ₁ is flipped, following the plotted endpoints), +θ₂ shifts σ(A) to the RIGHT, +θ₃ tilts the top of the bar to the right. Chosen to reproduce the to-scale Fig. 1, where σ(A) sits about 0.57° left of A, about 0.95° up, tilted about 42° as "/"; pair c/d (φ = .0154, −.0156, .7330) gives θ₂ = −0.0088 rad (0.5°), flipped θ₁ = −0.0195 rad (1.1° up), θ₃ = +0.733 rad (42°). The Fig. 5 pictograms b–e agree on θ₂; pictograms a and f disagree, and pictogram tilts do not follow the sign of φ₃. This is an inference, not stated in the paper. Displacement = θ rad × 57.3°/rad.</td><td>assumption (Fig. 1)</td></tr>
+      <tr><td>Fig. 1 measurements</td><td>Measured at 600 dpi (141 px/deg): vertical A-to-A separation 2.6° (text: 2.7°, used); example probe B about 0.36° left and 0.4° up of A, tilted about 30° ("/"), an example only, not tied to any preset.</td><td>Fig. 1 (measured)</td></tr>
+      <tr><td>Array centre</td><td>Subject fixates the centre of the array. <span class="asm">Drawn at the midpoint of the A and σ(A) bars (Fig. 1 shows A at the lower right with σ(A) up-left); the mark, if shown, sits there.</span> Fig. 1 is "an example of the full stimulus field" and is not tied to a Fig. 5 pair; its offsets are larger than those of the presets.</td><td>§3.2, Fig. 1</td></tr>
+      <tr><td>Background</td><td>Uniform white field, 11° diameter, 2400 td; bars 4800 td. <span class="asm">Drawn with bar luminance 2× background assuming display gamma 2.2 (#bcbcbc disc, #fff bars); black surround outside the disc is an assumption; absolute td cannot be reproduced.</span></td><td>§3.1 p. 84</td></tr>
+      <tr><td>Apparatus / viewing</td><td>Four-channel Maxwellian view, 2 mm artificial pupil completely filled, 12 V 100 W quartz-iodine lamp (±0.25 %), 3200 K, dental bite-bar, monocular. <span class="asm">Not reproducible on a screen.</span></td><td>§3.1–3.2</td></tr>
+      <tr><td>Cycle</td><td>2.0 s period; order of Fig. 4 (lower: A, σ(A), –, σ(A); upper: A, –, B, σ(A))</td><td>§3.2, Fig. 4</td></tr>
+      <tr><td>Slot durations / ISI</td><td class="asm">not given. 4 equal slots of 500 ms (assumption; reading Fig. 4 as four slots, labels 1–5 with 5 = 1, is an interpretation). The rotating sector probably gave shorter exposures with gaps; "visible time per slot" is a flagged control (500/250/100 ms, default 500), the rest of the slot blank.</td><td>assumption</td></tr>
+      <tr><td>Timing implementation</td><td>Refresh rate measured at load (median of ~60 rAF intervals); each duration converted to whole frames and scheduled by frame counting; realised ms shown above.</td><td>harness</td></tr>
+      <tr><td>Probe</td><td>Bar B = ρ(A). θ₂(ρ) fixed by experimenter, 0 ≤ θ₂(ρ) ≤ θ₂(σ); subject adjusts θ₁(ρ) and θ₃(ρ). <span class="asm">Number of θ₂ levels not given (5 used, equally spaced); initial probe setting not given (θ₁=θ₃=0 at each trial start); slider ranges ±0.03 rad (θ₁), ±π/2 (θ₃) and steps are assumptions; at 0 % and 100 % θ₁, θ₃ are left free.</span></td><td>§3.2</td></tr>
+      <tr><td>Trial structure</td><td>Experimenter sets θ₂, subject adjusts until match, then θ₂ is reset. Probe tracked from one end of the display to the other and back, 4 times; 8 determinations of θ₁, θ₃ at each θ₂. Block here: 4 sweeps × (5 levels out + 5 back) = 40 trials, 8 per level; responses are kept internally only.</td><td>§3.2 p. 85</td></tr>
+      <tr><td>Observers</td><td>Two: FMF (myopic, 26 y, naive) and DHF (author, myopic, 28 y), naked eye, stimuli within accommodation range. Only pairs for which rigid-motion beta could be induced were used.</td><td>§3.2</td></tr>
+    </table>
   </div>
+</div>
 
 <script>
-const c = document.getElementById('c');
-const ctx = c.getContext('2d');
-const W = c.width, H = c.height;
-const PX = 100;                 // px per degree
-const CXX = W/2;
-
-const st = {
-  t3s:60, t2s:-1.0, t1s:0.8, frac:0.5,
-  bar:0.9, sep:2.7, cyc:2000, dur:300, fix:'top',
-  refShown:false,     // lower reference array visible?
-  probeShown:true,    // probe bar visible in the test array?
-  p1:0,  // probe vertical (deg)
-  p3:30  // probe orientation (deg)
-};
-
-// Foster Fig 5 a–h: the tested σ(A) via scheme-2 constants φ1,φ2,φ3 (radians)
-const PHI = {
-  a:[ 0.0005, 0.0140,-0.7068], b:[ 0.0128,-0.0102,-0.7854],
-  c:[ 0.0154,-0.0156, 0.7330], d:[ 0.0154,-0.0156, 0.7330],
-  e:[-0.0146,-0.0091, 0.7068], f:[ 0.0052, 0.0164,-0.7068],
-  g:[ 0.0187,-0.0039,-0.7330], h:[ 0.0222,-0.0022,-0.7330]
-};
-// endpoint σ(A) coords (deg) from φ, using scheme-2 curves at t=1
-function sigmaFromPhi(p1, p2, p3) {
-  const s = Math.sin(p3), cm = 1 - Math.cos(p3), D = 180/Math.PI;
-  return {
-    t1: ((p1/p3)*s  - (p2/p3)*cm) * D,
-    t2: ((p1/p3)*cm + (p2/p3)*s ) * D,
-    t3: p3 * D
-  };
+const c=document.getElementById('c'), ctx=c.getContext('2d');
+const RAD=180/Math.PI;
+const PHI={a:[.0005,.0140,-.7068],b:[.0128,-.0102,-.7854],c:[.0154,-.0156,.7330],d:[.0154,-.0156,.7330],
+           e:[-.0146,-.0091,.7068],f:[.0052,.0164,-.7068],g:[.0187,-.0039,-.7330],h:[.0222,-.0022,-.7330]};
+function sigma(k){ const [p1,p2,p3]=PHI[k], s=Math.sin(p3), cm=1-Math.cos(p3);
+  return { t1: -((p1/p3)*s-(p2/p3)*cm), t2:(p1/p3)*cm+(p2/p3)*s, t3:p3 }; }
+const st={pair:'c', lev:2, fix:'top', mark:false, p1:0, p3:0, onms:500};
+const FR=[0,.25,.5,.75,1];
+const SEP=2.7, BARL=0.9, BARW=0.2, FIELD=11, VIEW=12;
+// ---- display setup (shared key am_display)
+let disp={ppcm:37.8, dist:57};
+try{ const d=JSON.parse(localStorage.getItem('am_display')||'null'); if(d&&d.ppcm>0&&d.dist>0) disp={ppcm:+d.ppcm,dist:+d.dist}; }catch(e){}
+let PPD=1;
+function saveDisp(){ try{ localStorage.setItem('am_display',JSON.stringify(disp)); }catch(e){} }
+function applyDisp(){
+  PPD=disp.ppcm*disp.dist*Math.tan(Math.PI/180);
+  const dpr=window.devicePixelRatio||1, S=Math.round(VIEW*PPD);
+  c.style.width=S+'px'; c.style.height=S+'px'; c.width=Math.round(S*dpr); c.height=Math.round(S*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  document.getElementById('ppd').textContent=PPD.toFixed(1)+' px/deg; 11° field = '+(FIELD*PPD).toFixed(0)+' px = '+(FIELD*PPD/disp.ppcm).toFixed(1)+' cm; bar '+BARL+'° = '+(BARL*PPD).toFixed(0)+' px';
+  document.getElementById('ppcm').value=disp.ppcm.toFixed(1); document.getElementById('dist').value=disp.dist;
+  document.getElementById('cal').value=Math.round(disp.ppcm*8.56); document.getElementById('calbar').style.width=(disp.ppcm*8.56)+'px';
 }
+document.getElementById('cal').oninput=e=>{ disp.ppcm=+e.target.value/8.56; saveDisp(); applyDisp(); };
+document.getElementById('ppcm').onchange=e=>{ const v=+e.target.value; if(v>0){disp.ppcm=v; saveDisp(); applyDisp();} };
+document.getElementById('dist').onchange=e=>{ const v=+e.target.value; if(v>0){disp.dist=v; saveDisp(); applyDisp();} };
+applyDisp();
 
-// ---- draw a bar: centre (cx,cy), in-plane angle from vertical (deg, +CCW) ----
-function drawBar(cx, cy, angDeg, dim) {
-  const L = st.bar*PX, w = Math.max(5, L*0.16);
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(-angDeg*Math.PI/180);
-  ctx.fillStyle = dim ? 'rgba(150,170,230,0.5)' : '#eef0ff';
-  const r = w/2;
-  ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(-w/2, -L/2, w, L, r);
-  else ctx.rect(-w/2, -L/2, w, L);
-  ctx.fill();
-  ctx.restore();
+// ---- frame timing
+let HZ=60, SLOT=30, ON=30, ready=false;
+function ms(f){ return f*1000/HZ; }
+function setTiming(){
+  SLOT=Math.max(1,Math.round(500*HZ/1000)); ON=Math.min(SLOT,Math.max(1,Math.round(st.onms*HZ/1000)));
+  const frac=[500,st.onms].map(x=>Math.abs(x*HZ/1000-Math.round(x*HZ/1000))>0.05);
+  document.getElementById('hz').textContent='Display: '+HZ.toFixed(1)+' Hz (median of 60 frames). Slot '+SLOT+' frames = '+ms(SLOT).toFixed(1)+' ms; visible '+ON+' frames = '+ms(ON).toFixed(1)+' ms; cycle '+(4*SLOT)+' frames = '+ms(4*SLOT).toFixed(0)+' ms (paper 2000 ms).'
+   +(frac.some(x=>x)?' Warning: a duration is not a whole number of frames at this rate.':'');
 }
-function fixMark(cx, cy, active) {
-  ctx.strokeStyle = active ? '#6a7bd0' : '#333';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(cx-4,cy); ctx.lineTo(cx+4,cy);
-  ctx.moveTo(cx,cy-4); ctx.lineTo(cx,cy+4); ctx.stroke();
-}
-
-// ---- position of an object given (theta1 vertical deg, theta2 horizontal deg) about an array centre ----
-function pos(centreY, t2deg, t1deg) {
-  return { x: CXX + t2deg*PX, y: centreY - t1deg*PX };
-}
-
-// ---- which slot is active: 0 = A, 1 = B (probe), 2 = σ(A) ----
-function slotNow() {
-  const T = st.cyc, slot = T/3;
-  const t = clock % T;
-  const idx = Math.floor(t/slot);           // 0,1,2
-  const on = (t - idx*slot) < st.dur;       // flash on at slot start
-  return { idx, on };
-}
-
-let clock = 0, lastTs = 0;
-function drawFrame() {
-  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-  // single test array (centred) unless the reference array is also shown
-  const testY = st.refShown ? 160 : H/2;
-  const refY  = testY + st.sep*PX;
-  const t2r = st.frac * st.t2s;             // probe horizontal position
-  const { idx, on } = slotNow();
-
-  // ---- TEST array: A (slot 0) → B (slot 1, if probe on) → σ(A) (slot 2) ----
-  if (on && idx===0) { const p=pos(testY,0,0);           drawBar(p.x,p.y,0,false); }
-  if (on && idx===1 && st.probeShown) { const p=pos(testY,t2r,st.p1); drawBar(p.x,p.y,st.p3,false); }
-  if (on && idx===2) { const p=pos(testY,st.t2s,st.t1s); drawBar(p.x,p.y,st.t3s,false); }
-  fixMark(CXX, testY, st.fix==='top' || !st.refShown);
-  ctx.fillStyle='#444'; ctx.font='10px monospace';
-  if (st.refShown) ctx.fillText('test (A → B → σ(A))', CXX+120, testY-90);
-
-  // ---- REFERENCE array (optional): A (slot 0) ⇄ σ(A) (slot 2), no probe ----
-  if (st.refShown) {
-    if (on && idx===0) { const p=pos(refY,0,0);           drawBar(p.x,p.y,0,false); }
-    if (on && idx===2) { const p=pos(refY,st.t2s,st.t1s); drawBar(p.x,p.y,st.t3s,false); }
-    fixMark(CXX, refY, st.fix==='bottom');
-    ctx.fillStyle='#444'; ctx.fillText('reference (A → σ(A))', CXX+120, refY-90);
+// ---- drawing
+function bar(cx,cy,t3){ ctx.save(); ctx.translate(cx,cy); ctx.rotate(t3); ctx.fillStyle='#fff';
+  ctx.fillRect(-BARW*PPD/2,-BARL*PPD/2,BARW*PPD,BARL*PPD); ctx.restore(); }
+function S_(){ return sigma(st.pair); }
+// array centre = midpoint of A (0,0) and sigma(A); positions relative to A
+function place(cy,t1,t2){ const s=S_(); const mx=s.t2*RAD*PPD/2, my=s.t1*RAD*PPD/2;
+  return {x:VIEW*PPD/2 + (t2*RAD*PPD) - mx, y:cy + (t1*RAD*PPD) - my}; }
+const UP=['A',null,'B','S'], LO=['A','S',null,'S'];
+let frame=0;
+function curLevel(){ return blk? blk.seq[blk.i] : st.lev; }
+function draw(){
+  const Wd=VIEW*PPD, cx0=Wd/2, cyTop=Wd/2-SEP/2*PPD, cyBot=Wd/2+SEP/2*PPD;
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,Wd,Wd);
+  ctx.fillStyle='#bcbcbc'; ctx.beginPath(); ctx.arc(cx0,Wd/2,FIELD/2*PPD,0,7); ctx.fill();
+  const ph=Math.floor((frame%(4*SLOT))/SLOT), inSlot=frame%SLOT, vis=inSlot<ON;
+  const s=S_(), t2r=FR[curLevel()]*s.t2;
+  function show(cy,what){
+    if(!vis) return;
+    if(what==='A'){ const p=place(cy,0,0); bar(p.x,p.y,0); }
+    else if(what==='S'){ const p=place(cy,s.t1,s.t2); bar(p.x,p.y,s.t3); }
+    else if(what==='B'){ const p=place(cy,st.p1,t2r); bar(p.x,p.y,st.p3); }
   }
-
-  // readouts
-  document.getElementById('t2rLbl').textContent = t2r.toFixed(2)+'°';
-  document.getElementById('setLbl').textContent = st.p1.toFixed(2)+'°, '+st.p3+'°';
-  document.getElementById('sigLbl').textContent = st.t1s.toFixed(2)+'°, '+st.t2s.toFixed(2)+'°, '+st.t3s+'°';
+  show(cyTop,UP[ph]); show(cyBot,LO[ph]);
+  if(st.mark){ const cy=st.fix==='top'?cyTop:cyBot; ctx.strokeStyle='#d33'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(cx0-6,cy); ctx.lineTo(cx0+6,cy); ctx.moveTo(cx0,cy-6); ctx.lineTo(cx0,cy+6); ctx.stroke(); }
 }
-function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
+// ---- main loop: measure refresh first, then count frames
+let lastTs=0, ivs=[];
+function loop(ts){
+  if(!ready){
+    if(lastTs) ivs.push(ts-lastTs); lastTs=ts;
+    if(ivs.length>=60){ const a=ivs.slice().sort((x,y)=>x-y), m=a[a.length>>1]; HZ=1000/m; ready=true; setTiming(); frame=0; }
+    else document.getElementById('hz').textContent='Measuring display refresh… '+ivs.length+'/60';
+  } else { frame++; draw(); }
+  requestAnimationFrame(loop);
+}
 requestAnimationFrame(loop);
+document.addEventListener('visibilitychange',()=>{ frame=0; });
 
-// ---- controls ----
-function seg(id, fn){
-  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
-    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on'); fn(b.dataset.v);
-  }));
-}
-function rng(id, lblId, fmt, fn){
-  const el=document.getElementById(id), lbl=document.getElementById(lblId);
-  el.addEventListener('input',()=>{ const v=+el.value; if(lbl) lbl.textContent=fmt(v); fn(v); });
-}
-seg('fix', v=>st.fix=v);
-seg('ref', v=>st.refShown = v==='on');
-document.getElementById('probeBtn').addEventListener('click', e=>{
-  st.probeShown = !st.probeShown;
-  e.target.textContent = st.probeShown ? 'Probe: ON' : 'Probe: OFF';
-  e.target.classList.toggle('on', st.probeShown);
-});
+// ---- controls
+const pe=document.getElementById('pairs');
+'abcdefgh'.split('').forEach(k=>{ const b=document.createElement('button'); b.textContent=k; if(k==='c')b.className='on';
+  b.onclick=()=>{ if(blk)return; st.pair=k; [...pe.children].forEach(x=>x.classList.toggle('on',x===b)); }; pe.appendChild(b); });
+const le=document.getElementById('levels');
+FR.forEach((f,i)=>{ const b=document.createElement('button'); b.textContent=(f*100)+'% of θ₂(σ)'; if(i===2)b.className='on';
+  b.onclick=()=>{ if(blk)return; st.lev=i; [...le.children].forEach(x=>x.classList.toggle('on',x===b)); }; le.appendChild(b); });
+const oe=document.getElementById('onms');
+[500,250,100].forEach(v=>{ const b=document.createElement('button'); b.textContent=v+' ms'; if(v===500)b.className='on';
+  b.onclick=()=>{ st.onms=v; [...oe.children].forEach(x=>x.classList.toggle('on',x===b)); if(ready)setTiming(); }; oe.appendChild(b); });
+document.querySelectorAll('#fix button').forEach(b=>b.onclick=()=>{ st.fix=b.dataset.v;
+  document.querySelectorAll('#fix button').forEach(x=>x.classList.toggle('on',x===b)); document.getElementById('fixTxt').textContent=st.fix; });
+document.getElementById('mark').onchange=e=>st.mark=e.target.checked;
+const P1=document.getElementById('p1'), P3=document.getElementById('p3');
+P1.oninput=e=>st.p1=+e.target.value; P3.oninput=e=>st.p3=+e.target.value;
+function resetProbe(){ st.p1=0; st.p3=0; P1.value=0; P3.value=0; }
 
-// Fig 5 presets: set σ(A) from the panel's φ constants
-function setSlider(id, lblId, val, fmt){
-  const el=document.getElementById(id); el.value=val;
-  document.getElementById(lblId).textContent = fmt(val);
-}
-document.querySelectorAll('#preset button').forEach(b=>b.addEventListener('click', ()=>{
-  document.querySelectorAll('#preset button').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');
-  const [p1,p2,p3] = PHI[b.dataset.k];
-  const s = sigmaFromPhi(p1,p2,p3);
-  st.t3s = Math.round(s.t3); st.t2s = +s.t2.toFixed(2); st.t1s = +s.t1.toFixed(2);
-  setSlider('t3s','t3sLbl', st.t3s, v=>v);
-  setSlider('t2s','t2sLbl', st.t2s, v=>(+v).toFixed(2));
-  setSlider('t1s','t1sLbl', st.t1s, v=>(+v).toFixed(2));
-}));
-
-rng('t3s','t3sLbl', v=>v, v=>st.t3s=v);
-rng('t2s','t2sLbl', v=>v.toFixed(2), v=>st.t2s=v);
-rng('t1s','t1sLbl', v=>v.toFixed(2), v=>st.t1s=v);
-rng('frac','fracLbl', v=>v.toFixed(2), v=>st.frac=v);
-rng('bar','barLbl', v=>v.toFixed(2), v=>st.bar=v);
-rng('sep','sepLbl', v=>v.toFixed(2), v=>st.sep=v);
-rng('cyc','cycLbl', v=>v, v=>st.cyc=v);
-rng('dur','durLbl', v=>v, v=>st.dur=v);
-document.getElementById('p1').addEventListener('input', e=>st.p1=+e.target.value);
-document.getElementById('p3').addEventListener('input', e=>st.p3=+e.target.value);
-
-// ---- logging ----
-const log=[];
-document.getElementById('record').addEventListener('click', ()=>{
-  log.push({ theta3_sigma:st.t3s, theta2_sigma:+st.t2s.toFixed(3), theta1_sigma:+st.t1s.toFixed(3),
-             theta2_probe:+(st.frac*st.t2s).toFixed(3), theta1_probe:+st.p1.toFixed(3), theta3_probe:st.p3 });
-  document.getElementById('nLog').textContent = log.length;
-});
-document.getElementById('export').addEventListener('click', ()=>{
-  if(!log.length) return;
-  const cols=Object.keys(log[0]);
-  const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download='foster_1975_probe.csv'; a.click();
-});
+// ---- block: 4 sweeps, each out (0..4) and back (4..0) = 10 trials; 40 trials, 8 per level
+let blk=null; const data=[];   // responses kept internally only
+function seqBuild(){ const q=[]; for(let s=0;s<4;s++){ for(let i=0;i<5;i++)q.push(i); for(let i=4;i>=0;i--)q.push(i);} return q; }
+function info(){ document.getElementById('tinfo').textContent= blk? 'Trial '+(blk.i+1)+' of '+blk.seq.length+' — sweep '+(Math.floor(blk.i/10)+1)+' of 4' : 'Free mode (no block running)'; }
+document.getElementById('blk').onclick=function(){
+  if(blk){ blk=null; this.textContent='Start block (4 out-and-back sweeps)'; document.getElementById('match').disabled=true; info(); return; }
+  blk={seq:seqBuild(),i:0}; resetProbe(); this.textContent='Abort block'; document.getElementById('match').disabled=false; info();
+};
+document.getElementById('match').onclick=function(){
+  if(!blk) return;
+  data.push({pair:st.pair,fix:st.fix,trial:blk.i,level:blk.seq[blk.i],t1:st.p1,t3:st.p3});
+  blk.i++; resetProbe();
+  if(blk.i>=blk.seq.length){ blk=null; document.getElementById('blk').textContent='Start block (4 out-and-back sweeps)'; this.disabled=true;
+    document.getElementById('tinfo').textContent='Block complete (responses stored internally, not shown)'; }
+  else info();
+};
 </script>
 </body>
 </html>

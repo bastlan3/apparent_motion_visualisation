@@ -2,89 +2,348 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Chatterjee, Freyd & Shiffrar (1996) — Biological Motion AM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chatterjee, Freyd & Shiffrar (1996) — Configural Processing in Apparent Biological Motion</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#c8c8c8; display:block; }
-.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
-input[type=range] { width:160px; accent-color:#888; }
-button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.meta { margin-top:16px; font-size:11px; color:#555; max-width:560px; text-align:center; line-height:1.5; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; min-height:100vh; font-family:sans-serif; color:#aaa; padding:16px; }
+a.back { align-self:flex-start; color:#888; font-size:13px; text-decoration:none; margin-bottom:12px; }
+a.back:hover { color:#ccc; }
+h1 { font-size:15px; font-weight:normal; color:#ccc; margin-bottom:10px; text-align:center; }
+canvas { background:#0a0a0a; display:block; }
+.monitor { display:flex; flex-direction:column; align-items:center; max-width:100%; overflow-x:auto; }
+.row { margin-top:12px; display:flex; align-items:center; gap:14px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+select, button, input { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; font-size:13px; }
+button { cursor:pointer; }
+input[type=number] { width:80px; padding:5px 6px; }
+button:disabled { opacity:.4; cursor:default; }
+#status { margin-top:10px; font-size:12px; color:#777; min-height:16px; text-align:center; }
+#disp { margin-top:6px; font-size:11px; color:#777; text-align:center; max-width:680px; }
+#warn { color:#c98a4a; }
+details.setup { margin-top:12px; font-size:12px; color:#999; max-width:680px; }
+details.setup summary { cursor:pointer; }
+#calbar { height:18px; width:323px; background:#555; border-radius:3px; margin:8px 0; resize:horizontal; overflow:auto; min-width:100px; max-width:100%; }
+.meta { margin-top:18px; font-size:12px; color:#777; max-width:680px; line-height:1.55; }
+.meta h2 { font-size:13px; color:#aaa; margin:12px 0 4px; font-weight:normal; }
+.meta table { border-collapse:collapse; width:100%; }
+.meta td { border-top:1px solid #2c2c2c; padding:3px 6px; vertical-align:top; }
+.meta td:first-child { color:#999; white-space:nowrap; }
+.assume { color:#b89a5a; }
 </style>
 </head>
 <body>
-<canvas id="c" width="500" height="420"></canvas>
-<div class="controls">
-  <button id="btn">Pause</button>
-  <label>SOA: <span id="lbl">300</span> ms &nbsp;<input type="range" id="soa" min="40" max="800" value="300" step="40"></label>
+<a class="back" href="index.html">&larr; back to experiments</a>
+<h1>Chatterjee, Freyd &amp; Shiffrar (1996) &mdash; Experiments 1&ndash;5: two alternating pictures</h1>
+<div class="monitor">
+<canvas id="c"></canvas>
+<div class="row" id="stopRow"><button id="stopBtn" disabled style="visibility:hidden">Stop</button></div>
 </div>
-<div class="meta">Chatterjee, Freyd &amp; Shiffrar (1996). Whole-body position changes — biomechanically plausible paths are preferred even when they are longer than the direct path.</div>
+<div class="meta" id="instr" style="margin-top:12px"><b>Instructions (paraphrase of p. 919&ndash;920, not the original wording).</b> You will see two pictures of a model in different poses flashing rapidly in alternation. You may sometimes see motion between them. Look for as long as you need to decide which path the moving part takes, then click Stop below the pictures. A &ldquo;Please Respond&rdquo; screen follows; click it, then say whether the path of motion was around or through. Click to start the next trial.</div>
+<div class="row">
+  <label>Experiment <select id="exp"></select></label>
+  <label>Condition <select id="cond"></select></label>
+  <label>Picture pair <select id="item"></select></label>
+  <label>SOA <select id="soa"></select></label>
+</div>
+<div class="row">
+  <button id="single">Single trial</button>
+  <button id="practice">Practice (4 trials)</button>
+  <button id="block">Run one block</button>
+  <button id="session">Run session</button>
+</div>
+<div id="status"></div>
+<div id="disp"></div>
+<details class="setup" open>
+<summary>Display setup</summary>
+<div>Resize the bar (drag its right edge) until it matches the width of a credit card (8.56 cm).</div>
+<div id="calbar"></div>
+<div class="row" style="justify-content:flex-start;margin-top:4px">
+  <label>Screen px/cm <input type="number" id="ppcm" step="0.1" min="10" max="200"></label>
+  <label>Viewing distance (cm) <input type="number" id="dist" step="0.5" min="20" max="300"></label>
+  <button id="calset">Use bar width</button>
+</div>
+<div id="scaleinfo" style="margin-top:6px"></div>
+</details>
+
+<div class="meta">
+<p><b>Schematic stand-ins.</b> The paper used full-colour video photographs of a human model, wooden boards/blocks and a wooden mannequin (Figs 1, 2, 4, 7, 8). The pictures here are flat drawings that reproduce only the layout: the body (or object) stays fixed and one limb (or board) appears at either side of a body part (or block). Pictures, poses, displacements and colours are assumptions. Responses are collected internally only and never shown.</p>
+
+<h2>Parameters (paper values)</h2>
+<table>
+<tr><td>Display</td><td>Macintosh 21 in. colour display, 1152 &times; 870 px, 40 &times; 30 cm screen (p. 918)</td></tr>
+<tr><td>Viewing distance</td><td>80.5 cm, chin rest (p. 918&ndash;919). Each image 8 cm high &times; 10 cm wide = 5.68&deg; &times; 7.08&deg;. Here the picture is drawn at 7.08&deg; &times; 5.68&deg; from the pixels-per-cm and viewing distance set in Display setup.</td></tr>
+<tr><td>Frames</td><td>Two pictures (A, B) of one pair alternate, each followed by a blank interval (p. 919)</td></tr>
+<tr><td>SOA</td><td>133, 266, 400, 533 ms; stimulus duration = ISI = SOA/2 = 66.5, 133, 200, 266.5 ms (p. 919). Converted to whole frames at the measured refresh rate (see the display line).</td></tr>
+<tr><td>Presentation length</td><td>Open-ended: pictures flash repeatedly until the observer clicks a stop button on the monitor just below the pictures (p. 919)</td></tr>
+<tr><td>Response</td><td>After stop: blank screen with a "Please Respond" button, then a two-alternative choice, "around" or "through" (the inanimate object or the body), then a button to start the next trial; the experimenter starts each new block (p. 919&ndash;920)</td></tr>
+<tr><td>Exp 1</td><td>16 observers. Body about body vs body about object; 7 pairs each: right foot about left foot; left foot about right ankle; right foot about left knee; right hand about face; right hand about left knee; right hand about waist; right arm about bent right knee (model seated). Object condition: matched box (or chair-backrest corner) of about the same 2D size/orientation, placed adjacent to and not occluding the body part it replaced, which stays visible (p. 918). Every pair at all 4 SOAs; 8 blocks of 7 trials (4 per condition) = 28 trials per condition; condition order counterbalanced; pairs and SOAs randomised within condition (p. 919).</td></tr>
+<tr><td>Exp 2</td><td>16 new observers. Body about body (as Exp 1) vs object about body: a wooden board cut to the limb length, same position and orientation, appearing to float without a joint, replacing the limb; 7 pairs (left foot, left ankle, left knee, face, left knee side view, waist, right knee seated); 4 blocks &times; 7 trials per condition; same SOAs (p. 921).</td></tr>
+<tr><td>Exp 3</td><td>16 new observers. Partial body: only the moving limb and the body part it moves about visible, remainder filled with black pixels; visible region 1.1&deg; &times; 1.6&deg; (as printed, taken as width &times; height). 7 stimuli &times; 4 SOAs in 2 blocks of 14 trials, random order (p. 923).</td></tr>
+<tr><td>Exp 4</td><td>16 new observers. Object about object: wooden boards/blocks cut to the length of the displaced limb and of the stationary body part, same position and orientation, nothing else; Exp 3 parameters (p. 924&ndash;925).</td></tr>
+<tr><td>Exp 5</td><td>16 new observers. Wooden artist's mannequin, enlarged to the same visual angle as the human model; same spatiotemporal parameters as Exp 3 (p. 925&ndash;926). Assumption: only the SOAs and the block structure are carried over; the 1.1&deg; &times; 1.6&deg; partial window is not applied, the full mannequin is shown (Fig. 8).</td></tr>
+<tr><td>Practice</td><td>4 picture pairs at 133 or 533 ms SOA, with inanimate objects or other models, different from test items (p. 919)</td></tr>
+</table>
+
+<h2 class="assume">Not specified in the paper (assumptions here)</h2>
+<p class="assume">Backdrop and blank-interval colour (near-black used, like the dark backdrop of the published photographs; the Exp 3 surround is black as stated), fixation point (none), refresh rate (measured at load), which picture comes first (A), number of cycles before stop (unlimited), how the around/through report was given (the paper says only that observers &ldquo;indicated&rdquo; it, p. 920, so it may have been verbal; on-screen Around/Through buttons are used here, only the next-trial button is stated to be a mouse click), the drawn arm (a two-segment limb of constant length with a bent elbow; drawing stand-in only, the poses are given in words), button labels beyond "Please Respond" and stop, the prompt text "The path of motion was" and the labels "Around"/"Through"/"Next trial", instruction wording (the paper gives only its gist), left/right position of the Around and Through buttons (not specified; randomised per trial here), the stand-in shape drawn for the occluding body part in Exp 3 (a plain block at the part's position; the moving limb is drawn as in Exp 1), stimulus drawings and limb displacement (nominally &plusmn;0.40&deg; of the occluder centre, i.e. 0.8&deg; between the two pictures; widened per pair so the limb tip lies clearly beside the occluder, never on it: tip centre = occluder half-width + tip radius + 3 units; in Exp 3 the waist/other occluders are narrowed to at most 34 units so both limb positions fit in the 1.1&deg; &times; 1.6&deg; window; the paper only says the limb is clearly on either side of the part, p. 918), side views drawn as front views, practice stimuli (four invented layouts, not the paper's), how the 28 stimuli of Exp 3&ndash;5 are split between the 2 blocks (here: each pair gets 2 random SOAs per block) and how SOAs are spread over the 4 blocks of Exp 1&ndash;2 (here: each pair meets each SOA once per condition). Exp 1&ndash;2 session: both conditions in random order, 4 blocks each; Exp 3&ndash;5 session: 2 blocks of 14. Run session starts with the 4 practice trials.</p>
+</div>
+
 <script>
-const c=document.getElementById('c');
-const ctx=c.getContext('2d');
-const CX=c.width/2, CY=c.height/2+20;
-let soaMs=300, running=true, phase='f1', phaseStart=performance.now();
 
-// Pose: {headY, torsoAngle, lArmAngle, rArmAngle, lLegAngle, rLegAngle}
-// All angles in degrees from vertical
-const POSE1 = { lArm:-40, rArm:30, lLeg:-20, rLeg:15 };  // step A
-const POSE2 = { lArm: 30, rArm:-40, lLeg: 15, rLeg:-20 }; // step B (opposite gait)
+const $=id=>document.getElementById(id);
+const c=$('c'), ctx=c.getContext('2d');
+const UW=500, UH=400, UDEG=UW/7.08;          // design units: 500x400 units = 7.08 x 5.68 deg
+const BG='#0a0a0a';
+const SOAS=[133,266,400,533];
 
-function drawFigure(pose) {
-  ctx.fillStyle='#c8c8c8'; ctx.fillRect(0,0,c.width,c.height);
-  const ox=CX, oy=CY;
-  ctx.strokeStyle='#222'; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round';
+// ---------- display setup ----------
+let ppcm=37.8, dist=80.5, K=1, PXDEG=1;
+try{const d=JSON.parse(localStorage.getItem('am_display')||'null'); if(d){ if(+d.ppcm>0)ppcm=+d.ppcm; if(+d.dist>0)dist=+d.dist; }}catch(e){}
+function saveDisp(){try{localStorage.setItem('am_display',JSON.stringify({ppcm,dist}));}catch(e){}}
+function applyScale(){
+  PXDEG=ppcm*2*dist*Math.tan(Math.PI/360);
+  const w=Math.round(7.08*PXDEG), h=Math.round(5.68*PXDEG);
+  c.width=w; c.height=h; K=w/UW;
+  ctx.setTransform(K,0,0,K,0,0);
+  $('ppcm').value=ppcm; $('dist').value=dist;
+  $('calbar').style.width=(8.56*ppcm)+'px';
+  $('scaleinfo').innerHTML=PXDEG.toFixed(1)+' px/deg; picture '+w+' &times; '+h+' px = '+(w/ppcm).toFixed(1)+' &times; '+(h/ppcm).toFixed(1)+' cm. '+
+    (dist===80.5?'Distance = paper (80.5 cm).':'Distance differs from the paper (80.5 cm); the picture is still drawn at 7.08&deg; &times; 5.68&deg;.')+' Default 37.8 px/cm is an assumption.';
+  if(state==='idle'){blank(); idleMsg();}
+}
+$('ppcm').onchange=()=>{const v=+$('ppcm').value; if(v>0){ppcm=v;saveDisp();applyScale();}};
+$('dist').onchange=()=>{const v=+$('dist').value; if(v>0){dist=v;saveDisp();applyScale();}};
+$('calset').onclick=()=>{const w=$('calbar').getBoundingClientRect().width; if(w>0){ppcm=w/8.56;saveDisp();applyScale();}};
 
-  // Head
-  ctx.fillStyle='#222';
-  ctx.beginPath(); ctx.arc(ox,oy-120,22,0,Math.PI*2); ctx.fill();
+// ---------- timing ----------
+let frameMs=1000/60, hz=60, measured=false;
+function measureRefresh(cb){
+  const ts=[]; function f(t){ts.push(t); if(ts.length<62)requestAnimationFrame(f); else{
+    const d=[]; for(let i=2;i<ts.length;i++)d.push(ts[i]-ts[i-1]); d.sort((a,b)=>a-b);
+    frameMs=d[Math.floor(d.length/2)]; hz=1000/frameMs; measured=true; cb();}}
+  requestAnimationFrame(f);
+}
+function sdFrames(soa){return Math.max(1,Math.round((soa/2)/frameMs));}
+function showDisp(){
+  const parts=[], warns=[];
+  SOAS.forEach(s=>{const sd=s/2, exact=sd/frameMs, n=sdFrames(s);
+    parts.push('SOA '+s+': SD=ISI '+n+' f = '+(n*frameMs).toFixed(1)+' ms (SOA '+(2*n*frameMs).toFixed(1)+' ms)');
+    if(Math.abs(exact-n)>0.15) warns.push(sd+' ms = '+exact.toFixed(2)+' frames');});
+  $('disp').innerHTML='Display: '+hz.toFixed(1)+' Hz measured (median of 60 frames, '+frameMs.toFixed(2)+' ms/frame). '+parts.join('; ')+'.'+
+    (warns.length?' <span id="warn">Warning: not a whole number of frames at this rate ('+warns.join(', ')+'); rounded.</span>':'');
+}
 
-  // Torso
-  ctx.beginPath(); ctx.moveTo(ox,oy-98); ctx.lineTo(ox,oy-20); ctx.stroke();
+// ---------- stimuli (design units, 500 x 400) ----------
+// o: body-part (occluder) centre; s: its size; os: board size for object-about-object
+const ITEMS=[
+ {lb:'rleg', o:[265,372], s:[40,22], os:[40,22]},
+ {lb:'lleg', o:[232,345], s:[26,26], os:[22,60]},
+ {lb:'rleg', o:[268,290], s:[34,34], os:[24,70]},
+ {lb:'rarm', o:[250,50],  s:[48,50], os:[46,50]},
+ {lb:'rarm', o:[268,290], s:[34,34], os:[24,70], bside:1},
+ {lb:'rarm', o:[250,205], s:[56,34], os:[56,34]},
+ {lb:'rarm', o:[205,300], s:[34,34], os:[24,70], seated:true}
+];
+const NAMES={
+ bodybody:['right foot about left foot','left foot about right ankle','right foot about left knee','right hand about face','right hand about left knee','right hand about waist','right arm about bent right knee (seated)'],
+ bodyobj:['right foot about a box','left foot about a box (side view)','right foot about a box at left-knee height','right hand about a small box','right hand about a corner of a chair backrest','right hand and wrist about a box at head level','right hand about a box (seated)'],
+ objbody:['board about left foot','board about left ankle','board about left knee','board about face','board about left knee (side view)','board about waist','board about right knee (seated)']
+};
+NAMES.partial=NAMES.mannequin=NAMES.bodybody;
+NAMES.objobj=NAMES.bodybody.map((n,i)=>'board about board (matched to pair '+(i+1)+')');
+const PRACTICE=[ // invented layouts, not the paper's items
+ {lb:'larm', o:[215,150], s:[30,30], os:[24,50]},
+ {lb:'rarm', o:[290,170], s:[30,30], os:[24,50]},
+ {lb:'lleg', o:[215,325], s:[26,40], os:[22,50]},
+ {lb:'rleg', o:[290,335], s:[30,30], os:[24,50]}
+];
+const GAP=28;           // nominal limb tip offset (0.40 deg); actual per-item offset from tipOff()
+function occW(item,cond){return cond==='partial'?Math.min(item.s[0],34):cond==='objobj'?item.os[0]:item.s[0];}
+function tipOff(item,cond){return occW(item,cond)/2+(item.lb.endsWith('arm')?8:9)+3;}
+const ORG={rarm:[212,100], larm:[288,100], rleg:[232,215], lleg:[268,215]};
+const WOOD='#a8814f', WOODD='#6b4f2a';
 
-  function limb(sx,sy,angle,len,segs=1) {
-    let x=sx,y=sy;
-    for(let s=0;s<segs;s++){
-      const r=angle*Math.PI/180;
-      const nx=x+Math.sin(r)*len, ny=y+Math.cos(r)*len;
-      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(nx,ny); ctx.stroke();
-      x=nx; y=ny;
-    }
-    return [x,y];
+const EXPS={
+ 1:{conds:[['bodybody','Body about body'],['bodyobj','Body about object']],bpc:4,per:7},
+ 2:{conds:[['bodybody','Body about body'],['objbody','Object about body']],bpc:4,per:7},
+ 3:{conds:[['partial','Partial body']],bpc:2,per:14},
+ 4:{conds:[['objobj','Object about object']],bpc:2,per:14},
+ 5:{conds:[['mannequin','Mannequin']],bpc:2,per:14}
+};
+const selExp=$('exp'),selCond=$('cond'),selItem=$('item'),selSoa=$('soa');
+for(const k in EXPS){selExp.add(new Option('Experiment '+k,k));}
+SOAS.forEach(s=>selSoa.add(new Option(s+' ms (SD=ISI='+(s/2)+' ms)',s)));
+function fillItems(){selItem.innerHTML='';NAMES[selCond.value].forEach((n,i)=>selItem.add(new Option((i+1)+'. '+n,i)));}
+function fillConds(){selCond.innerHTML='';EXPS[selExp.value].conds.forEach(([v,l])=>selCond.add(new Option(l,v)));fillItems();}
+selExp.onchange=fillConds; selCond.onchange=fillItems; fillConds();
+
+function capsule(a,b,w,col){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+function disc(p,r,col){ctx.fillStyle=col;ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();}
+function drawBody(skip,item,manq){
+  const col=manq?'#b88a55':'#8a9bbd', skin=manq?'#c99d68':'#e0b090', jt=manq?'#8a6338':null;
+  const seated=!!item.seated;
+  if(seated){ctx.fillStyle='#3a3026';ctx.fillRect(185,110,130,190);ctx.fillStyle='#2c241c';ctx.fillRect(185,300,130,14);}
+  if(manq){ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(250,50,19,26,0,0,7);ctx.fill();}
+  else disc([250,50],24,skin);
+  capsule([250,85],[250,seated?190:205],manq?46:56,col);
+  const L=seated
+   ?{rarm:[[212,100],[200,170],[205,230]],larm:[[288,100],[300,170],[295,230]],
+     rleg:[[232,195],[205,300],[225,372]],lleg:[[268,195],[295,300],[275,372]]}
+   :{rarm:[[212,100],[200,170],[205,230]],larm:[[288,100],[300,170],[312,230]],
+     rleg:[[232,215],[228,295],[228,372]],lleg:[[268,215],[272,295],[272,372]]};
+  for(const k in L){ if(k===skip) continue; const p=L[k]; const w=(k.endsWith('arm')?16:24)*(manq?0.8:1);
+    capsule(p[0],p[1],w,col); capsule(p[1],p[2],w*0.85,col);
+    if(jt){disc(p[1],w*0.7,jt);disc(p[0],w*0.7,jt);}}
+  if(manq&&skip){const o=ORG[skip]; disc(o,(skip.endsWith('arm')?16:24)*0.56,jt);}
+}
+function box(cx,cy,w,h,fill,edge){ctx.fillStyle=fill;ctx.fillRect(cx-w/2,cy-h/2,w,h);ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.strokeRect(cx-w/2,cy-h/2,w,h);}
+function occCentre(item,cond){
+  if(cond!=='bodyobj') return item.o;
+  const sgn=item.bside||(ORG[item.lb][0]<250?-1:1); // box beside the body part, on the moving limb's side unless that side holds another limb (bside)
+  return [item.o[0]+sgn*(item.s[0]/2+tipOff(item,'bodyobj')+10), item.o[1]];
+}
+function drawScene(item,side,cond){
+  const sgn=side==='A'?-1:1, oc=occCentre(item,cond);
+  const tip=[oc[0]+sgn*tipOff(item,cond), oc[1]], org=ORG[item.lb];
+  const bodyLimb=(cond==='bodybody'||cond==='bodyobj'||cond==='partial'||cond==='mannequin');
+  const manq=cond==='mannequin';
+  const hasBody=(cond!=='objobj');
+  if(cond==='partial'){ // only the occluding body part (stand-in shape at its position) plus the moving limb; rest black
+    const isFace=item.lb==='rarm'&&item.o[1]<100;
+    ctx.fillStyle=isFace?'#e0b090':'#8a9bbd'; ctx.beginPath();
+    if(ctx.roundRect)ctx.roundRect(oc[0]-occW(item,cond)/2,oc[1]-item.s[1]/2,occW(item,cond),item.s[1],8); else ctx.rect(oc[0]-occW(item,cond)/2,oc[1]-item.s[1]/2,occW(item,cond),item.s[1]);
+    ctx.fill();
+  } else if(hasBody) drawBody(item.lb,item,manq);        // the moving limb is never part of the fixed picture
+  if(cond==='bodyobj') box(oc[0],oc[1],item.s[0],item.s[1],'#8a6a40','#5a4220');
+  if(cond==='objobj') box(oc[0],oc[1],item.os[0],item.os[1],'#8a6a40','#5a4220');
+  const arm=item.lb.endsWith('arm');
+  if(bodyLimb){
+    const w=(arm?12:16)*(manq?0.85:1);
+    const lc=manq?'#b88a55':'#8a9bbd';
+    if(arm){ // two-segment arm of constant length (same in both pictures), elbow bent outward; drawing stand-in only
+      const ta=[oc[0]-tipOff(item,cond),oc[1]], tb=[oc[0]+tipOff(item,cond),oc[1]];
+      const L=Math.max(131,1.05*Math.max(Math.hypot(ta[0]-org[0],ta[1]-org[1]),Math.hypot(tb[0]-org[0],tb[1]-org[1])));
+      const dx=tip[0]-org[0], dy=tip[1]-org[1], d=Math.max(Math.hypot(dx,dy),1), h=Math.sqrt(Math.max(L*L/4-d*d/4,0));
+      let nx=-dy/d, ny=dx/d; const out=org[0]<250?-1:1; if(Math.abs(nx)<0.2){ if(ny<0){nx=-nx;ny=-ny;} } else if(nx*out<0){nx=-nx;ny=-ny;}
+      const el=[org[0]+dx/2+nx*h, org[1]+dy/2+ny*h];
+      capsule(org,el,w,lc); capsule(el,tip,w*0.9,lc); if(manq)disc(el,w*0.6,'#8a6338');
+    } else capsule(org,tip,w,lc);
+    disc(tip,arm?8:9,manq?'#8a6338':'#e0b090');
+  } else { // floating board of limb length, detached from the body (no joint)
+    const dx=tip[0]-org[0], dy=tip[1]-org[1], len=Math.hypot(dx,dy), ang=Math.atan2(dy,dx), gap=14;
+    ctx.save(); ctx.translate(org[0]+dx/len*(gap+(len-gap)/2), org[1]+dy/len*(gap+(len-gap)/2)); ctx.rotate(ang);
+    ctx.fillStyle=WOOD; ctx.fillRect(-(len-gap)/2,-7,len-gap,14); ctx.strokeStyle=WOODD; ctx.lineWidth=2; ctx.strokeRect(-(len-gap)/2,-7,len-gap,14); ctx.restore();
   }
-
-  // Arms from shoulder (ox, oy-80)
-  const [lhx,lhy]=limb(ox-10,oy-80, pose.lArm+180, 55);
-  ctx.beginPath(); ctx.arc(lhx,lhy,5,0,Math.PI*2); ctx.fill();
-  const [rhx,rhy]=limb(ox+10,oy-80, pose.rArm+180, 55);
-  ctx.beginPath(); ctx.arc(rhx,rhy,5,0,Math.PI*2); ctx.fill();
-
-  // Forearms
-  limb(lhx,lhy, pose.lArm+180+20, 40);
-  limb(rhx,rhy, pose.rArm+180-20, 40);
-
-  // Legs from hip (ox, oy-20)
-  const [lkx,lky]=limb(ox-10,oy-20, pose.lLeg+180, 55);
-  const [rfx,rfy]=limb(lkx,lky, pose.lLeg+180+15, 45); // lower leg
-  const [rkx,rky]=limb(ox+10,oy-20, pose.rLeg+180, 55);
-  limb(rkx,rky, pose.rLeg+180-15, 45);
 }
-
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
-  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
-  if(phase==='f1') drawFigure(POSE1);
-  else if(phase==='f2') drawFigure(POSE2);
-  else { ctx.fillStyle='#c8c8c8'; ctx.fillRect(0,0,c.width,c.height); }
-  requestAnimationFrame(tick);
+function drawPicture(item,side,cond){
+  ctx.setTransform(K,0,0,K,0,0);
+  if(cond==='partial'){
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,UW,UH);
+    const ww=1.1*UDEG, wh=1.6*UDEG, oc=item.o;
+    const wx=Math.min(Math.max(oc[0]-ww/2,0),UW-ww), wy=Math.min(Math.max(oc[1]-wh/2,0),UH-wh); // window kept inside the picture so the full 1.1 x 1.6 deg is visible
+    ctx.save(); ctx.beginPath(); ctx.rect(wx,wy,ww,wh); ctx.clip();
+    ctx.fillStyle=BG; ctx.fillRect(0,0,UW,UH); drawScene(item,side,cond); ctx.restore();
+  } else { ctx.fillStyle=BG; ctx.fillRect(0,0,UW,UH); drawScene(item,side,cond); }
 }
+function blank(cond){ctx.setTransform(K,0,0,K,0,0);ctx.fillStyle=(cond==='partial')?'#000':BG;ctx.fillRect(0,0,UW,UH);}
 
-document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+// ---------- trial state machine ----------
+const stopBtn=$('stopBtn'), status=$('status');
+let state='idle', raf=0, frameCount=0, trial=null, queue=[], respRects=[], log=[], tStart=0;
+function setStatus(t){status.textContent=t;}
+function drawText(t,y,sz,col){ctx.setTransform(K,0,0,K,0,0);ctx.fillStyle=col||'#bbb';ctx.font=sz+'px sans-serif';ctx.textAlign='center';ctx.fillText(t,UW/2,y);}
+function btn(label,x,y,w,h,id){ctx.setTransform(K,0,0,K,0,0);ctx.fillStyle='#e8e8e8';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#555';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h);
+  drawText(label,y+h/2+6,18,'#222');respRects.push({id,x,y,w,h});}
+function idleMsg(){drawText('Choose a mode to begin',UH/2,16,'#777');}
+
+function startTrial(t){
+  trial=t; state='flash'; frameCount=0; stopBtn.disabled=false; stopBtn.style.visibility='visible'; respRects=[]; tStart=performance.now();
+  const fr=sdFrames(t.soa); let last=null;
+  cancelAnimationFrame(raf);
+  function loop(){
+    if(state!=='flash')return;
+    const cyc=frameCount%(4*fr), seg=Math.floor(cyc/fr);
+    if(seg===0&&last!==0) drawPicture(t.item,'A',t.cond);
+    else if(seg===2&&last!==2) drawPicture(t.item,'B',t.cond);
+    else if((seg===1||seg===3)&&last!==seg) blank(t.cond);
+    last=seg; frameCount++; raf=requestAnimationFrame(loop);
+  }
+  setStatus(label(t)+' — flashing; click Stop when you have decided on the path of motion');
+  raf=requestAnimationFrame(loop);
+}
+function label(t){return (t.practice?'Practice ':'Trial ')+(t.k+1)+'/'+t.of+(t.nblocks>1?' · block '+(t.block+1)+'/'+t.nblocks:'')+' · SOA '+t.soa+' ms';}
+function stop(){
+  if(state!=='flash')return; cancelAnimationFrame(raf); stopBtn.disabled=true; stopBtn.style.visibility='hidden'; trial.rt=performance.now()-tStart;
+  state='please'; respRects=[]; blank(); btn('Please Respond',UW/2-90,UH/2-22,180,44,'please');
+  setStatus(label(trial));
+}
+stopBtn.onclick=stop;
+function nextTrialOrBlock(){
+  if(!queue.length){state='idle';blank();enable(true);setStatus('Finished. Choose a mode to run again.');idleMsg();return;}
+  const t=queue[0];
+  if(t.blockStart){state='blockstart';respRects=[];blank();
+    drawText('Block '+(t.block+1)+' of '+t.nblocks,UH/2-50,20);
+    if(t.condLabel)drawText(t.condLabel,UH/2-24,14,'#888');
+    btn('Start block',UW/2-80,UH/2-10,160,44,'blk'); setStatus('Waiting for the experimenter to start the block'); return;}
+  startTrial(queue.shift());
+}
+c.addEventListener('click',e=>{
+  const r=c.getBoundingClientRect(), x=(e.clientX-r.left)*UW/r.width, y=(e.clientY-r.top)*UH/r.height;
+  const hit=respRects.find(b=>x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h); if(!hit)return;
+  if(hit.id==='please'){state='choose';respRects=[];blank();
+    drawText('The path of motion was',UH/2-50,20);
+    trial.aroundLeft=Math.random()<.5; const xl=UW/2-170, xr=UW/2+20;
+    btn(trial.aroundLeft?'Around':'Through',xl,UH/2-20,150,44,trial.aroundLeft?'a_around':'a_through');
+    btn(trial.aroundLeft?'Through':'Around',xr,UH/2-20,150,44,trial.aroundLeft?'a_through':'a_around');}
+  else if(hit.id==='a_around'||hit.id==='a_through'){
+    log.push({exp:selExp.value,cond:trial.cond,item:trial.idx,soa:trial.soa,rt:trial.rt,resp:hit.id.slice(2),aroundLeft:trial.aroundLeft,practice:!!trial.practice}); // internal only
+    state='next';respRects=[];blank();btn(queue.length?'Next trial':'Done',UW/2-80,UH/2-22,160,44,'next');}
+  else if(hit.id==='next'||hit.id==='blk'){ if(hit.id==='blk')queue[0].blockStart=false; nextTrialOrBlock(); }
+});
+function enable(on){['single','practice','block','session','exp','cond','item','soa','ppcm','dist','calset'].forEach(i=>$(i).disabled=!on);}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function run(list,practice){
+  const main=list.filter(t=>!t.practice), pr=list.filter(t=>t.practice);
+  main.forEach((t,k)=>{t.k=k;t.of=main.length;t.practice=practice;});
+  pr.forEach((t,k)=>{t.k=k;t.of=pr.length;});
+  queue=list; enable(false); nextTrialOrBlock();
+}
+$('single').onclick=()=>run([{cond:selCond.value,idx:+selItem.value,item:ITEMS[+selItem.value],soa:+selSoa.value,block:0,nblocks:1}],false);
+$('practice').onclick=()=>{
+  const cond=selCond.value, l=PRACTICE.map((it,i)=>({cond,idx:'p'+i,item:it,soa:Math.random()<.5?133:533,block:0,nblocks:1}));
+  run(l,true);
+};
+// blocks for one condition: returns array of blocks (arrays of trials)
+function blocksFor(expId,cond){
+  const e=EXPS[expId], nb=e.bpc, blocks=[];
+  for(let b=0;b<nb;b++)blocks.push([]);
+  if(e.per===7){ // Exp 1-2: 7 pairs per block, each pair meets each SOA once over the 4 blocks
+    ITEMS.forEach((it,i)=>{const p=shuffle(SOAS.slice()); for(let b=0;b<nb;b++)blocks[b].push({cond,idx:i,item:it,soa:p[b]});});
+  } else { // Exp 3-5: 7 pairs x 4 SOAs split over 2 blocks of 14 (2 random SOAs per pair per block)
+    ITEMS.forEach((it,i)=>{const p=shuffle(SOAS.slice()); for(let b=0;b<nb;b++)for(let j=0;j<2;j++)blocks[b].push({cond,idx:i,item:it,soa:p[b*2+j]});});
+  }
+  return blocks.map(shuffle);
+}
+function build(expId,conds){
+  const out=[]; let all=[];
+  conds.forEach(cd=>{const lab=EXPS[expId].conds.find(x=>x[0]===cd)[1]; blocksFor(expId,cd).forEach(b=>all.push({b,lab}));});
+  all.forEach((o,bi)=>o.b.forEach((t,k)=>{t.block=bi;t.nblocks=all.length;if(k===0){t.blockStart=true;t.condLabel=o.lab;}out.push(t);}));
+  return out;
+}
+$('block').onclick=()=>{ // one block of the selected condition
+  const expId=selExp.value, cond=selCond.value, b=blocksFor(expId,cond)[0];
+  b.forEach(t=>{t.block=0;t.nblocks=1;}); run(b,false);
+};
+$('session').onclick=()=>{
+  const expId=selExp.value, conds=EXPS[expId].conds.map(x=>x[0]);
+  if(conds.length>1&&Math.random()<.5)conds.reverse(); // condition order counterbalanced
+  const pl=PRACTICE.map((it,i)=>({cond:conds[0],idx:'p'+i,item:it,soa:Math.random()<.5?133:533,block:0,nblocks:1,practice:true}));
+  run(pl.concat(build(expId,conds)),false); // the 4 practice trials come first, as for every observer (p. 919)
+};
+
+applyScale(); blank(); idleMsg(); setStatus('Measuring display refresh rate…');
+enable(false);
+measureRefresh(()=>{showDisp(); enable(true); setStatus('Idle');});
 </script>
 </body>
 </html>

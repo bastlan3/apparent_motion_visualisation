@@ -12,234 +12,304 @@
   .back:hover { color:#8aa0ff; }
   h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
   .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:760px; text-align:center; line-height:1.5; }
-  canvas { display:block; border-radius:3px; }
+  canvas { display:block; }
+  #stage { background:#fff; max-width:100%; overflow-x:auto; }
+  .warn { color:#d9a441; }
+  .mono { font-variant-numeric:tabular-nums; }
+  input[type=number] { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; border-radius:4px; padding:4px 6px; width:80px; font-size:12px; }
+  #cardbar { height:22px; background:#3b6fb0; border-radius:3px; min-width:20px; }
+  input[type=range] { width:300px; max-width:90vw; }
 
   .participant { margin-top:12px; width:720px; max-width:96vw; }
-  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; }
-  .soaBig { text-align:center; margin-top:8px; font-size:20px; color:#e8e8e8; font-variant-numeric:tabular-nums; }
-  .soaBig small { font-size:12px; color:#777; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; text-align:center; min-height:36px; }
+  .stat { text-align:center; margin-top:8px; font-size:12px; color:#888; font-variant-numeric:tabular-nums; }
+  .stat b { color:#e8e8e8; }
   .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
-  .prow .lab { font-size:11px; color:#777; margin-right:4px; }
-
   .panel { margin-top:20px; width:720px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
   .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
   .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
   .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
-  .ctrl.dim { opacity:.3; }
-  .ctrl .v { color:#cfcfcf; font-variant-numeric:tabular-nums; }
   .seg { display:flex; gap:5px; flex-wrap:wrap; }
-  .ctrl input[type=range] { width:150px; accent-color:#8a93b8; }
-  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
-           border-radius:4px; cursor:pointer; font-size:12px; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px; border-radius:4px; cursor:pointer; font-size:12px; }
   button:hover { background:#26262e; }
+  button:disabled { opacity:.4; cursor:default; }
   button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
-  .readouts { margin-top:16px; display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:#888; }
-  .readouts b { color:#cfcfcf; font-weight:600; }
-  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#555; line-height:1.6; }
+  table { border-collapse:collapse; width:100%; font-size:11px; margin-top:6px; }
+  td,th { border-top:1px solid #222228; padding:4px 6px; text-align:left; vertical-align:top; color:#8a8a92; }
+  th { color:#6b6b75; font-weight:600; }
+  td:first-child { color:#b0b0b8; white-space:nowrap; }
+  .meta { margin-top:20px; width:720px; max-width:96vw; font-size:10.5px; color:#666; line-height:1.6; }
 </style>
 </head>
 <body>
   <a class="back" href="index.html">← back to experiments</a>
   <h1>Shepard &amp; Zare (1983) — path-guided apparent motion</h1>
-  <div class="sub">A faint gray curved band, flashed for 5 ms between two alternating dots, makes the dot appear to move along
-    that curve. The minimum SOA scales with <b>path length</b>, not direct distance.</div>
+  <div class="sub">Two black dots alternate on a white ground; a light-gray band is flashed in the interdot field. Reconstruction of the display and the observer's duration-adjustment task (Science 220, 632–634).</div>
 
-  <canvas id="c" width="620" height="420"></canvas>
+  <div id="stage"><canvas id="c" width="620" height="300"></canvas></div>
 
   <div class="participant">
-    <div class="instr">
-      Fixate the centre. Lengthen the dot duration (10% steps) until you first see the dot <b>move back and forth over the
-      presented path</b> (not just blink). Mark that point.
-    </div>
-    <div class="soaBig">SOA <span id="soaVal">105</span> <small>ms  (dot duration <span id="durVal">100</span> + 5 ms path field)</small></div>
-    <div class="prow">
-      <div><span class="lab">duration</span>
-        <button id="down">◀ −10%</button><button id="up">+10% ▶</button></div>
-      <div><button id="mark">Motion appears → mark threshold</button></div>
-      <div><button id="record">Record</button> <button id="export">Export CSV</button></div>
+    <div class="instr" id="instr"></div>
+        <div class="prow">
+      <button id="start">Start trial</button>
+      <button id="up" disabled>Lengthen dots +10% (Space)</button>
+      <button id="end" disabled>End trial (Enter)</button>
+      <button id="newsess" hidden>New session</button>
+      <button id="export">Export CSV</button>
     </div>
   </div>
 
   <div class="panel">
-    <h2>Experimenter parameters</h2>
+    <h2>Experimenter</h2>
     <div class="grid">
-      <div class="ctrl">Condition
+      <div class="ctrl">Condition (separate session each)
         <div class="seg" id="cond">
-          <button data-v="varL" class="on">Variable path (D = 3°)</button>
-          <button data-v="noPath">No path (control)</button>
-          <button data-v="fixL">Fixed path L = 6°</button>
+          <button data-v="varL" class="on">Variable path-length (D = 3°)</button>
+          <button data-v="fixL">Fixed path-length (L = 6°)</button>
+          <button data-v="noPath">No-path</button>
         </div>
       </div>
-      <div class="ctrl" id="ctlL">Path length L
-        <div class="seg" id="L">
-          <button data-v="3">3</button><button data-v="4">4</button>
-          <button data-v="6" class="on">6</button><button data-v="9">9</button><button data-v="12">12°</button>
+      <div class="ctrl">Mode
+        <div class="seg" id="mode">
+          <button data-v="session" class="on">Session (5 practice + 4 per config, random)</button>
+          <button data-v="manual">Manual configuration</button>
         </div>
       </div>
-      <div class="ctrl" id="ctlD">Distance D between dots
-        <div class="seg" id="D">
-          <button data-v="0">0</button><button data-v="0.667">⅔</button><button data-v="2">2</button>
-          <button data-v="3" class="on">3</button><button data-v="4">4</button>
-          <button data-v="6">6</button><button data-v="9">9°</button>
-        </div>
+      <div class="ctrl" id="cfgWrap">Configuration (manual)
+        <div class="seg" id="cfg"></div>
       </div>
-      <div class="ctrl">Path contrast: <span class="v" id="conLbl">0.35</span>
-        <input type="range" id="con" min="0.1" max="0.8" step="0.05" value="0.35"></div>
-      <div class="ctrl">Path field duration: <span class="v" id="isiLbl">5</span> ms
-        <input type="range" id="isi" min="5" max="60" step="5" value="5"></div>
     </div>
-
-    <div class="readouts">
-      <div>Path length L: <b id="lLbl">6.0°</b></div>
-      <div>Direct distance D: <b id="dLbl">3.0°</b></div>
-      <div>Paper's predicted min SOA: <b id="predLbl">—</b></div>
-      <div>Threshold marked: <b id="threshLbl">—</b></div>
-      <div>Trials: <b id="nLog">0</b></div>
-    </div>
+    <div class="stat" style="text-align:left;margin-top:10px"><label><input type="checkbox" id="dbg"> show live timing readout (experimenter only)</label> <span id="stat" class="mono"></span></div>
+    <div class="stat" style="text-align:left;margin-top:10px">Current: <b id="cfgLbl"></b> &nbsp; Trials logged: <b id="nLog">0</b></div>
   </div>
 
-  <div class="meta">
-    Faithful reconstruction of Shepard, R. N. &amp; Zare, S. L. (1983), <i>Science</i> 220, 632–634. Two black dots (0.42°) alternate on a
-    white ground; during the 5 ms interstimulus field a faint gray band (0.42° wide) traces a circular-arc path between them. Observers
-    fixate the path centre and raise the dot duration in 10% steps (from 100 ms) until motion over the path first appears (SOA = duration
-    + 5 ms field). <b>Variable path</b>: D fixed at 3°, arc length L = 3/4/6/9/12° → SOA ≈ 100 + 41·L. <b>No-path</b> control: blank field,
-    dots 2⁄3–9° apart → SOA ≈ 170 + 32·D (Korte's law). <b>Fixed path</b> L = 6°, terminal distance D = 6/4/2/2⁄3/0° → SOA ≈ 166 + 540/D,
-    rising sharply as the path closes into a circle (motion of the dot into itself; the closed circle adds 200 ms blank fields). The gray
-    path is a real flashed stimulus and is drawn; the perceived moving dot is the observer's percept and is not.
+  <div class="panel">
+    <h2>Display setup</h2>
+    <div class="ctrl">Screen scale: resize the bar until it is exactly as wide as a credit card (8.56 cm)
+      <div id="cardbar"></div>
+      <input type="range" id="cardw" min="150" max="700" step="1">
+    </div>
+    <div class="grid" style="margin-top:10px">
+      <div class="ctrl">Pixels per cm <input type="number" id="ppcm" min="10" max="200" step="0.1"></div>
+      <div class="ctrl">Viewing distance (cm) <input type="number" id="vdist" min="10" max="300" step="1"></div>
+      <div class="ctrl"><button id="remeasure">Re-measure refresh</button></div>
+    </div>
+    <div class="stat" style="text-align:left;margin-top:10px" id="dispLine">Measuring refresh rate…</div>
+    <div class="stat warn" style="text-align:left" id="warnLine"></div>
   </div>
+
+  <div class="panel">
+    <h2>Methods (paper values; page refs to Science 220)</h2>
+    <table>
+      <tr><th>Parameter</th><th>Value</th><th>Source</th></tr>
+      <tr><td>Display</td><td>Four-field tachistoscope, fields illuminated in a repeating sequence</td><td>p. 633; emulated on a canvas (frame-counted at the measured refresh rate)</td></tr>
+      <tr><td>Dots / ground</td><td>Black circular dots, 0.42° wide, on white</td><td>p. 633</td></tr>
+      <tr><td>Path</td><td>Uniform light gray (Color Aid No. 1A), 0.42° wide, circular arcs bulging upward (Fig. 1D–F)</td><td>p. 633, Fig. 1</td></tr>
+      <tr><td>Sequence</td><td>dot A, interdot field (path), dot B, interdot field, repeat; both dots of equal duration</td><td>pp. 633–634</td></tr>
+      <tr><td>Interdot field</td><td>5 ms (blank white in no-path condition)</td><td>pp. 633–634</td></tr>
+      <tr><td>Dot duration</td><td>Starts at 100 ms each; key press lengthens both by 10 percent</td><td>p. 633</td></tr>
+      <tr><td>Closed circle (D = 0)</td><td>200 ms blank white field before and after the 5 ms path</td><td>p. 634</td></tr>
+      <tr><td>Variable path-length</td><td>D = 3°; L = 3 (straight), 4, 6, 9, 12°</td><td>pp. 633–634</td></tr>
+      <tr><td>Fixed path-length</td><td>L = 6°; D = 6 (straight), 4, 2, 2/3, 0°</td><td>p. 634</td></tr>
+      <tr><td>No-path</td><td>Blank interdot field; D = 2/3, 2, 3, 4, 6, 9°</td><td>p. 634</td></tr>
+      <tr><td>Task</td><td>Fixate the centre of the region defined by the presented path; try to see the dot moving back and forth over the path (no-path: until "good apparent motion"); lengthen until the desired motion is first experienced</td><td>pp. 633–634</td></tr>
+      <tr><td>Session</td><td>One session per condition; 5 practice trials then random sequence, 4 trials per configuration; 10 observers</td><td>p. 634</td></tr>
+      <tr><td>Realised timing</td><td>Refresh rate measured at load (median of ~60 rAF intervals); every duration converted to whole frames and scheduled by counting frames; realised ms shown in the Display line. The 5 ms interdot field becomes at least 1 frame (e.g. 16.7 ms at 60 Hz), i.e. longer than the paper's value; the page warns whenever a paper duration is not a whole number of frames</td><td>Assumption (display limit)</td></tr>
+      <tr><td>Dot duration steps</td><td>Nominal duration 100 x 1.1^k ms, rounded to frames; a press that would not change the frame count advances k further until the realised duration changes</td><td>Assumption</td></tr>
+      <tr><td>Path shade</td><td>#d2d2d2 on #ffffff (approximation of a light tint; paper gives no luminance)</td><td>Assumption</td></tr>
+      <tr><td>Scale</td><td>Drawn in degrees: px/deg = px per cm (card calibration, default 37.8) x viewing distance x tan 1 deg; viewing distance default 57 cm (not reported in the paper)</td><td>Assumption</td></tr>
+      <tr><td>Placement</td><td>Dots at the ends of a horizontal chord, path bulging up; configuration centred in a white field; no fixation mark drawn; path runs dot-centre to dot-centre (butt ends); the white field fills the stage, surround unspecified</td><td>Assumption</td></tr>
+      <tr><td>Trial control</td><td>Space = lengthen both dots 10 percent (key auto-repeat ignored); Enter = end trial (end signal not described in the paper); Space or Enter starts the next trial; cycle starts at dot A and restarts at dot A after each lengthening; no decrease key; duration capped at about 6.7 s</td><td>Assumption</td></tr>
+      <tr><td>Practice</td><td>5 practice trials with configurations drawn at random from the condition's levels (which ones were used is not reported); first starting dot always A</td><td>Assumption</td></tr>
+      <tr><td>Condition order</td><td>Observers 1-8: variable, fixed, no-path (separate sessions); last two observers started with no-path. Here the condition is chosen by the experimenter</td><td>p. 634, note 10</td></tr>
+    </table>
+  </div>
+
+  <div class="meta">Not reported in the paper: viewing distance, field size, luminances, absolute dot positions, tachistoscope surround, fixation mark, inter-trial interval, starting dot, upper limit on duration.</div>
 
 <script>
-const c = document.getElementById('c');
-const ctx = c.getContext('2d');
-const W = c.width, H = c.height;
-const PXDEG = 32;                // px per degree
-const MIDX = W/2, CHORDY = 300;
-const DOTR = 0.42*PXDEG/2;
-
-const st = {
-  cond:'varL', L:6, D:3, con:0.35, isi:5,
-  dotDur:100, thresh:null
+const c = document.getElementById('c'), ctx = c.getContext('2d'), $=id=>document.getElementById(id);
+let W=620, H=300, PXDEG=37.8*57*Math.tan(Math.PI/180), MIDX=W/2, DOTR=0.42*PXDEG/2;
+let FRAME=1000/60, measured=false;
+let ppcm=37.8, vdist=57;
+try{ const d=JSON.parse(localStorage.getItem('am_display')||'null'); if(d){ if(d.ppcm>0) ppcm=+d.ppcm; if(d.dist>0) vdist=+d.dist; else if(d.vdist>0) vdist=+d.vdist; } }catch(e){}
+const CONFIGS = {
+  varL:   [3,4,6,9,12].map(L=>({L, D:3, lab:'L='+L+'°, D=3°'})),
+  fixL:   [[6,'6'],[4,'4'],[2,'2'],[2/3,'2/3'],[0,'0']].map(([D,s])=>({L:6, D, lab:'L=6°, D='+s+'°'})),
+  noPath: [[2/3,'2/3'],[2,'2'],[3,'3'],[4,'4'],[6,'6'],[9,'9']].map(([D,s])=>({L:null, D, lab:'no path, D='+s+'°'}))
 };
+const INSTR_PATH='Keep your eyes at the centre of the region defined by the path and try to see the dot as moving back and forth over the path. Lengthen the dots until that motion is first experienced, then end the trial.';
+const INSTR_NOPATH='Lengthen the dots until you first experience good apparent motion, then end the trial.';
+const S = { cond:'varL', mode:'session', cfg:CONFIGS.varL[0], running:false, k:0, presses:0, queue:[], idx:0, practice:0 };
+const log = [];
+const MAXMS=6700;
 
-// half-angle u solving sin(u)/u = ratio  (ratio = D/L in (0,1))
-function solveHalf(ratio){
-  let lo=1e-4, hi=Math.PI;
-  for(let i=0;i<60;i++){ const m=(lo+hi)/2; (Math.sin(m)/m > ratio) ? lo=m : hi=m; }
-  return (lo+hi)/2;
+// ---------- display setup ----------
+function applyScale(){
+  PXDEG = ppcm*vdist*Math.tan(Math.PI/180);
+  DOTR = 0.42*PXDEG/2;
+  const avail=Math.max(280, Math.min(window.innerWidth-24, 820));
+  const need=Math.ceil(Math.max(...CONFIGS[S.cond].map(k=>Math.max(k.D,(k.L||0)/Math.PI)))*PXDEG+4*DOTR+24);
+  needW=need; W=Math.round(Math.max(avail,need)); H=Math.round(Math.min(560, Math.max(240, 6.5*PXDEG)));
+  c.width=W; c.height=H; MIDX=W/2;
+  $('cardbar').style.width=(ppcm*8.56)+'px';
+  $('cardw').value=Math.round(ppcm*8.56); $('ppcm').value=ppcm.toFixed(1); $('vdist').value=vdist;
+  if(typeof rebuild==='function' && seq) { const sv=si, lf=left; rebuild(); si=Math.min(sv,seq.length-1); left=lf; render(); }
+  dispLine();
 }
-// arc geometry from chord D and arc length L (px)
-function arc(Dpx, Lpx){
-  if (Dpx < 0.5) { const R = Lpx/(2*Math.PI); return { kind:'circle', cx:MIDX, cy:CHORDY-R, R }; }
-  const ratio = Dpx/Lpx;
-  if (ratio >= 0.999) return { kind:'line' };
-  const u = solveHalf(ratio), R = Lpx/(2*u), Cy = -R*Math.cos(u);
-  const pts=[]; const N=64;
-  for(let i=0;i<=N;i++){ const t=-u + 2*u*(i/N); pts.push([MIDX + R*Math.sin(t), CHORDY - (Cy + R*Math.cos(t))]); }
-  return { kind:'arc', pts };
+function saveDisp(){ try{ localStorage.setItem('am_display', JSON.stringify({ppcm:ppcm, dist:vdist})); }catch(e){} }
+$('cardw').addEventListener('input',()=>{ ppcm=+$('cardw').value/8.56; saveDisp(); applyScale(); });
+$('cardw').addEventListener('change',()=>$('cardw').blur());
+$('ppcm').addEventListener('change',()=>{ const v=+$('ppcm').value; if(v>0){ ppcm=v; saveDisp(); applyScale(); } });
+$('vdist').addEventListener('change',()=>{ const v=+$('vdist').value; if(v>0){ vdist=v; saveDisp(); applyScale(); } });
+window.addEventListener('resize',()=>{ if(!S.running) applyScale(); });
+
+// ---------- timing ----------
+const nFr = ms => Math.max(1, Math.round(ms/FRAME));
+const dotFramesAt = k => nFr(100*Math.pow(1.1,k));
+const dotFrames = () => dotFramesAt(S.k);
+const BLANK_FR = () => nFr(200), FIELD_FR = () => nFr(5);
+function dispLine(){
+  const f=FIELD_FR(), b=BLANK_FR(), d0=dotFramesAt(0);
+  $('dispLine').innerHTML=(measured?'Measured refresh: <b>'+(1000/FRAME).toFixed(1)+' Hz</b> (frame '+FRAME.toFixed(2)+' ms). ':'Measuring refresh rate… ')+
+    'Realised: interdot field <b>'+f+' fr = '+(f*FRAME).toFixed(1)+' ms</b> (paper 5 ms); initial dot <b>'+d0+' fr = '+(d0*FRAME).toFixed(1)+' ms</b> (paper 100 ms); blank <b>'+b+' fr = '+(b*FRAME).toFixed(1)+' ms</b> (paper 200 ms). Scale: <b>'+PXDEG.toFixed(1)+' px/deg</b>.';
+  const w=[]; [['5 ms interdot field',5],['100 ms initial dot',100],['200 ms blank',200]].forEach(([n,ms])=>{
+    const r=ms/FRAME; if(Math.abs(r-Math.round(r))>0.05 || Math.round(r)<1 || (ms===5)) w.push(n+' = '+r.toFixed(2)+' frames, realised as '+nFr(ms)+' ('+(nFr(ms)*FRAME).toFixed(1)+' ms)'); });
+  const wide = needW>Math.max(280, Math.min(window.innerWidth-24, 820)) ? ' The largest stimulus in this condition ('+needW+' px wide) exceeds the available page width; the stage scrolls horizontally.' : '';
+  $('warnLine').textContent = (measured && w.length ? 'Not a whole number of frames at this rate: '+w.join('; ')+'.' : '')+wide;
 }
-function drawPath(){
-  if (st.cond === 'noPath') return;
-  const Lpx = (st.cond==='varL' ? st.L : 6) * PXDEG;
-  const Dpx = getD()*PXDEG;
-  const g = arc(Dpx, Lpx);
-  ctx.strokeStyle = `rgba(120,120,120,${st.con})`;
-  ctx.lineWidth = 0.42*PXDEG; ctx.lineCap='round'; ctx.lineJoin='round';
+function measure(){
+  measured=false; $('start').disabled=true; $('dispLine').textContent='Measuring refresh rate…';
+  const t=[]; let prev=0;
+  function f(ts){ if(prev) t.push(ts-prev); prev=ts;
+    if(t.length<60) return requestAnimationFrame(f);
+    t.sort((a,b)=>a-b); FRAME=t[t.length>>1]; measured=true;
+    $('start').disabled = S.running || (S.mode==='session' && S.practice>=5 && S.idx>=S.queue.length);
+    if(seq){ const sv=si, lf=left; rebuild(); si=Math.min(sv,seq.length-1); left=Math.min(lf,seq[si][1]); }
+    dispLine(); }
+  requestAnimationFrame(f);
+}
+$('remeasure').onclick=()=>{ if(!S.running) measure(); $('remeasure').blur(); };
+
+// ---------- geometry ----------
+function solveHalf(r){ let lo=1e-4, hi=Math.PI; for(let i=0;i<60;i++){ const m=(lo+hi)/2; (Math.sin(m)/m>r)?lo=m:hi=m; } return (lo+hi)/2; }
+function geom(cfg, hasPath){
+  const D = cfg.D*PXDEG, L = (cfg.L||0)*PXDEG;
+  let pts=null;
+  if (hasPath){
+    if (D<0.5){ const R=L/(2*Math.PI); pts={circle:true,R,cy:-R}; }
+    else if (D/L>=0.999){ pts=[[MIDX-D/2,0],[MIDX+D/2,0]]; }
+    else { const u=solveHalf(D/L), R=L/(2*u), Cy=-R*Math.cos(u); pts=[];
+      for(let i=0;i<=80;i++){ const t=-u+2*u*i/80; pts.push([MIDX+R*Math.sin(t), -(R*Math.cos(t)+Cy)]); } }
+  }
+  let top=0;
+  if (pts) top = pts.circle ? -2*pts.R : Math.min(...pts.map(p=>p[1]));
+  const off=H/2-top/2;
+  return { pts, off, xs:[MIDX-D/2, MIDX+D/2] };
+}
+function drawDot(g,i){ ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(g.xs[i],g.off,DOTR,0,2*Math.PI); ctx.fill(); }
+function drawPath(g){
+  if(!g.pts) return;
+  ctx.strokeStyle='#d2d2d2'; ctx.lineWidth=0.42*PXDEG; ctx.lineCap='butt'; ctx.lineJoin='round';
   ctx.beginPath();
-  if (g.kind==='line'){ ctx.moveTo(MIDX-Dpx/2,CHORDY); ctx.lineTo(MIDX+Dpx/2,CHORDY); }
-  else if (g.kind==='circle'){ ctx.arc(g.cx,g.cy,g.R,0,2*Math.PI); }
-  else { g.pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); }
+  if (g.pts.circle) ctx.arc(MIDX,g.off+g.pts.cy,g.pts.R,0,2*Math.PI);
+  else g.pts.forEach((p,i)=> i?ctx.lineTo(p[0],g.off+p[1]):ctx.moveTo(p[0],g.off+p[1]));
   ctx.stroke();
 }
-function getD(){ return st.cond==='varL' ? 3 : st.D; }
-function dotXs(){ const Dpx=getD()*PXDEG; return [MIDX-Dpx/2, MIDX+Dpx/2]; }
 
-// timeline: dotA (dur), path field (isi), dotB (dur), path field (isi) ; SOA = dur + isi
-// closed circle (D=0): add 200 ms blank before/after each path field
-let clock = 0, lastTs = 0;
-function drawFrame(){
-  ctx.fillStyle = '#ededed'; ctx.fillRect(0,0,W,H);   // white ground
-  const d = st.dotDur, isi = st.isi;
-  const closed = (st.cond==='fixL' && getD()<0.5);
-  const blank = closed ? 200 : 0;
-  const seg = [['A',d],['b',blank],['P',isi],['b',blank],['B',d],['b',blank],['P',isi],['b',blank]];
-  const cycle = seg.reduce((a,[,x])=>a+x,0);
-  let t = clock % cycle, cur='b';
-  for (const [name,len] of seg){ if (t < len){ cur=name; break; } t -= len; }
-
-  const xs = dotXs();
-  if (cur==='P') drawPath();
-  ctx.fillStyle = '#111';
-  if (cur==='A'){ ctx.beginPath(); ctx.arc(xs[0],CHORDY,DOTR,0,2*Math.PI); ctx.fill(); }
-  if (cur==='B'){ ctx.beginPath(); ctx.arc(xs[1],CHORDY,DOTR,0,2*Math.PI); ctx.fill(); }
-
-  // fixation tick at path centre
-  ctx.strokeStyle='#bbb'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(MIDX-4,CHORDY-40); ctx.lineTo(MIDX+4,CHORDY-40); ctx.stroke();
-
-  document.getElementById('soaVal').textContent = Math.round(st.dotDur + st.isi);
-  document.getElementById('durVal').textContent = Math.round(st.dotDur);
+// ---------- frame-counted sequencer (one step per rAF = one display frame) ----------
+function blankFr(){ return (S.cond==='fixL' && S.cfg.D<0.5) ? BLANK_FR() : 0; }
+function buildSeq(){
+  const d=dotFrames(), bl=blankFr(), mid = S.cond!=='noPath' ? 'P' : 'W', fl=FIELD_FR();
+  const s=[['A',d]]; if(bl) s.push(['W',bl]); s.push([mid,fl]); if(bl) s.push(['W',bl]);
+  s.push(['B',d]); if(bl) s.push(['W',bl]); s.push([mid,fl]); if(bl) s.push(['W',bl]);
+  return s;
 }
-function loop(ts){ const dt = lastTs?ts-lastTs:16; lastTs=ts; clock+=dt; drawFrame(); requestAnimationFrame(loop); }
-requestAnimationFrame(loop);
-
-// ---- readouts ----
-function pathLen(){ return st.cond==='varL' ? st.L : (st.cond==='fixL' ? 6 : getD()); }
-function predicted(){
-  if (st.cond==='varL') return Math.round(100 + 41*st.L);
-  if (st.cond==='noPath') return Math.round(170 + 32*st.D);
-  return getD()<0.5 ? 648 : Math.round(166 + 540/getD());
+let seq=null, si=0, left=1, G, needW=0;
+function rebuild(){ G=geom(S.cfg, S.cond!=='noPath'); seq=buildSeq(); si=0; left=seq[0][1]; }
+function render(){
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  if(!S.running||!seq) return;
+  const t=seq[si][0];
+  if(t==='A') drawDot(G,0); else if(t==='B') drawDot(G,1); else if(t==='P') drawPath(G);
 }
-function refresh(){
-  document.getElementById('lLbl').textContent = pathLen().toFixed(1)+'°';
-  document.getElementById('dLbl').textContent = getD().toFixed(2).replace(/\.00$/,'.0')+'°';
-  document.getElementById('predLbl').textContent = predicted()+' ms';
+function step(){ if(--left<=0){ si=(si+1)%seq.length; if(si===0) seq=buildSeq(); left=seq[si][1]; } }
+function loop(){ if(S.running) step(); render(); requestAnimationFrame(loop); }
+
+function onsetMs(){ return (dotFrames()+FIELD_FR()+2*blankFr())*FRAME; }
+function stat(){
+  if(!S.running||!$('dbg').checked){ $('stat').textContent=''; return; }
+  const d=dotFrames();
+  $('stat').textContent=' dot nominal '+(100*Math.pow(1.1,S.k)).toFixed(0)+' ms, realised '+d+' fr = '+(d*FRAME).toFixed(1)+' ms; onset-to-onset '+onsetMs().toFixed(1)+' ms';
 }
-
-// ---- staircase ----
-function clampDur(){ st.dotDur = Math.max(60, Math.min(1200, st.dotDur)); }
-document.getElementById('down').addEventListener('click', ()=>{ st.dotDur/=1.1; clampDur(); });
-document.getElementById('up').addEventListener('click',   ()=>{ st.dotDur*=1.1; clampDur(); });
-document.getElementById('mark').addEventListener('click', ()=>{
-  st.thresh = st.dotDur + st.isi;
-  document.getElementById('threshLbl').textContent = Math.round(st.thresh)+' ms';
-});
-
-// ---- logging ----
-const log=[];
-document.getElementById('record').addEventListener('click', ()=>{
-  log.push({ condition:st.cond, L_deg:pathLen(), D_deg:+getD().toFixed(3),
-             pathFieldMs:st.isi, thresholdSOA: st.thresh!=null?Math.round(st.thresh):'',
-             predictedSOA: predicted() });
-  document.getElementById('nLog').textContent = log.length;
-  st.thresh=null; document.getElementById('threshLbl').textContent='—';
-});
-document.getElementById('export').addEventListener('click', ()=>{
-  if(!log.length) return;
-  const cols=Object.keys(log[0]);
+$('dbg').addEventListener('change',stat);
+function setCfgLbl(){ $('cfgLbl').textContent=S.cfg.lab; }
+function baseInstr(){ return S.cond==='noPath'?INSTR_NOPATH:INSTR_PATH; }
+function beginTrial(){
+  if(S.running||!measured||$('start').disabled) return;
+  S.running=true; S.k=0; S.presses=0; rebuild(); left=seq[0][1]+1; setCfgLbl();
+  const tag = S.mode==='session' ? (S.practice<5 ? 'Practice '+(S.practice+1)+'/5' : 'Trial '+(S.idx+1)+'/'+S.queue.length) : 'Manual trial';
+  $('instr').textContent = tag+' — '+baseInstr();
+  $('up').disabled=false; $('end').disabled=false; $('start').disabled=true; stat();
+}
+function lengthen(){
+  if(!S.running) return;
+  if(100*Math.pow(1.1,S.k)>MAXMS) return;
+  const f0=dotFrames(); let n=0;
+  do{ S.k++; n++; }while(dotFrames()===f0 && n<40 && 100*Math.pow(1.1,S.k)<=MAXMS);
+  S.presses++; seq=buildSeq(); si=0; left=seq[0][1]+1; stat();
+}
+function endTrial(){
+  if(!S.running) return;
+  const d=dotFrames();
+  const rec = S.mode==='session' && S.practice<5 ? 'practice' : 'recorded';
+  log.push({condition:S.cond, L_deg:S.cfg.L===null?'':S.cfg.L, D_deg:+S.cfg.D.toFixed(3), kind:rec, presses:S.presses,
+            nominalDotMs:+(100*Math.pow(1.1,S.k)).toFixed(1), dotFrames:d, frameMs:+FRAME.toFixed(3), realisedDotMs:+(d*FRAME).toFixed(1), realisedOnsetMs:+onsetMs().toFixed(1)});
+  $('nLog').textContent=log.length;
+  S.running=false; $('up').disabled=true; $('end').disabled=true; $('start').disabled=false; $('stat').textContent='';
+  if(S.mode==='session'){
+    if(S.practice<5){ S.practice++; S.cfg = S.practice<5 ? rand(CONFIGS[S.cond]) : S.queue[0]; }
+    else { S.idx++; if(S.idx<S.queue.length) S.cfg=S.queue[S.idx]; }
+    if(S.practice>=5 && S.idx>=S.queue.length){ $('instr').textContent='Session complete. Press "New session" to start again.'; $('start').disabled=true; $('newsess').hidden=false; render(); return; }
+  }
+  $('instr').textContent = baseInstr(); setCfgLbl(); render();
+}
+function rand(a){ return a[Math.floor(Math.random()*a.length)]; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function resetSession(){
+  $('newsess').hidden=true; S.running=false; S.practice=0; S.idx=0;
+  S.queue = shuffle([].concat(...[0,1,2,3].map(()=>CONFIGS[S.cond])));
+  S.cfg = S.mode==='session' ? rand(CONFIGS[S.cond]) : CONFIGS[S.cond][0];
+  $('up').disabled=true; $('end').disabled=true; $('start').disabled=!measured; $('stat').textContent='';
+  setCfgLbl(); $('instr').textContent=baseInstr(); rebuild(); render();
+}
+function buildCfgButtons(){
+  const w=$('cfg'); w.innerHTML='';
+  CONFIGS[S.cond].forEach(cf=>{ const b=document.createElement('button'); b.textContent=cf.lab.replace(/^no path, /,'');
+    if(cf===S.cfg) b.classList.add('on');
+    b.onclick=()=>{ b.blur(); if(S.running||S.mode!=='manual') return; S.cfg=cf; [...w.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); setCfgLbl(); rebuild(); render(); };
+    w.appendChild(b); });
+  $('cfgWrap').style.opacity = S.mode==='manual'?1:.35;
+}
+function seg(id, fn){ document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
+  b.blur(); if(S.running) return; document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset.v); })); }
+seg('cond', v=>{ S.cond=v; resetSession(); applyScale(); buildCfgButtons(); });
+seg('mode', v=>{ S.mode=v; resetSession(); buildCfgButtons(); });
+$('newsess').onclick=()=>{ $('newsess').blur(); resetSession(); buildCfgButtons(); };
+$('start').onclick=()=>{ $('start').blur(); beginTrial(); };
+$('up').onclick=()=>{ $('up').blur(); lengthen(); };
+$('end').onclick=()=>{ $('end').blur(); endTrial(); };
+function typing(e){ const t=e.target; return t && (t.tagName==='INPUT'&&t.type!=='checkbox'&&t.type!=='range' || t.tagName==='TEXTAREA'); }
+document.addEventListener('keydown',e=>{
+  if(typing(e)) return;
+  if(e.code==='Space'||e.code==='Enter'){ e.preventDefault(); if(e.repeat) return;
+    if(S.running){ if(e.code==='Space') lengthen(); else endTrial(); }
+    else beginTrial(); } });
+document.addEventListener('keyup',e=>{ if(e.code==='Space'&&!typing(e)) e.preventDefault(); });
+$('export').onclick=()=>{ if(!log.length) return; const cols=Object.keys(log[0]);
   const csv=[cols.join(',')].concat(log.map(r=>cols.map(k=>r[k]).join(','))).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download='shepard_zare_1983.csv'; a.click();
-});
-
-// ---- experimenter controls ----
-function seg(id, fn){
-  document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{
-    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on'); fn(b.dataset.v);
-  }));
-}
-function applyCondUI(){
-  document.getElementById('ctlL').classList.toggle('dim', st.cond!=='varL');
-  document.getElementById('ctlD').classList.toggle('dim', st.cond==='varL');
-  refresh();
-}
-seg('cond', v=>{ st.cond=v; applyCondUI(); });
-seg('L', v=>{ st.L=+v; refresh(); });
-seg('D', v=>{ st.D=+v; refresh(); });
-document.getElementById('con').addEventListener('input', e=>{ st.con=+e.target.value; document.getElementById('conLbl').textContent=st.con.toFixed(2); });
-document.getElementById('isi').addEventListener('input', e=>{ st.isi=+e.target.value; document.getElementById('isiLbl').textContent=st.isi; });
-applyCondUI();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='shepard_zare_1983.csv'; a.click(); };
+applyScale(); resetSession(); buildCfgButtons(); measure(); requestAnimationFrame(loop);
 </script>
 </body>
 </html>

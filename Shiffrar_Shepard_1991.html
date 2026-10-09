@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shiffrar &amp; Shepard (1991) — Same/different comparison of cube rotations</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:740px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; }
+  .cvwrap { max-width:100vw; overflow-x:auto; }
+  .participant { margin-top:12px; width:740px; max-width:96vw; text-align:center; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; }
+  .prow { margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .status { margin-top:8px; font-size:12px; color:#8aa0ff; min-height:16px; font-variant-numeric:tabular-nums; }
+  .panel { margin-top:20px; width:740px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:6px 14px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button:disabled { opacity:.35; cursor:default; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  select { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:4px 6px; border-radius:4px; font-size:12px; }
+  .meta { margin-top:20px; width:740px; max-width:96vw; font-size:10.5px; color:#666; line-height:1.6; }
+  .meta table { border-collapse:collapse; margin:8px 0; width:100%; }
+  .meta td, .meta th { border-top:1px solid #222; padding:3px 6px; text-align:left; vertical-align:top; font-weight:normal; }
+  .meta th { color:#888; }
+  .asm { color:#c9a15a; }
+  .disp { margin-top:8px; font-size:10.5px; color:#666; text-align:center; max-width:740px; }
+  .disp.warn { color:#c9a15a; }
+  #card { height:26px; background:#2a3a5a; border:1px solid #5a64a8; border-radius:3px; position:relative; }
+  #card::after { content:""; position:absolute; right:-5px; top:0; bottom:0; width:10px; cursor:ew-resize; }
+  input[type=number] { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:4px 6px; border-radius:4px; font-size:12px; width:80px; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Shiffrar &amp; Shepard (1991) — Comparing two successive cube rotations (same / different)</h1>
+  <div class="sub">A green wire-frame cube rotates 315° (1,680 ms nominal), a 2 s blank follows, a second cube rotation appears,
+    and the observer presses <i>same</i> or <i>different</i> during that second rotation.</div>
+
+  <div class="cvwrap"><canvas id="c" width="740" height="460"></canvas></div>
+
+  <div class="participant">
+    <div class="instr">
+      Press <b>next</b> to start a trial. Watch the first rotation and form a mental image of it; during the second rotation press
+      <b>same</b> or <b>different</b> as quickly and accurately as possible. Half of the trials are identical (same rotation twice); on the other half the two rotations differ in some way. Reversals of apparent depth/direction (Necker) do not count as a difference.
+    </div>
+    <div class="prow">
+      <button id="bNext">next (Space)</button>
+      <button id="bSame" disabled>same (S)</button>
+      <button id="bDiff" disabled>different (D)</button>
+    </div>
+    <div class="status" id="status">Press next to begin.</div>
+    <div class="status" id="prog" style="color:#777"></div>
+  </div>
+
+  <div class="disp" id="disp">Measuring display refresh...</div>
+
+  <div class="panel">
+    <h2>Display setup</h2>
+    <div class="ctrl" style="font-size:11px">Drag the slider until the blue bar is exactly as wide as a credit card (8.56 cm).
+      <input type="range" id="cardW" min="150" max="600" step="1" value="324" style="width:100%">
+      <div id="card" style="width:324px"></div></div>
+    <div class="grid" style="margin-top:10px">
+      <div class="ctrl">Screen px per cm <input type="number" id="ppcm" step="0.1" min="10" max="200" value="37.8"></div>
+      <div class="ctrl">Viewing distance (cm) <input type="number" id="vdist" step="1" min="20" max="300" value="80"></div>
+      <div class="ctrl"><span id="pxdeg"></span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Session
+        <div class="seg"><button id="bReset">Restart session (25 practice + 4 × 37 trials)</button></div>
+      </div>
+      <div class="ctrl">Trial selection
+        <div class="seg" id="mode">
+          <button data-v="random" class="on">Random (paper procedure)</button>
+          <button data-v="manual">Manual</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid" id="manualBox" style="margin-top:12px; display:none">
+      <div class="ctrl">Rotation 1: axis in environment
+        <select id="e1"><option>Y</option><option>Z</option><option>O</option><option>YO</option><option>ZO</option></select></div>
+      <div class="ctrl">Rotation 1: axis in cube
+        <select id="c1"><option>F</option><option>C</option><option>N</option><option>FN</option><option>CN</option></select></div>
+      <div class="ctrl">Rotation 2: axis in environment
+        <select id="e2"><option>Y</option><option>Z</option><option>O</option><option>YO</option><option>ZO</option></select></div>
+      <div class="ctrl">Rotation 2: axis in cube
+        <select id="c2"><option>F</option><option>C</option><option>N</option><option>FN</option><option>CN</option></select></div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <b>Methods (Shiffrar &amp; Shepard, 1991, <i>J. Exp. Psychol.: HPP</i> 17(1), 44–54; Method, pp. 46–47).</b>
+    The page shows only what the observer saw and pressed. No axes, paths, correct answers or results are drawn; the paper's accuracy/latency
+    feedback line (&ldquo;Correct in 820 ms&rdquo;) is not reproduced because it would reveal the correct answer; no response, latency or accuracy is shown back. Responses and latencies are held internally only.
+    <table>
+      <tr><th>Parameter</th><th>Paper value</th><th>This page</th></tr>
+      <tr><td>Display</td><td>HP 1345A vector scope, 2,048 × 2,048 addressable, 60 Hz; screen 9.5 × 12.5 cm (p. 46)</td><td>Dark canvas only (no screen frame drawn); sized by the Display setup control (px/cm calibrated with a credit card; stored in localStorage key am_display). <span class="asm">Screen orientation unstated</span></td></tr>
+      <tr><td>Stimulus</td><td>Wire-frame cube, 12 edges, bright green, 170 cd/m² on dark background, parallel (orthographic) projection, all edges visible (transparent faces), centred on screen</td><td>Green lines (#3cff5a), orthographic projection, no hidden-line removal; <span class="asm">line width and exact hue are assumptions</span></td></tr>
+      <tr><td>Size</td><td>Max projected edge 3 cm = about 2.2° at ~80 cm; whole cube 3°–4°</td><td>Edge = 3 cm at 80 cm = 2.15° (drawn in degrees; px per degree from calibrated px/cm and viewing distance, default 80 cm = paper)</td></tr>
+      <tr><td>Angular speed</td><td>187.5°/s, i.e. +3° per 16.7 ms frame at 60 Hz</td><td>Refresh rate measured at load (median rAF interval over 60 frames). Angle step = 187.5°/s × frame duration (3.125° at 60 Hz; the paper's &ldquo;3° per 16.7 ms&rdquo; is a rounding). Durations converted to whole frames and scheduled by counting frames; realised ms shown in the display line under the canvas</td></tr>
+      <tr><td>Rotation extent / duration</td><td>315° in 1,680 ms; each cube display lasted 1,680 ms</td><td>Rotation lasts round(1,680 ms / frame) frames (101 at 60 Hz); angle is capped at 315° and reaches it on the last frame; cube visible only during the rotation, blank otherwise. 1,500 ms and 2 s intervals are also frame counted</td></tr>
+      <tr><td>Direction</td><td>Always clockwise viewed from above for the vertical axis</td><td>Same sign (negative right-handed rotation) used for all axes; <span class="asm">sign for non-vertical axes assumed identical in convention</span></td></tr>
+      <tr><td>Trial sequence</td><td>press <i>next</i> → 1,500 ms → rotation 1 (1,680 ms) → 2 s blank → rotation 2 (1,680 ms), response during rotation 2; responses after the display counted as missing (&lt;2% of trials)</td><td>Same; a response after rotation 2 ends is flagged as late</td></tr>
+      <tr><td>Response</td><td>Keys labelled next, same, different; speed and accuracy stressed</td><td>Buttons/keys Space, S, D; latency measured from rotation-2 onset, recorded internally and not displayed</td></tr>
+      <tr><td>Environmental axis of rotation</td><td>Y (vertical), Z (line of sight), O (equidistant from X, Y, Z; 54.73° from each), YO (10° from Y toward O), ZO (10° from Z toward O)</td><td>Same. <span class="asm">Sign of O (1,1,1) and the sense in which it is tilted are assumed</span></td></tr>
+      <tr><td>Axis relative to cube</td><td>F (through opposite face centres), C (through opposite corners), N (centre of the F–C–E triangle, about 34° from F and 26° from C), FN (10° from F toward N), CN (10° from C toward N)</td><td>Same; N is solved from the 34°/26° values (E axis lies 45° from F, 35.3° from C)</td></tr>
+      <tr><td>Starting orientation</td><td>Cube begins in the same orientation in identical rotations; cube is placed so the chosen cube axis coincides with the chosen environment axis (Fig. 2); roll about that axis not stated</td><td>Fig. 2 (p. 48) shows the cubes in a slightly oblique view. <span class="asm">Cube axis aligned to environment axis by minimal rotation, then rolled by a fixed 20° about that axis (assumed, so that F/Y is not seen exactly face-on); same rule for both rotations of a pair</span></td></tr>
+      <tr><td>Conditions</td><td>5 environment axes × 5 cube axes = 25 rotations; half of trials same, half different (differing in environment relation, cube relation, or both); observers told the proportion</td><td>Random mode: pick rotation 1 uniformly from the 25, 50% same; for different trials <span class="asm">rotation 2 drawn uniformly from the other 24 (the paper does not state the sampling of different pairs)</span></td></tr>
+      <tr><td>Session</td><td>13 observers; 25 practice trials, then 4 blocks × 37 trials = 148 trials</td><td>One session: 25 practice trials then 4 blocks × 37 trials, 50% same per block (<span class="asm">18 or 19 same per block, two blocks of each in random order, giving exactly 74 same / 74 different; the paper states only half</span>); a pause message after each block. Responses are collected internally only</td></tr>
+      <tr><td>Viewing</td><td>Binocular, about 80 cm; room lighting not stated</td><td>Viewing distance set in Display setup (default 80 cm); monocular/binocular and lighting not simulated</td></tr>
+    </table>
+  </div>
+
+<script>
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const EDGE_CM = 3, PAPER_DIST = 80, CARD_CM = 8.56;
+const CX = W/2, CY = H/2;
+const ANG_RATE = 187.5;                                 // deg/s
+const ROLL = 20;                                        // ASSUMED start roll about the rotation axis (deg)
+const T_PRE = 1500, T_ROT = 1680, T_BLANK = 2000;       // ms, converted to frames after measurement
+const D2R = Math.PI/180;
+let frameMs = 1000/60, nPre=90, nRot=101, nBlank=120, step = ANG_RATE*frameMs/1000;
+let ppcm = 37.8, vdist = PAPER_DIST, edgePx = 113;
+
+// ---- small vector / matrix helpers (row-major 3x3) ----
+const norm = a=>{const l=Math.hypot(a[0],a[1],a[2]);return a.map(x=>x/l);};
+const dot = (a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross = (a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const mulv = (M,v)=>[dot(M[0],v),dot(M[1],v),dot(M[2],v)];
+const mulm = (A,B)=>A.map(r=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));
+function rotAA(axis, ang){
+  const [x,y,z]=norm(axis), c=Math.cos(ang), s=Math.sin(ang), t=1-c;
+  return [[t*x*x+c, t*x*y-s*z, t*x*z+s*y],[t*x*y+s*z, t*y*y+c, t*y*z-s*x],[t*x*z-s*y, t*y*z+s*x, t*z*z+c]];
+}
+function alignRot(a, b){
+  a=norm(a); b=norm(b);
+  const c=dot(a,b);
+  if (c>0.999999) return [[1,0,0],[0,1,0],[0,0,1]];
+  return rotAA(cross(a,b), Math.acos(Math.max(-1,Math.min(1,c))));
+}
+function toward(a, b, deg){
+  a=norm(a); b=norm(b);
+  return mulv(rotAA(cross(a,b), deg*D2R), a);
+}
+
+// ---- axes ----
+const Y=[0,1,0], Z=[0,0,1], O=norm([1,1,1]);
+const ENV = { Y, Z, O, YO: toward(Y,O,10), ZO: toward(Z,O,10) };
+const F=[0,0,1], C=norm([1,1,1]), E=norm([1,0,1]);
+function solveN(){
+  const c1=Math.cos(34*D2R), c2=Math.cos(26*D2R);
+  const fc=dot(F,C), n=cross(F,C), nn=dot(n,n);
+  const a=(c1-c2*fc)/(1-fc*fc), b=(c2-c1*fc)/(1-fc*fc);
+  const base=[0,1,2].map(i=>a*F[i]+b*C[i]);
+  const k=Math.sqrt(Math.max(0,(1-dot(base,base))/nn));
+  const p1=norm([0,1,2].map(i=>base[i]+k*n[i])), p2=norm([0,1,2].map(i=>base[i]-k*n[i]));
+  return dot(p1,E)>dot(p2,E)?p1:p2;
+}
+const N = solveN();
+const CUBEAX = { F, C, N, FN: toward(F,N,10), CN: toward(C,N,10) };
+
+const VERT=[]; for (const x of[-1,1])for(const y of[-1,1])for(const z of[-1,1]) VERT.push([x,y,z]);
+const EDGES=[]; for(let i=0;i<8;i++)for(let j=i+1;j<8;j++){
+  const d=(i^j); if(d===1||d===2||d===4) EDGES.push([i,j]); }
+
+function orient(rot, thetaDeg){
+  const R0 = mulm(rotAA(ENV[rot.e], ROLL*D2R), alignRot(CUBEAX[rot.c], ENV[rot.e]));
+  return mulm(rotAA(ENV[rot.e], -thetaDeg*D2R), R0);   // clockwise seen from above for Y
+}
+
+// ---- scale: everything drawn in degrees ----
+function pxPerDeg(){ return ppcm * vdist * Math.tan(Math.PI/180); }
+function updateScale(){
+  const edgeDeg = 2*Math.atan(EDGE_CM/2/PAPER_DIST)/D2R;   // 3 cm at 80 cm
+  edgePx = edgeDeg*pxPerDeg();
+  if (cv.clientWidth && cv.clientWidth!==cv.width) $('pxdeg').dataset.w='canvas is CSS-scaled; size not calibrated'; else delete $('pxdeg').dataset.w;
+  $('pxdeg').textContent = pxPerDeg().toFixed(1)+' px/deg; cube edge '+edgeDeg.toFixed(2)+'° = '+edgePx.toFixed(0)+' px'+($('pxdeg').dataset.w?' - WARNING: '+$('pxdeg').dataset.w:'');
+  if (!(run && run.active)) blank();
+}
+function saveCal(withDist){ try{ let o={}; try{ o=JSON.parse(localStorage.getItem('am_display')||'{}')||{}; }catch(e){}
+  o.ppcm=ppcm; o.pxPerCm=ppcm;
+  if (withDist){ o.vdist=vdist; o.distCm=vdist; o.dist=vdist; o.viewingCm=vdist; o.vdistSetBy='shiffrar1991'; }
+  localStorage.setItem('am_display', JSON.stringify(o)); }catch(e){} }
+// accepts {ppcm|pxPerCm} for scale; viewing distance is NOT taken from storage (paper's 80 cm default kept)
+// unless this page itself wrote it (marker vdistPage = 'shiffrar1991').
+function loadCal(){ try{ const o=JSON.parse(localStorage.getItem('am_display')||'null');
+  if (!o) return; const pp=+(o.ppcm||o.pxPerCm); if (pp>0) ppcm=pp;
+  if (o.vdistSetBy==='shiffrar1991'){ const d=+(o.vdist||o.distCm||o.dist||o.viewingCm); if (d>0) vdist=d; } }catch(e){} }
+
+// ---- drawing ----
+function drawBase(){ ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); }
+function drawCube(rot, thetaDeg){
+  drawBase();
+  const M = orient(rot, thetaDeg), h=edgePx/2;
+  const P = VERT.map(v=>{const r=mulv(M,v.map(x=>x*h)); return [CX+r[0], CY-r[1]];});
+  ctx.strokeStyle='#3cff5a'; ctx.lineWidth=1.6; ctx.lineCap='round';
+  ctx.beginPath();
+  for (const [i,j] of EDGES){ ctx.moveTo(P[i][0],P[i][1]); ctx.lineTo(P[j][0],P[j][1]); }
+  ctx.stroke();
+}
+function blank(){ drawBase(); }
+
+// ---- UI ----
+const $ = id=>document.getElementById(id);
+const bNext=$('bNext'), bSame=$('bSame'), bDiff=$('bDiff'), statusEl=$('status'), progEl=$('prog');
+let mode='random';
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.v;
+  document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('on',x===b));
+  $('manualBox').style.display = mode==='manual'?'flex':'none';
+});
+const EN=['Y','Z','O','YO','ZO'], CN=['F','C','N','FN','CN'];
+const rnd = n=>Math.floor(Math.random()*n);
+const shuffle = a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+// ---- session: 25 practice then 4 blocks x 37; half the trials identical ----
+let sess = {idx:0, list:[]};
+function makeTrial(same){
+  const r1={e:EN[rnd(5)], c:CN[rnd(5)]};
+  let r2;
+  if (same) r2={...r1};
+  else { do { r2={e:EN[rnd(5)], c:CN[rnd(5)]}; } while (r2.e===r1.e && r2.c===r1.c); }
+  return {r1,r2};
+}
+function makeList(n, nSameFixed){
+  const nSame = nSameFixed!=null ? nSameFixed : Math.floor(n/2) + (Math.random()<0.5 && n%2 ? 1:0);
+  const flags=shuffle(Array.from({length:n},(_,i)=>i<nSame));
+  return flags.map(makeTrial);
+}
+function newSession(){
+  sess={idx:0, list:[], log:[]};
+  sess.list.push(...makeList(25).map(t=>({...t,lab:'practice'})));
+  const sameN=shuffle([18,18,19,19]);   // exactly 74 same / 74 different over the 4 blocks
+  for (let b=1;b<=4;b++) sess.list.push(...makeList(37,sameN[b-1]).map(t=>({...t,lab:'block '+b})));
+  updProg();
+}
+function updProg(){
+  const i=sess.idx, tot=sess.list.length;
+  if (i>=tot){ progEl.textContent='Session complete (148 trials). Restart to run again.'; return; }
+  const t=sess.list[i];
+  let n = i<25 ? i+1 : (i-25)%37+1, of = i<25 ? 25 : 37;
+  progEl.textContent=t.lab+': trial '+n+' / '+of;
+}
+
+let run=null, raf=0;
+function setLock(on){
+  document.querySelectorAll('#mode button, #e1, #c1, #e2, #c2, #bReset').forEach(el=>{el.disabled=on;});
+}
+
+// frame-counted scheduler: segments [{n:frames, draw:(k)=>void, start:()=>void}]
+function playSegments(segs, done){
+  cancelAnimationFrame(raf);
+  let si=0, k=0, started=false;
+  function tick(ts){
+    if (si>=segs.length){ done(); return; }
+    const sg=segs[si];
+    if (!started){ started=true; if(sg.start) sg.start(ts); }
+    if (sg.draw) sg.draw(k);
+    k++;
+    if (k>=sg.n){ si++; k=0; started=false; }
+    raf = requestAnimationFrame(tick);
+  }
+  raf = requestAnimationFrame(tick);
+}
+
+function startTrial(){
+  if (sess.idx>=sess.list.length) return;
+  const tr = mode==='manual'
+    ? { r1:{e:$('e1').value,c:$('c1').value}, r2:{e:$('e2').value,c:$('c2').value} }
+    : sess.list[sess.idx];
+  run={tr, mode, active:true, phase:'pre', answered:false, t2:0};
+  bNext.disabled=true; bSame.disabled=true; bDiff.disabled=true;
+  setLock(true);
+  statusEl.textContent='';
+  const rotDraw = rot => k=>drawCube(rot, Math.min(315, step*(k+1)));
+  playSegments([
+    {n:nPre, draw:()=>blank()},
+    {n:nRot, start:()=>{run.phase='r1'; statusEl.textContent='First rotation…';}, draw:rotDraw(tr.r1)},
+    {n:1, draw:()=>{blank(); run.phase='gap'; statusEl.textContent='';}},
+    {n:nBlank-1, draw:()=>blank()},
+    {n:nRot, start:t=>{run.phase='r2'; run.t2=t; bSame.disabled=false; bDiff.disabled=false;
+        statusEl.textContent='Second rotation: same or different?';}, draw:k=>{ rotDraw(tr.r2)(k); if (k===nRot-1 && !run.answered) run.phase='late'; }},
+  ], ()=>{
+    if (!run.answered) run.phase='late';
+    blank(); run.active=false; setLock(false);
+    bSame.disabled=true; bDiff.disabled=true;
+    if (!run.answered){ run.resp=null; statusEl.textContent='No response during the second rotation (missing).'; }
+    else statusEl.textContent='';
+    endTrial();
+  });
+}
+function endTrial(){
+  const rm=run.mode;
+  if (rm!=='manual'){
+    sess.log.push({trial:sess.list[sess.idx], resp:run.resp||null, rt:run.rt||null});   // internal only
+    sess.idx++;
+    const i=sess.idx, tot=sess.list.length;
+    updProg();
+    if (i===25) statusEl.textContent+=' Practice finished. Press next to start block 1 of 4.';
+    else if (i>25 && i<tot && (i-25)%37===0) statusEl.textContent+=' Block '+((i-25)/37)+' of 4 finished: take a short break.';
+    else if (i>=tot) statusEl.textContent+=' Block 4 of 4 finished. Session complete.';
+  }
+  bNext.disabled = (rm!=='manual' && sess.idx>=sess.list.length);
+}
+function respond(ans, ts){
+  if (!run || run.phase!=='r2' || run.answered) return;
+  run.answered=true; run.resp=ans; run.rt=(ts||performance.now())-run.t2;   // rAF frame timestamp vs event.timeStamp (same clock)
+  statusEl.textContent='Response recorded.';
+  bSame.disabled=true; bDiff.disabled=true;
+}
+bNext.onclick=startTrial;
+bSame.onclick=e=>respond('same',e.timeStamp);
+bDiff.onclick=e=>respond('different',e.timeStamp);
+$('bReset').onclick=()=>{ cancelAnimationFrame(raf); run=null; setLock(false); blank(); newSession(); bNext.disabled=false;
+  bSame.disabled=true; bDiff.disabled=true; statusEl.textContent='Press next to begin.'; };
+document.addEventListener('keydown', e=>{
+  if (e.target.tagName==='SELECT' || e.target.tagName==='INPUT') return;
+  if (e.code==='Space'){ e.preventDefault(); if(!bNext.disabled) startTrial(); }
+  else if (e.key==='s'||e.key==='S') respond('same',e.timeStamp);
+  else if (e.key==='d'||e.key==='D') respond('different',e.timeStamp);
+});
+
+// ---- display setup controls ----
+$('cardW').oninput=()=>{ const w=+$('cardW').value; $('card').style.width=w+'px';
+  ppcm=Math.round(w/CARD_CM*10)/10; $('ppcm').value=ppcm; saveCal(); updateScale(); };
+$('ppcm').onchange=()=>{ const v=+$('ppcm').value; if(v>0){ppcm=v; $('cardW').value=Math.round(v*CARD_CM); $('card').style.width=Math.round(v*CARD_CM)+'px'; saveCal(); updateScale();} };
+$('vdist').onchange=()=>{ const v=+$('vdist').value; if(v>0){vdist=v; saveCal(true); updateScale();} };
+
+// ---- refresh measurement ----
+function measureRefresh(cb){
+  const ts=[];
+  function f(t){ ts.push(t); if (ts.length<62) requestAnimationFrame(f); else {
+    const d=[]; for(let i=1;i<ts.length;i++) d.push(ts[i]-ts[i-1]);
+    d.sort((a,b)=>a-b); cb(d[Math.floor(d.length/2)]); } }
+  requestAnimationFrame(f);
+}
+function applyRefresh(ms){
+  frameMs=ms; step=ANG_RATE*frameMs/1000;
+  nPre=Math.round(T_PRE/ms); nRot=Math.round(T_ROT/ms); nBlank=Math.round(T_BLANK/ms);
+  const el=$('disp'); let warn=[];
+  [['1,500',T_PRE,nPre],['1,680',T_ROT,nRot],['2,000',T_BLANK,nBlank]].forEach(([l,t,n])=>{
+    if (Math.abs(n*ms-t) > ms*0.1) warn.push(l+' ms is not a whole number of frames');});
+  el.textContent='Display: '+(1000/ms).toFixed(1)+' Hz measured ('+ms.toFixed(2)+' ms/frame). Realised: pre-trial '+(nPre*ms).toFixed(0)+' ms ('+nPre+' fr), rotation '
+    +(nRot*ms).toFixed(0)+' ms ('+nRot+' fr, '+step.toFixed(3)+'° per frame), blank '+(nBlank*ms).toFixed(0)+' ms ('+nBlank+' fr).'
+    +(warn.length?' Warning: '+warn.join('; ')+' at this rate (rounded to nearest frame).':'');
+  el.className='disp'+(warn.length?' warn':'');
+}
+
+loadCal();
+$('ppcm').value=ppcm; $('vdist').value=vdist; $('cardW').value=Math.round(ppcm*CARD_CM); $('card').style.width=Math.round(ppcm*CARD_CM)+'px';
+updateScale(); newSession(); blank();
+bNext.disabled=true;
+measureRefresh(ms=>{ applyRefresh(ms); bNext.disabled=false; });
+</script>
+</body>
+</html>

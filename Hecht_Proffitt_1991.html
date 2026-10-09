@@ -2,111 +2,517 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hecht & Proffitt (1991) — 3D Domino Orientation AM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hecht &amp; Proffitt (1991) — Apparent extended body motions in depth</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#222; display:block; }
-.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
-input[type=range] { width:160px; accent-color:#888; }
-button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.meta { margin-top:16px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+body { background:#1a1a1a; color:#aaa; font-family:sans-serif; font-size:13px; padding:14px 16px 40px; display:flex; flex-direction:column; align-items:center; }
+a { color:#8ab; text-decoration:none; }
+.wrap { width:100%; max-width:760px; }
+.wrap.wide { max-width:96vw; }
+h1 { font-size:16px; color:#ccc; font-weight:600; margin:10px 0 4px; }
+.sub { font-size:11px; color:#777; margin-bottom:10px; line-height:1.5; }
+.row { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; margin:8px 0; }
+select, button, input[type=number] { background:#333; color:#ddd; border:1px solid #555; padding:5px 12px; border-radius:4px; font-size:13px; cursor:pointer; }
+button:disabled { opacity:.4; cursor:default; }
+input[type=range] { width:100%; accent-color:#888; }
+canvas { background:#000; display:block; margin:6px 0; border:1px solid #333; }
+.cvw { width:100%; max-width:96vw; display:flex; justify-content:center; }
+.cvbox { position:relative; display:inline-block; line-height:0; }
+.cvbox canvas { margin:0; }
+.cvbox .resp { display:none; position:absolute; left:50%; bottom:8px; transform:translateX(-50%); width:min(880px,96%); margin:0; background:rgba(18,18,22,.93); line-height:1.4; z-index:2; max-height:92%; overflow:auto; }
+.cvbox .resp.mid { bottom:auto; top:50%; transform:translate(-50%,-50%); }
+.cvbox .resp p { margin-bottom:6px; font-size:12px; }
+.cvbox .resp .scale { margin:4px 0 8px; }
+.cvbox .resp .lab { font-size:12px; color:#bbb; }
+.cvbox .resp { padding:6px 12px; }
+.cvbox .resp .row { margin:4px 0; }
+#demoC { background:#000; border:1px solid #333; margin:4px 0; }
+details.setup { margin:8px 0; font-size:12px; color:#9a9a9a; background:#131318; border:1px solid #2a2a30; border-radius:4px; padding:6px 10px; }
+details.setup .row { margin:6px 0; }
+#card { height:14px; width:323px; background:#8a8a92; border-radius:3px; }
+input[type=number] { width:80px; }
+#status { font-size:12px; color:#999; min-height:18px; }
+#params { font-size:11px; color:#666; min-height:15px; }
+.resp { border:1px solid #333; border-radius:4px; padding:10px 12px; margin:6px 0; display:none; color:#aaa; font-size:13px; }
+.resp.on { display:block; }
+.resp p { margin-bottom:8px; line-height:1.5; }
+.scale { margin:8px 0 12px; }
+.scale .lab { display:flex; justify-content:space-between; font-size:12px; color:#bbb; }
+details { margin-top:14px; border-top:1px solid #333; padding-top:8px; }
+summary { cursor:pointer; color:#ccc; margin-bottom:6px; }
+table { border-collapse:collapse; width:100%; font-size:11.5px; line-height:1.4; }
+td, th { border-top:1px solid #2c2c2c; padding:4px 6px; text-align:left; vertical-align:top; }
+th { color:#999; font-weight:600; }
+.asm { color:#d9a24a; }
+.warn { color:#d9a24a; font-size:11px; }
 </style>
 </head>
 <body>
-<canvas id="c" width="540" height="360"></canvas>
-<div class="controls">
-  <button id="btn">Pause</button>
-  <label>SOA: <span id="lbl">400</span> ms &nbsp;<input type="range" id="soa" min="50" max="1000" value="400" step="50"></label>
-  <label>Tilt: <span id="tiltLbl">45</span>° &nbsp;<input type="range" id="tilt" min="0" max="72" value="45" step="9"></label>
+<div class="wrap">
+<a href="index.html">← back to experiments</a>
+<h1>Hecht &amp; Proffitt (1991) — Apparent extended body motions in depth</h1>
+<div class="sub">JEP: Human Perception &amp; Performance 17(4), 1090–1103. Experiments 1–5: two "domino" objects alternate on screen; the observer places a probe on the invisible system axis and then gives the experiment's rating or sets a depth plane. Responses are not stored or analysed here.</div>
+
+<details class="setup" id="setup"><summary>Display setup (screen scale and viewing distance)</summary>
+  <div class="row">Resize the bar to the width of a credit card (8.56 cm):
+    <input type="range" id="cardRange" min="120" max="700" step="1" value="324"> <span id="ppcmTxt"></span></div>
+  <div class="row"><div id="card"></div></div>
+  <div class="row">Viewing distance (cm) <input type="number" id="dist" min="20" max="200" step="1" value="60"> <span id="distNote"></span></div>
+  <div class="row" id="scaleInfo"></div>
+</details>
+<div class="row">
+  <label>Experiment <select id="exp">
+    <option value="1">1 — dominos, picture-plane orientation change</option>
+    <option value="2">2 — 2D / B1 / B2 (motion in depth)</option>
+    <option value="3">3 — viewing box, depth plane, half size</option>
+    <option value="4">4 — rotation 30/60 x internal orientation</option>
+    <option value="5">5 — perspective, 25 cm</option>
+  </select></label>
+  <label id="probeSelWrap">Probe (Exp 3) <select id="probeSel"><option value="domino">third domino</option><option value="window">window</option></select></label>
+  <label><input type="checkbox" id="prac" checked> 4 practice trials first</label>
+  <button id="startBtn" disabled>Start randomised block</button>
+  <label><input type="checkbox" id="expmode"> experimenter mode (shows condition labels; the observer was not told them)</label>
 </div>
-<div class="meta">Hecht &amp; Proffitt (1991). Domino shown in two 3D tilt orientations — perceived apparent rotation curves through 3D space.</div>
+<div class="row" id="singleRow" style="display:none">
+  <label>Single trial <select id="single"></select></label>
+  <label id="singleProbeWrap">probe <select id="singleProbe"><option value="domino">third domino</option><option value="window">window</option></select></label>
+  <button id="singleBtn">Run this trial</button>
+  <button id="stopBtn">Stop</button>
+</div>
+<div id="status">Measuring display refresh...</div>
+
+<div class="cvw"><div class="cvbox" id="cvbox"><canvas id="c" width="1323" height="1134"></canvas>
+<div class="resp mid" id="r_intro"><p id="introTxt"></p><canvas id="demoC" width="420" height="190" style="display:none"></canvas><div class="row"><button id="beginBtn">Begin (Enter)</button></div></div>
+<div class="resp" id="r_watch"><div class="row"><span>Turn the probe on once a stable path is seen.</span><button id="probeOnBtn">Turn probe on (Space)</button></div></div>
+<div class="resp" id="r_probe"><div class="row"><input type="range" id="probePos" min="0" max="1000" value="0" style="flex:1;min-width:200px" title="slider or arrow keys; Shift = coarse"><button id="placeBtn">Confirm placement (Enter)</button></div></div>
+<div class="resp" id="r_good"><div class="row"><span class="lab">good</span><input type="range" id="goodS" min="0" max="1000" value="500" style="flex:1;min-width:200px"><span class="lab">poor</span><button class="nextBtn">Next trial (Enter)</button></div></div>
+<div class="resp" id="r_two"><div class="row" id="q1"><span class="lab">Rating 1: how difficult was it to place the probe on the motion path?&nbsp; easy</span><input type="range" id="diffS" min="0" max="1000" value="500" style="flex:1;min-width:140px"><span class="lab">difficult</span><button id="q1Btn">Continue (Enter)</button></div>
+  <div class="row" id="q2" style="display:none"><span class="lab">Rating 2: how much did the path run in depth or in the plane of the screen?&nbsp; in depth</span><input type="range" id="depthS" min="0" max="1000" value="500" style="flex:1;min-width:140px"><span class="lab">in plane</span><button class="nextBtn">Next trial (Enter)</button></div></div>
+<div class="resp" id="r_plane"><div class="row"><label><input type="radio" name="ax" value="v" checked> vertical axis</label><label><input type="radio" name="ax" value="h"> horizontal axis</label>
+  <button id="pm">◀ 5°</button><button id="pp">5° ▶</button><button class="nextBtn">Next trial (Enter)</button></div></div>
+<div class="resp" id="r_break"><p>Short break (taken after half of the trials).</p><button id="contBtn">Continue</button></div>
+</div></div>
+<div id="hz" class="warn"></div>
+<div id="params" style="display:none"></div>
+
+<details open>
+<summary>Methods panel (values from the paper unless marked as assumption)</summary>
+<table>
+<tr><th>Item</th><th>Value</th><th>Source</th></tr>
+<tr><td>Apparatus</td><td>Tektronix 4129 3-D colour graphics workstation, upright screen, 4 lines/mm, 30 x 35 cm; dim room</td><td>p.1094</td></tr>
+<tr><td>Layout of the response interface</td><td class="asm">The response panel in use (probe-on button, goodness, difficulty/depth sliders, grid controls, Next) overlays the lower part of the canvas, so no scrolling is needed (the goodness scale was at the bottom of the screen, p.1094). The canvas is cropped around the screen centre to the window size at physical scale; the probe range is limited to the visible part and kept clear of the panel (bottom reserve = height of the tallest panel).</td><td class="asm">assumption (usability)</td></tr>
+<tr><td>Instructions</td><td class="asm">A short intro (paraphrase of the experimenter's briefing, not the paper's wording) is shown before each block; before Exp 3 also a static schematic of three dominos on a plane (my drawing, standing in for the physical model, p.1099). Viewing-distance override: a typed distance applies only to the experiment it was entered for (never Exp 5, which is fixed at 25 cm).</td><td>pp.1094, 1098–1099; <span class="asm">wording assumed</span></td></tr>
+<tr><td>Canvas mapping</td><td class="asm">35 cm wide x 30 cm high (landscape), cropped to the window; scale from the Display setup (default 37.8 px/cm, shared key am_display); black background; stimulus and probe colours are my choice</td><td class="asm">assumption (colours, orientation of the 30 x 35 cm screen unspecified)</td></tr>
+<tr><td>Viewing distance</td><td>about 60 cm (Exps 1–2; 12.7° between domino centres); 64 cm (Exps 3–4); 25 cm (Exp 5). Exps 3–4: black viewing box, window occluding screen borders, monocular. Exp 5: box removed, monocular, dark room. Not reproducible on a monitor; stated for reference.</td><td>pp.1094, 1098, 1101</td></tr>
+<tr><td>Domino</td><td>3.2 x 1.6 x 0.8 cm (Exp 3: 2.6 x 1.3 x 0.65 cm); top marked with dots, ends with lines, sides colour-coded; long axis along the object ray</td><td>p.1094; p.1099. <span class="asm">Top: two halves split by a line with 1 + 2 dots (as in Figs 4/6, not stated in text); ends neutral grey with 2 lines; sides blue/green; counts, sizes and colours assumed (scaled with domino size).</span></td></tr>
+<tr><td>Geometry</td><td>Two fixed dominos, centres 13.5 cm apart on screen (Exp 3: 6.75 cm), placed symmetrically about the invisible system axis on object rays from origin O, angle theta to the axis. <span class="asm">For small theta, O lies far behind/off the display, so the page puts the midpoint of the two domino centres at screen centre (jittered within the 4-cm circle) and O is implicit; beta1/beta2 are applied in the system frame (B1 about the system axis, B2 perpendicular to it in the picture plane).</span> Internal rotations alpha1 (about x', long axis), alpha2 (about y'); alpha3 = 0. System rotated by beta1 (external x = system axis) or beta2 (y); beta3 = in-plane orientation of the axis.</td><td>pp.1094–1095, Fig. 4. <span class="asm">Rotation sign, rotation order, and applying the same alpha to both dominos are assumptions.</span></td></tr>
+<tr><td>Projection</td><td>Parallel (orthographic) in Exps 1–4; polar (perspective) at 25 cm in Exp 5</td><td>pp.1095–1099, 1101. <span class="asm">Exp 5 eye on screen-centre normal; rotation pivot at the midpoint of the pair so depth is symmetric about the screen plane; the 3-D distance is rescaled so the on-screen centre separation is 13.5 cm (the 30° projected orientation difference is not enforced).</span></td></tr>
+<tr><td>3-D theta and distance</td><td>B1: tan(theta3D) = tan(theta2D)/cos(beta1), distance = 13.5/cos(beta1). B2: distance 13.5; theta3D from theta2D (relation garbled in the PDF; I used tan(theta3D) = tan(theta2D) cos(beta2), which reproduces the Exp 5 values).</td><td>Appendix pp.1102–1103; <span class="asm">B2 form inferred</span></td></tr>
+<tr><td>Origin O and axis orientation</td><td>O randomised within a 4-cm circle at screen centre; axis beta3 random</td><td>p.1094. <span class="asm">4 cm taken as the diameter; beta3 random within each 90° sector (stratified) in Exp 1, uniform over 360° in Exps 2–5 (not specified)</span></td></tr>
+<tr><td>Timing</td><td>Each domino 220 ms on, SOA 500 ms, cycle (D1-ISI-D2-ISI) 1000 ms, continuous. Converted to whole frames at the refresh rate measured at load (median of 60 frames) and scheduled by counting frames; realised ms are shown in the display line under the canvas, with a warning when a duration is not a whole number of frames (at 60 Hz: 13 frames = 216.7 ms, SOA 30, cycle 60).</td><td>p.1094</td></tr>
+<tr><td>Probe</td><td>Turned on by the observer; flashes in the ISIs for 160 ms (whole frames at the measured rate); starts at a random extreme end of the system axis near the screen border; moved continuously along the axis. Window = two pointed triangles separated enough for the domino to pass; or a third domino at an intermediate position and orientation.</td><td>p.1094. <span class="asm">Probe onset about 50 ms after domino offset; probe range from the screen border (1.5-cm margin) on one side of the pair midpoint to the other; gap 4 cm (3.2 cm in Exp 3); triangle size; probe domino drawn with the system-axis orientation and the stimulus alpha values; slider/keys as control device (Exp 2 ratings used a thumb wheel).</span></td></tr>
+<tr><td>Exp 1 (pp.1094–1095)</td><td>theta = 30°, beta1 = beta2 = 0; alpha1, alpha2 each 0, 15, 30, 45, 60° (25 trials per block); each trial once with window, once with domino probe (order counterbalanced); random order in block; four practice trials; goodness scale (good–poor) after placement; break after half the trials.</td><td>p.1094–1095</td></tr>
+<tr><td>Exp 2 (pp.1095–1098)</td><td>15 stimuli: 2D (alpha1 = alpha2 = 20°; theta 30° or 35°), B1 (beta1 34.5, 36.1, 50.9, 62.3, 72.2°; 2D theta 3.1, 7.1, 12.9, 20.6, 25.4°), B2 (beta2 48.8, 60.3, 61.0, 67.8, 72.2°; 2D theta 10, 15, 20, 25, 30°), alpha = 0 for B1/B2. Each shown twice (window block, domino block; 30 trials, break after 15). Probe moves with the system orientation. Two ratings, continuous 0–100 thumb wheel: difficulty (easy–difficult) and depth (in depth–in plane).</td><td>pp.1095–1098. <span class="asm">Which 2D pairs use 30 vs 35 not stated (I used 30, 30, 30, 35, 35). The two ratings are asked in sequence, difficulty first then depth (p.1097); both sliders start at the centre, which the paper does not specify. The 2D theta values are taken as the projected angles the Appendix formula starts from.</span></td></tr>
+<tr><td>Exp 3 (pp.1098–1099)</td><td>Same 15 stimuli at half size, 64 cm, viewing box, monocular. Each observer saw 15 stimuli in one block; one half of the observers used the window probe and the other half the domino probe (here selectable per block). After placement a key shows a regularly spaced grid drawn in perspective; it can be turned in 5° steps about a vertical or a horizontal axis through its centre (not both). Rating scales dropped.</td><td>pp.1098–1099. <span class="asm">Grid 24 x 24 cm, 3-cm spacing (scaled down proportionally, 8 x 8 cells, when the window is too short to show it whole above the response bar), starts frontoparallel; probe hidden once grid appears; no fixed number of practice trials beyond four.</span></td></tr>
+<tr><td>Exp 4 (pp.1099–1101)</td><td>Display size as Exp 1–2, viewing as Exp 3. System rotated about x (B1) or y (B2) by 30 or 60°; domino orientation parallel to the object ray, alpha1 = 30, alpha2 = 30, or both 30. Domino probe only; grid task.</td><td>p.1099–1101. <span class="asm">The text lists four orientations but counts 12 stimuli; I present all four (16). theta2D = 30° assumed.</span></td></tr>
+<tr><td>Exp 5 (p.1101)</td><td>As Exp 4 without box; 25 cm; polar projection; 9 stimuli: B1 beta1 30/45/60 (theta3D 33.7, 39.2, 49.1°), B2 beta2 30/45/60 (theta3D 26.6, 22.2, 16.1°), 2D (theta 16.1, 32.7, 49.1°); alpha1 = alpha2 = 10°.</td><td>p.1101</td></tr>
+<tr><td>Not specified</td><td>Colours and luminances, fixation (none described), probe colour and size, input device for probe movement, inter-trial interval, dot/line layout, exact perspective formulae.</td><td>—</td></tr>
+</table>
+</details>
+</div>
+
 <script>
-const c=document.getElementById('c');
-const ctx=c.getContext('2d');
-const CX=c.width/2, CY=c.height/2;
-let soaMs=400, running=true, phase='f1', phaseStart=performance.now();
+(function(){
+const SW=35, SH=30;           // screen cm (30 x 35 cm; orientation assumed landscape)
+let PXCM=37.8, CXp=0, CYp=0, CYs=0;  // CYs: vertical centre of the scene, in the region above the response bar
+  // PXCM = px per paper-cm (cm at the paper's viewing distance)
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+const rad=d=>d*Math.PI/180, deg=r=>r*180/Math.PI;
+const PAPER_DIST={1:60,2:60,3:64,4:64,5:25};
 
-// Draw a domino (tall rectangle) tilted in 3D about the horizontal axis
-// tiltDeg: 0 = upright, 90 = flat on table
-function drawDomino(tiltDeg) {
-  const tilt = tiltDeg * Math.PI / 180;
-  const W=50, H=110, D=12; // width, height, depth
-  // Project with simple cabinet oblique projection
-  const cos_=Math.cos(tilt), sin_=Math.sin(tilt);
-  // Front face corners in object space (before tilt around x-axis)
-  // Object: centered at origin, width W, height H, depth D
-  function project3d(x,y,z) {
-    // rotate around x-axis by tilt
-    const yr = y*cos_ - z*sin_;
-    const zr = y*sin_ + z*cos_;
-    // perspective: use a larger camera distance so denominator stays positive
-    const camera = 400;
-    const scale = 280 / (camera - zr);
-    return {x: CX + x*scale, y: CY - yr*scale, z: zr};
+/* ---------- display setup (shared key am_display: {ppcm, dist}) ---------- */
+let disp={ppcm:37.8, dist:null, distFor:null};   // dist null = paper's distance; a typed distance applies only to experiment distFor of this page
+try{ const d=JSON.parse(localStorage.getItem('am_display')||'null');
+  if(d&&d.ppcm>20&&d.ppcm<200) disp.ppcm=d.ppcm;
+  if(d&&d.dist>=20&&d.dist<=200&&d.distPage==='HP1991'&&[1,2,3,4].includes(d.distFor)){ disp.dist=d.dist; disp.distFor=d.distFor; } }catch(e){}
+function saveDisp(){ try{ let old={}; try{ old=JSON.parse(localStorage.getItem('am_display')||'null')||{}; }catch(e){}
+  const o={ppcm:disp.ppcm};
+  if(disp.dist){ o.dist=disp.dist; o.distPage='HP1991'; o.distFor=disp.distFor; }
+  else if(old.distPage!=='HP1991'){ if(old.dist!=null) o.dist=old.dist; if(old.distPage) o.distPage=old.distPage; if(old.distFor!=null) o.distFor=old.distFor; }   // keep a distance stored by another page
+  localStorage.setItem('am_display',JSON.stringify(o)); }catch(e){} }
+let VW=SW, VH=SH;   // visible part of the 35 x 30 cm screen (cm), cropped to the window at physical scale
+let curExp=1;
+function applyDisp(){
+  const pd=PAPER_DIST[curExp], ov=!!(disp.dist&&disp.distFor===curExp&&curExp!==5), dist=ov?disp.dist:pd;
+  PXCM=disp.ppcm*dist/pd;
+  VW=Math.max(16,Math.min(SW,(window.innerWidth-40)/PXCM)); VH=Math.max(16,Math.min(SH,(window.innerHeight-24)/PXCM));
+  cv.width=Math.round(VW*PXCM); cv.height=Math.round(VH*PXCM); CXp=cv.width/2; CYp=cv.height/2; CYs=CYp;
+  try{ if(G&&RESERVE>0){ setReserve(); probeRange(G); } }catch(e){}   // window resized or scale changed mid-trial: scene re-centred, probe range recomputed
+  $('card').style.width=(disp.ppcm*8.56).toFixed(0)+'px';
+  $('ppcmTxt').textContent=disp.ppcm.toFixed(1)+' px/cm';
+  $('dist').value=dist; $('dist').disabled=(curExp===5);
+  $('distNote').textContent=curExp===5? '(Exp 5: fixed at the paper\'s 25 cm; the perspective is computed for 25 cm, so no override)' : ov? `(paper: ${pd} cm; your value is a deviation, applied to Exp ${curExp} only)` : `(paper: ${pd} cm for Exp ${curExp}${curExp===1||curExp===2?', approximate':''})`;
+  const pxdeg=disp.ppcm*dist*Math.PI/180;
+  $('scaleInfo').innerHTML=pxdeg.toFixed(1)+' px/deg; canvas '+cv.width+' x '+cv.height+' px = '+
+    (2*deg(Math.atan(SW/2/pd))).toFixed(1)+' x '+(2*deg(Math.atan(SH/2/pd))).toFixed(1)+'° (full 35 x 30 cm screen at '+pd+' cm; shown part: '+VW.toFixed(1)+' x '+VH.toFixed(1)+' cm, centred, cropped to this window at physical scale). Domino centres 13.5 cm apart = '+(2*deg(Math.atan(6.75/pd))).toFixed(1)+'° (paper: 12.7° at about 60 cm). Stimuli are drawn in the paper\'s cm converted to visual angle at your distance.'+
+    (VW<16.5||VH<16.5?' <span class="warn">WARNING: the visible area is under about 16.5 cm along one side; the stimulus (13.5 cm pair separation + domino length + jitter) may not fit, and the range of beta3 (axis orientation) is limited on short windows. Enlarge the window, or zoom the browser out and recalibrate the card bar.</span> ':'')+
+    (VW<SW||VH<SH?' <span class="warn">The window is smaller than the screen: the display is cropped around its centre; the probe range is limited to the visible part.</span>':'');
+  const w=$('cardRange'); w.value=Math.round(disp.ppcm*8.56);
+}
+$('cardRange').addEventListener('input',e=>{ disp.ppcm=+e.target.value/8.56; applyDisp(); saveDisp(); });
+$('dist').addEventListener('change',e=>{ const v=+e.target.value; if(curExp!==5&&v>=20&&v<=200){ disp.dist=v; disp.distFor=curExp; applyDisp(); saveDisp(); } });
+window.addEventListener('resize',applyDisp);
+applyDisp();
+
+/* ---------- timing: whole frames at the measured refresh ---------- */
+let fd=1000/60, measured=false;
+let ON=13, CYC=60, HALF=30, PR_OFF=3, PR_LEN=10;   // frames; recomputed after measurement
+function setFrames(){
+  ON=Math.max(1,Math.round(220/fd)); HALF=Math.max(ON+1,Math.round(500/fd)); CYC=2*HALF;
+  PR_LEN=Math.max(1,Math.round(160/fd)); PR_OFF=Math.max(1,Math.round(50/fd));
+  if(ON+PR_OFF+PR_LEN>HALF) PR_OFF=Math.max(0,HALF-ON-PR_LEN);
+  const frac=[220,500,160].some(x=>Math.abs(x/fd-Math.round(x/fd))>0.05);
+  $('hz').textContent='Display: '+(1000/fd).toFixed(1)+' Hz (median of 60 frames). Domino '+ON+' frames = '+(ON*fd).toFixed(1)+' ms (paper 220), SOA '+HALF+' frames = '+(HALF*fd).toFixed(1)+' ms (500), cycle '+CYC+' frames = '+(CYC*fd).toFixed(1)+' ms (1000), ISI '+(HALF-ON)+' frames = '+((HALF-ON)*fd).toFixed(1)+' ms (280), probe '+PR_LEN+' frames = '+(PR_LEN*fd).toFixed(1)+' ms (160).'+(frac?' Warning: 220, 500 and/or 160 ms is not a whole number of frames at this rate.':'');
+}
+function domVisible(p){ return p<ON ? 0 : (p>=HALF && p<HALF+ON ? 1 : -1); }
+function probeVisible(p){ const q=p%HALF; return q>=ON+PR_OFF && q<ON+PR_OFF+PR_LEN; }
+(function measure(){
+  const dts=[]; let last=0;
+  function f(ts){ if(last) dts.push(ts-last); last=ts;
+    if(dts.length<60) requestAnimationFrame(f);
+    else{ dts.sort((a,b)=>a-b); fd=dts[Math.floor(dts.length/2)]; measured=true; setFrames();
+      $('startBtn').disabled=false; $('singleBtn').disabled=false; status('Choose an experiment and start.'); } }
+  requestAnimationFrame(f);
+})();
+
+/* ---------- linear algebra ---------- */
+const Rx=a=>[[1,0,0],[0,Math.cos(a),-Math.sin(a)],[0,Math.sin(a),Math.cos(a)]];
+const Ry=a=>[[Math.cos(a),0,Math.sin(a)],[0,1,0],[-Math.sin(a),0,Math.cos(a)]];
+const Rz=a=>[[Math.cos(a),-Math.sin(a),0],[Math.sin(a),Math.cos(a),0],[0,0,1]];
+const mul=(A,B)=>A.map((r,i)=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));
+const ap=(M,v)=>[M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2],M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2],M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]];
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+
+/* ---------- stimulus definitions ---------- */
+function mk(exp,cond,o){
+  const sc=exp===3?0.5:1, D2=13.5*sc;
+  const b1=o.b1||0,b2=o.b2||0;
+  let th3=o.th3, D3=D2;
+  if(th3===undefined){
+    const t2=rad(o.th2);
+    if(cond==='B1'){ th3=deg(Math.atan(Math.tan(t2)/Math.cos(rad(b1)))); D3=D2/Math.cos(rad(b1)); }
+    else if(cond==='B2'){ th3=deg(Math.atan(Math.tan(t2)*Math.cos(rad(b2)))); }
+    else th3=o.th2;
+  } else if(cond==='B1'){ D3=D2/Math.cos(rad(b1)); }
+  return {exp,cond,b1,b2,a1:o.a1||0,a2:o.a2||0,th3,th2:o.th2,D3,D2,
+    dims: exp===3?[2.6,1.3,0.65]:[3.2,1.6,0.8], persp: exp===5?25:0,
+    dist:{1:60,2:60,3:64,4:64,5:25}[exp], gap: exp===3?3.2:4};
+}
+function stimuli(exp){
+  const L=[];
+  if(exp===1){ [0,15,30,45,60].forEach(a=>[0,15,30,45,60].forEach(c=>L.push(mk(1,'2D',{th2:30,a1:a,a2:c})))); }
+  else if(exp===2||exp===3){
+    [30,30,30,35,35].forEach(t=>L.push(mk(exp,'2D',{th2:t,a1:20,a2:20})));
+    const B1=[34.5,36.1,50.9,62.3,72.2], T1=[3.1,7.1,12.9,20.6,25.4];
+    const B2=[48.8,60.3,61.0,67.8,72.2], T2=[10,15,20,25,30];
+    B1.forEach((b,i)=>L.push(mk(exp,'B1',{b1:b,th2:T1[i]})));
+    B2.forEach((b,i)=>L.push(mk(exp,'B2',{b2:b,th2:T2[i]})));
+  } else if(exp===4){
+    ['B1','B2'].forEach(c=>[30,60].forEach(b=>[[0,0],[30,0],[0,30],[30,30]].forEach(a=>
+      L.push(mk(4,c,{b1:c==='B1'?b:0,b2:c==='B2'?b:0,th2:30,a1:a[0],a2:a[1]})))));
+  } else {
+    [30,45,60].forEach((b,i)=>L.push(mk(5,'B1',{b1:b,th3:[33.7,39.2,49.1][i],th2:30,a1:10,a2:10})));
+    [30,45,60].forEach((b,i)=>L.push(mk(5,'B2',{b2:b,th3:[26.6,22.2,16.1][i],th2:30,a1:10,a2:10})));
+    [16.1,32.7,49.1].forEach(t=>L.push(mk(5,'2D',{th3:t,th2:t,a1:10,a2:10})));
   }
+  return L;
+}
+function label(s){
+  if(s.exp===1) return `alpha1=${s.a1}, alpha2=${s.a2}`;
+  if(s.cond==='2D') return `2D, theta=${s.th3.toFixed(1)}, alpha=${s.a1}/${s.a2}`;
+  const b=s.cond==='B1'?s.b1:s.b2;
+  return `${s.cond}, beta=${b}, theta2D=${s.th2}, alpha=${s.a1}/${s.a2}`;
+}
 
-  const corners = [
-    [-W/2,-H/2,0],[ W/2,-H/2,0],[ W/2, H/2,0],[-W/2, H/2,0], // front
-    [-W/2,-H/2,D],[ W/2,-H/2,D],[ W/2, H/2,D],[-W/2, H/2,D], // back
+/* ---------- geometry for a trial ---------- */
+function setup(s,sector){
+  let best=null, bv=1e9;
+  for(let k=0;k<400;k++){ const g=setupOnce(s,sector); const v=violation(g); if(v<bv){ bv=v; best=g; } if(v===0) break; }
+  return best;
+}
+// overshoot (px) of domino centres plus half domino length beyond the visible region above the response bar
+function violation(g){
+  let v=0; const r=g.s.dims[0]/2*PXCM, H=cv.height-RESERVE;
+  g.doms.forEach(d=>{ const p=proj(g.s,toWorld(g,d.C));
+    v+=Math.max(0,r-p[0])+Math.max(0,p[0]-(cv.width-r))+Math.max(0,r-p[1])+Math.max(0,p[1]-(H-r)); });
+  return v;
+}
+function setupOnce(s,sector){
+  const g={s};
+  const ang=Math.random()*2*Math.PI, rr=2*Math.sqrt(Math.random());  // 4-cm circle (assumed diameter)
+  const J=[rr*Math.cos(ang),rr*Math.sin(ang),0];
+  g.b3= sector===undefined ? Math.random()*360 : sector*90+Math.random()*90;
+  g.Sm=mul(Rz(rad(g.b3)),mul(Ry(rad(s.b2)),Rx(rad(s.b1))));
+  const th=rad(s.th3);
+  function build(D3){
+    const h=D3/2, R=h/Math.sin(th);
+    g.R=R; g.s3=D3;
+    g.doms=[1,-1].map(sg=>{
+      const x=[Math.cos(th),sg*Math.sin(th),0], y=[-sg*Math.sin(th),Math.cos(th),0];
+      return {C:[R*Math.cos(th),sg*h,0], Bm:[[x[0],y[0],0],[x[1],y[1],0],[0,0,1]]};
+    });
+    // O placed so that the midpoint of the two domino centres sits at screen centre (+ jitter); O itself is off screen
+    g.O=sub(J,ap(g.Sm,[R*Math.cos(th),0,0]));
+  }
+  build(s.D3);
+  if(s.persp){   // Exp 5: keep the on-screen displacement of the centres at 13.5 cm
+    let D=s.D3;
+    for(let k=0;k<12;k++){
+      const a=proj(s,toWorld(g,g.doms[0].C)), b=proj(s,toWorld(g,g.doms[1].C));
+      const sep=Math.hypot(a[0]-b[0],a[1]-b[1])/PXCM;
+      D*=s.D2/sep; build(D);
+    }
+  }
+  g.t0=g.R*Math.cos(th); g.th=th; probeRange(g);
+  return g;
+}
+function probeRange(g){
+  const s=g.s, t0=g.t0;
+  for(const m of [1.5,0.5,0]){
+    const inside=t=>{ const p=proj(s,toWorld(g,[t,0,0])); return Math.abs(p[0]-CXp)<(VW/2-m)*PXCM && p[1]>m*PXCM && p[1]<cv.height-m*PXCM-RESERVE; };
+    let lo=t0, hi=t0;
+    while(inside(lo-0.1)&&lo>t0-80) lo-=0.1;
+    while(inside(hi+0.1)&&hi<t0+80) hi+=0.1;
+    g.sMin=lo; g.sMax=hi;
+    if(hi-lo>=3) return;
+  }
+  g.sMin=Math.min(g.sMin,t0-1.5); g.sMax=Math.max(g.sMax,t0+1.5);   // never a collapsed range
+}
+function toWorld(g,p){ return add(ap(g.Sm,p),g.O); }
+function proj(s,p){ const k=s.persp? s.persp/(s.persp-p[2]) : 1; return [CXp+p[0]*k*PXCM, CYs-p[1]*k*PXCM]; }
+
+/* ---------- drawing ---------- */
+const COL={top:'#d6d6d6',e1:'#9a9a9a',e2:'#9a9a9a',s1:'#3b73d6',s2:'#2f9e5c',bot:'#555'};
+function drawDomino(g,C,Bm,a1,a2){
+  const s=g.s, [l,w,t]=s.dims;
+  const Li=mul(Rx(rad(a1)),Ry(rad(a2)));
+  const M=mul(g.Sm,mul(Bm,Li));
+  const T=v=>toWorld(g,add(ap(mul(Bm,Li),v),C));   // local -> world
+  const faces=[
+    {n:[0,0,1],col:COL.top,v:[[-l/2,-w/2,t/2],[l/2,-w/2,t/2],[l/2,w/2,t/2],[-l/2,w/2,t/2]],kind:'top'},
+    {n:[0,0,-1],col:COL.bot,v:[[-l/2,-w/2,-t/2],[l/2,-w/2,-t/2],[l/2,w/2,-t/2],[-l/2,w/2,-t/2]]},
+    {n:[1,0,0],col:COL.e1,v:[[l/2,-w/2,-t/2],[l/2,w/2,-t/2],[l/2,w/2,t/2],[l/2,-w/2,t/2]],kind:'end',x:l/2},
+    {n:[-1,0,0],col:COL.e2,v:[[-l/2,-w/2,-t/2],[-l/2,w/2,-t/2],[-l/2,w/2,t/2],[-l/2,-w/2,t/2]],kind:'end',x:-l/2},
+    {n:[0,1,0],col:COL.s1,v:[[-l/2,w/2,-t/2],[l/2,w/2,-t/2],[l/2,w/2,t/2],[-l/2,w/2,t/2]]},
+    {n:[0,-1,0],col:COL.s2,v:[[-l/2,-w/2,-t/2],[l/2,-w/2,-t/2],[l/2,-w/2,t/2],[-l/2,-w/2,t/2]]}
   ];
-  const proj = corners.map(p=>project3d(...p));
-
-  // Draw faces (use painter's algorithm: sort faces back-to-front by depth)
-  const faces = [
-    {verts:[0,1,2,3], fill:'#c8b090'},  // front
-    {verts:[4,5,6,7], fill:'#a09070'},  // back
-    {verts:[0,4,7,3], fill:'#b0a080'},  // left
-    {verts:[1,5,6,2], fill:'#b0a080'},  // right
-    {verts:[0,1,5,4], fill:'#d0c0a0'},  // top
-    {verts:[3,2,6,7], fill:'#906050'},  // bottom
-  ];
-
-  const facesToDraw = faces.map(face => {
-    const depth = face.verts.reduce((s,i)=>s + proj[i].z, 0) / face.verts.length;
-    return {...face, depth};
-  }).sort((a,b)=>a.depth - b.depth);
-
-  for(const face of facesToDraw){
-    const v0 = proj[face.verts[0]];
+  const eye=[0,0,s.persp];
+  for(const f of faces){
+    const nw=ap(M,f.n);
+    const pts=f.v.map(T);
+    let vis;
+    if(s.persp){ const c=[0,1,2].map(i=>pts.reduce((a,p)=>a+p[i],0)/4); vis=dot(nw,sub(eye,c))>0; }
+    else vis=nw[2]>0;
+    if(!vis) continue;
     ctx.beginPath();
-    ctx.moveTo(v0.x, v0.y);
-    for(let i=1;i<face.verts.length;i++){ const v = proj[face.verts[i]]; ctx.lineTo(v.x, v.y); }
-    ctx.closePath();
-    ctx.fillStyle=face.fill; ctx.fill();
-    ctx.strokeStyle='#555'; ctx.lineWidth=1; ctx.stroke();
+    pts.forEach((p,i)=>{ const q=proj(s,p); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); });
+    ctx.closePath(); ctx.fillStyle=f.col; ctx.fill(); ctx.strokeStyle='#222'; ctx.lineWidth=1; ctx.stroke();
+    if(f.kind==='top'){
+      ctx.fillStyle='#222'; ctx.strokeStyle='#222'; ctx.lineWidth=1.5;
+      const sz=l/3.2, dr=0.12*sz*PXCM;
+      const d1=proj(s,T([0,-w/2,t/2])), d2=proj(s,T([0,w/2,t/2]));
+      ctx.beginPath(); ctx.moveTo(d1[0],d1[1]); ctx.lineTo(d2[0],d2[1]); ctx.stroke();   // divides the top into two halves
+      [[-l/4,0],[l/4,-w/4],[l/4,w/4]].forEach(d=>{ const q=proj(s,T([d[0],d[1],t/2])); ctx.beginPath(); ctx.arc(q[0],q[1],dr,0,7); ctx.fill(); });
+    } else if(f.kind==='end'){
+      ctx.strokeStyle='#222'; ctx.lineWidth=1.5;
+      [-t/6,t/6].forEach(z=>{ const a=proj(s,T([f.x,-w*0.35,z])), b=proj(s,T([f.x,w*0.35,z])); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); });
+    }
   }
-
-  // Dots on the face that's currently facing the camera (choose closest face)
-  const frontDepth = (proj[0].z + proj[1].z + proj[2].z + proj[3].z) / 4;
-  const backDepth  = (proj[4].z + proj[5].z + proj[6].z + proj[7].z) / 4;
-  // larger z => closer to camera (used earlier in sorting), so choose the face with larger average z
-  const base = frontDepth > backDepth ? 0 : 4;
-  const pv0 = proj[base], pv1 = proj[base+1], pv3 = proj[base+3];
-  const cx = pv0.x + (pv1.x - pv0.x)*0.5;
-  const cy = pv0.y + (pv3.y - pv0.y)*0.35;
-  ctx.fillStyle='#333';
-  ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill();
-  const cy2 = pv0.y + (pv3.y - pv0.y)*0.65;
-  ctx.beginPath(); ctx.arc(cx,cy2,4,0,Math.PI*2); ctx.fill();
+}
+function drawWindow(g,sv){
+  const s=g.s, gap=s.gap, len=2, bw=0.9;
+  ctx.fillStyle='#e8e8e8';
+  [1,-1].forEach(sg=>{
+    const tip=[sv+sg*gap/2,0,0], b1=[sv+sg*(gap/2+len),bw,0], b2=[sv+sg*(gap/2+len),-bw,0];
+    ctx.beginPath();
+    [tip,b1,b2].forEach((p,i)=>{ const q=proj(s,toWorld(g,p)); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); });
+    ctx.closePath(); ctx.fill();
+  });
+}
+function drawGrid(g,ax,angle){
+  const E=g.s.dist, half=Math.max(3,Math.min(12,(cv.height-RESERVE)/PXCM/2-0.5)), step=half/4;   // 24 x 24 cm with 3-cm steps when it fits, otherwise scaled down to fit above the response bar
+  const M=ax==='v'?Ry(rad(angle)):Rx(rad(angle));
+  const P=(x,y)=>{ const p=ap(M,[x,y,0]); const k=E/(E-p[2]); return [CXp+p[0]*k*PXCM, CYs-p[1]*k*PXCM]; };
+  ctx.strokeStyle='#7a7a7a'; ctx.lineWidth=1;
+  for(let u=-half;u<=half+0.01;u+=step){
+    let a=P(u,-half), b=P(u,half); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+    a=P(-half,u); b=P(half,u); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  }
 }
 
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const tilt=+document.getElementById('tilt').value;
-  const FRAME_MS=soaMs*0.5, isiMs=soaMs*0.5;
-  const e=now-phaseStart, dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
-  ctx.fillStyle='#222'; ctx.fillRect(0,0,c.width,c.height);
-  if(phase==='f1') drawDomino(0);
-  else if(phase==='f2') drawDomino(tilt);
-  requestAnimationFrame(tick);
+/* ---------- trial engine ---------- */
+let queue=[], qi=0, G=null, phase='idle', probeOn=false, probeType='domino';
+let planeAx='v', planeAngle=0, planeOn=false, breakAt=-1;
+let frame=0, RESERVE=0, rateStage=0;
+// height (px) of the tallest response panel, kept clear of the probe range (the panels overlay the bottom of the canvas)
+function panelReserve(){
+  let m=0;
+  document.querySelectorAll('.cvbox .resp:not(.mid)').forEach(e=>{ const was=e.className, st=e.style.visibility; e.style.visibility='hidden'; e.classList.add('on'); m=Math.max(m,e.offsetHeight); e.className=was; e.style.visibility=st; });
+  return Math.min(m+8,Math.round(cv.height*0.45));
 }
 
-document.getElementById('soa').addEventListener('input',e=>{soaMs=+e.target.value;document.getElementById('lbl').textContent=soaMs;});
-document.getElementById('tilt').addEventListener('input',e=>{document.getElementById('tiltLbl').textContent=e.target.value;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+function setReserve(){ RESERVE=panelReserve(); CYs=(cv.height-RESERVE)/2; }
+function show(id){ ['r_intro','r_watch','r_probe','r_good','r_two','r_plane','r_break'].forEach(k=>$(k).classList.toggle('on',k===id)); }
+function status(t){ $('status').textContent=t; }
+
+function startQueue(list,brk){ queue=list; qi=0; breakAt=brk; nextTrial(); }
+function expMode(){ return $('expmode').checked; }
+function nextTrial(){
+  if(qi>=queue.length){ phase='idle'; G=null; show(null); status('Block finished.'); $('params').textContent=''; return; }
+  if(breakAt>=0 && qi===breakAt && phase!=='breakDone'){ phase='break'; G=null; show('r_break'); status('Break'); return; }
+  const q=queue[qi];
+  curExp=q.s.exp; setReserve(); G=setup(q.s,q.sector); probeType=q.probe; probeOn=false; planeOn=false; planeAx='v'; planeAngle=0;
+  document.querySelector('input[name=ax][value=v]').checked=true;
+  $('probePos').value= Math.random()<0.5?0:1000;
+  $('goodS').value=500; $('diffS').value=500; $('depthS').value=500; setStage(0);
+  frame=0; phase='watch'; show('r_watch');
+  const s=q.s;
+  status(`${q.practice?'Practice (not part of the block)':'Trial'} ${q.practice?qi+1:qi+1-(queue.filter(x=>x.practice).length)} of ${q.practice?queue.filter(x=>x.practice).length:queue.filter(x=>!x.practice).length}  |  Experiment ${s.exp}  |  ${probeType==='window'?'window':'domino'} probe  |  viewing distance ${s.dist} cm (nominal)`);
+  $('params').textContent=`Stimulus (experimenter info): ${label(s)}; theta3D=${s.th3.toFixed(1)}, 3-D distance=${s.D3.toFixed(1)} cm, axis beta3=${G.b3.toFixed(0)}°`;
+}
+function setStage(n){ rateStage=n; $('q1').style.display=n===0?'':'none'; $('q2').style.display=n===1?'':'none'; }
+function advance(){ if(phase==='break') phase='breakDone'; else qi++; nextTrial(); }
+
+function turnProbeOn(){ if(phase!=='watch') return; probeOn=true; phase='probe'; show('r_probe'); }
+function confirmPlacement(){
+  if(phase!=='probe') return;
+  const e=G.s.exp;
+  if(e===1){ phase='rate'; show('r_good'); }
+  else if(e===2){ phase='rate'; setStage(0); show('r_two'); }
+  else { phase='plane'; planeOn=true; probeOn=false; show('r_plane'); }
+}
+function finishTrial(){ if(phase==='rate'&&G&&G.s.exp===2&&rateStage===0){ setStage(1); return; } if(phase==='rate'||phase==='plane') advance(); }
+function stepPlane(d){
+  if(phase!=='plane') return;
+  const ax=document.querySelector('input[name=ax]:checked').value;
+  if(ax!==planeAx){ planeAx=ax; planeAngle=0; }
+  planeAngle=Math.max(-85,Math.min(85,planeAngle+d));
+}
+document.querySelectorAll('input[name=ax]').forEach(r=>r.addEventListener('change',()=>{ planeAx=r.value; planeAngle=0; }));
+$('probeOnBtn').onclick=turnProbeOn;
+$('placeBtn').onclick=confirmPlacement;
+$('q1Btn').onclick=finishTrial;
+document.querySelectorAll('.nextBtn').forEach(b=>b.onclick=finishTrial);
+$('pm').onclick=()=>stepPlane(-5); $('pp').onclick=()=>stepPlane(5);
+$('contBtn').onclick=()=>{ if(phase==='break') advance(); };
+$('stopBtn').onclick=()=>{ phase='idle'; G=null; queue=[]; introPending=null; show(null); status('Stopped.'); $('params').textContent=''; };
+
+document.addEventListener('keydown',e=>{
+  if(e.target && (e.target.tagName==='SELECT')) return;
+  const k=e.key;
+  if(phase==='intro'&&k==='Enter'){ e.preventDefault(); beginBlock(); }
+  else if(phase==='watch' && k===' '){ e.preventDefault(); turnProbeOn(); }
+  else if(phase==='probe'){
+    const sl=$('probePos'), st=e.shiftKey?40:8;
+    if(k==='ArrowRight'||k==='ArrowUp'){ e.preventDefault(); sl.value=Math.min(1000,+sl.value+st); }
+    else if(k==='ArrowLeft'||k==='ArrowDown'){ e.preventDefault(); sl.value=Math.max(0,+sl.value-st); }
+    else if(k==='Enter'){ e.preventDefault(); confirmPlacement(); }
+  } else if(phase==='rate'&&k==='Enter'){ e.preventDefault(); finishTrial(); }
+  else if(phase==='plane'){
+    if(k==='ArrowRight'||k==='ArrowUp'){ e.preventDefault(); stepPlane(5); }
+    else if(k==='ArrowLeft'||k==='ArrowDown'){ e.preventDefault(); stepPlane(-5); }
+    else if(k==='Enter'){ e.preventDefault(); finishTrial(); }
+  }
+});
+
+/* ---------- block construction ---------- */
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function buildBlock(){
+  curExp=+$('exp').value; const exp=curExp, S=stimuli(exp);
+  const sectors=()=>{ const a=[]; for(let i=0;i<S.length;i++) a.push(i%4); return shuffle(a); };   // Exp 1: beta3 random within each 90-deg sector (stratified)
+  const pairs=(order)=>order.flatMap(p=>{ const sc=exp===1?sectors():[]; return shuffle(S.map((s,i)=>({s,probe:p,sector:exp===1?sc[i]:undefined}))); });
+  let list, brk=-1;
+  if(exp===1||exp===2){
+    const order=Math.random()<0.5?['window','domino']:['domino','window'];
+    list=pairs(order); brk=S.length;
+  } else if(exp===3){ list=shuffle(S.map(s=>({s,probe:$('probeSel').value}))); }
+  else list=shuffle(S.map(s=>({s,probe:'domino'})));
+  if($('prac').checked){
+    const pr=shuffle(list.slice()).slice(0,4).map(q=>({s:q.s,probe:q.probe,practice:true}));
+    list=pr.concat(list); if(brk>=0) brk+=4;
+  }
+  return {list,brk};
+}
+function applyExpMode(){ const m=expMode(); $('singleRow').style.display=m?'':'none'; $('params').style.display=m?'':'none'; }
+$('expmode').onchange=applyExpMode;
+document.addEventListener('click',e=>{ if(e.target.tagName==='BUTTON') e.target.blur(); });
+const INTRO={
+ a:'Instructions (paraphrase of the experimenter\'s briefing, pp.1094-1095, not the paper\'s wording): Two objects, dominos, will appear one after the other at two places on the screen, in continuous alternation. When this happens a single object can appear to move back and forth between the two places (apparent motion). Watch until you see a stable motion path; this typically takes 5-10 s. Only then turn the probe on. The probe (a window of two triangles, or a third domino) flashes in the gaps between the dominos; move it along the line to the position where the moving object appears to pass, then confirm.',
+ e1:' Once the probe is placed, a thin goodness scale appears at the bottom of the screen: rate the placement good if it seemed clear and easy, poor if not (paper wording paraphrased, p.1094). Four practice trials come first.',
+ e2:' Afterwards give two ratings (paper wording paraphrased, p.1097; the paper used a thumb wheel, here sliders): 1) how difficult it was to place the probe precisely onto the perceived motion path (easy to difficult); 2) the amount of perceived depth of the path: it could be seen parallel to the screen (in plane) or receding into it (in depth). Four practice trials come first.',
+ e3:' After the placement, a grid will appear while the dominos keep blinking. Turn the grid (about a vertical or a horizontal axis through its centre, not both; 5° steps, arrow keys or buttons; decide the axis first, then the amount) so that it is aligned with the motion of the domino, exploring different orientations until it coincides with the perceived trajectory. You view the display with one eye through a window in a box; the demonstration below shows what is meant by a plane (three dominos lying on a plane, as in the experimenter\'s model, p.1099). Four practice trials come first.',
+ e4:' After the placement, a grid will appear while the dominos keep blinking. Turn the grid (about a vertical or a horizontal axis, not both) so that it is parallel to the motion of the domino\'s centre, not to the orientation of the domino (axis: vertical or horizontal through the grid centre, not both; 5° steps, arrow keys or buttons). Four practice trials come first.'
+};
+function drawDemo(){
+  const c=$('demoC'), x=c.getContext('2d'); x.clearRect(0,0,c.width,c.height); x.fillStyle='#000'; x.fillRect(0,0,c.width,c.height);
+  // static, schematic plane seen obliquely (my illustration, not the paper's model)
+  const P=(u,v)=>{ const d=1+0.0035*v*1.0; return [210+u*d*0.62+v*0.4, 165-v*1.05]; };
+  x.fillStyle='#16202e'; x.strokeStyle='#4a5b73'; x.lineWidth=1;
+  x.beginPath(); [[-150,0],[150,0],[150,120],[-150,120]].forEach((q,i)=>{ const p=P(q[0],q[1]); i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]); }); x.closePath(); x.fill(); x.stroke();
+  [[-80,25],[0,55],[80,85]].forEach(c0=>{
+    x.fillStyle='#d6d6d6'; x.strokeStyle='#222';
+    const L=26, W=13, a=0.35, ca=Math.cos(a), sa=Math.sin(a);
+    x.beginPath(); [[-L,-W],[L,-W],[L,W],[-L,W]].forEach((q,i)=>{ const p=P(c0[0]+q[0]*ca-q[1]*sa, c0[1]+(q[0]*sa+q[1]*ca)*0.8); i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]); }); x.closePath(); x.fill(); x.stroke();
+    const m1=P(c0[0]-W*sa*0, c0[1]); x.fillStyle='#222'; x.beginPath(); x.arc(m1[0],m1[1],2.5,0,7); x.fill();
+  });
+  x.fillStyle='#888'; x.font='11px sans-serif'; x.fillText('Static illustration (my drawing): three dominos lying on a plane',8,14);
+}
+function startIntro(b,exp){
+  phase='intro'; G=null; RESERVE=0; CYs=CYp;
+  const t=INTRO.a+(exp===1?INTRO.e1:exp===2?INTRO.e2:exp===3?INTRO.e3:INTRO.e4);
+  $('introTxt').textContent=(exp===5?t+' (Exp 5: no box, viewing from 25 cm, one eye, dark room.)':t);
+  $('demoC').style.display=exp===3?'block':'none'; if(exp===3) drawDemo();
+  introPending=b; show('r_intro'); status('Instructions (paraphrase)');
+}
+let introPending=null;
+function beginBlock(){ if(phase!=='intro'||!introPending) return; const b=introPending; introPending=null; phase='x'; startQueue(b.list,b.brk); }
+$('beginBtn').onclick=beginBlock;
+$('startBtn').onclick=()=>{ const b=buildBlock(); startIntro(b,curExp); $('cvbox').scrollIntoView({block:'center'}); };
+$('singleBtn').onclick=()=>{
+  curExp=+$('exp').value; const exp=curExp, S=stimuli(exp), s=S[+$('single').value];
+  let p=$('singleProbe').value; if(exp>=4) p='domino';
+  phase='x'; startQueue([{s,probe:p}],-1);
+};
+function fillSingle(){
+  const exp=+$('exp').value, S=stimuli(exp);
+  $('single').innerHTML=S.map((s,i)=>`<option value="${i}">${label(s)}</option>`).join('');
+  $('probeSelWrap').style.display=exp===3?'':'none';
+  $('singleProbeWrap').style.display=exp<=3?'':'none';
+}
+$('exp').onchange=()=>{ curExp=+$('exp').value; applyDisp(); fillSingle(); phase='idle'; G=null; introPending=null; show(null); status('Choose an experiment and start.'); $('params').textContent=''; };
+fillSingle();
+
+/* ---------- frame loop (one rAF callback = one counted frame) ---------- */
+function draw(){
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,cv.width,cv.height);
+  if(!G) return;
+  const p=frame%CYC, s=G.s;
+  const d=domVisible(p);
+  if(d>=0){ const D=G.doms[d]; drawDomino(G,D.C,D.Bm,s.a1,s.a2); }
+  if(probeOn && probeVisible(p)){
+    const sv=G.sMin+(G.sMax-G.sMin)*(+$('probePos').value)/1000;
+    if(probeType==='window') drawWindow(G,sv);
+    else drawDomino(G,[sv,0,0],[[1,0,0],[0,1,0],[0,0,1]],s.a1,s.a2);
+  }
+  if(planeOn) drawGrid(G,planeAx,planeAngle);
+}
+function loop(){ if(measured){ frame++; draw(); } else { ctx.fillStyle='#000'; ctx.fillRect(0,0,cv.width,cv.height); } requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+})();
 </script>
 </body>
 </html>

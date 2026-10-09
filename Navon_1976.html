@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Navon (1976) — Figural identity and ambiguous apparent motion</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c0c0e; color:#cfcfcf; font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         display:flex; flex-direction:column; align-items:center; padding:16px 12px 40px; }
+  .back { align-self:flex-start; font-size:11px; color:#555; text-decoration:none; margin-bottom:8px; }
+  .back:hover { color:#8aa0ff; }
+  h1 { font-size:15px; font-weight:600; color:#e8e8e8; text-align:center; }
+  .sub { font-size:11px; color:#777; margin:2px 0 14px; max-width:740px; text-align:center; line-height:1.5; }
+  canvas { background:#000; display:block; border-radius:3px; max-width:96vw; height:auto; }
+  .participant { margin-top:12px; width:740px; max-width:96vw; text-align:center; }
+  .instr { font-size:12px; color:#9a9a9a; line-height:1.5; }
+  .prow { margin-top:10px; display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .status { margin-top:8px; font-size:12px; color:#8a93b8; min-height:16px; }
+  .panel { margin-top:20px; width:740px; max-width:96vw; border-top:1px solid #2a2a30; padding-top:14px; }
+  .panel h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#6b6b75; margin-bottom:10px; }
+  .grid { display:flex; gap:16px 26px; flex-wrap:wrap; align-items:flex-end; }
+  .ctrl { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#9a9a9a; }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  button { background:#1c1c22; color:#d4d4d4; border:1px solid #3a3a44; padding:5px 11px;
+           border-radius:4px; cursor:pointer; font-size:12px; }
+  button:hover { background:#26262e; }
+  button.on { background:#3a4170; border-color:#5a64a8; color:#fff; }
+  button.key { border-color:#5a64a8; }
+  .meta { margin-top:20px; width:740px; max-width:96vw; font-size:10.5px; color:#666; line-height:1.6; }
+  .meta table { border-collapse:collapse; margin:8px 0; width:100%; }
+  .meta td, .meta th { border-top:1px solid #222; padding:3px 6px; text-align:left; vertical-align:top; }
+  .meta th { color:#888; font-weight:600; }
+  .a { color:#c9a15a; }
+  .setup { margin-top:12px; width:740px; max-width:96vw; font-size:11px; color:#8a8a95; display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; }
+  .setup input[type=number] { width:70px; background:#15151a; color:#ccc; border:1px solid #3a3a44; border-radius:3px; padding:2px 4px; }
+  #bar { height:14px; background:#6a74c0; border-radius:2px; width:323px; }
+  #barwrap { width:100%; display:none; }
+  .disp { font-size:10.5px; color:#777; margin-top:4px; max-width:740px; text-align:center; }
+  .warn { color:#c9a15a; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">← back to experiments</a>
+  <h1>Navon (1976) — Ambiguous apparent-motion episodes made of letters, Hebrew letters or line segments</h1>
+  <div class="sub">Each episode is a cycle of 2 or 6 brief arrays of elements, repeated. The observer fixates the centre dot,
+    watches as long as the first interpretation holds, and presses a key when it switches to another.</div>
+
+  <canvas id="c" width="560" height="560"></canvas>
+  <div class="disp" id="disp"></div>
+  <div class="setup">
+    <b>Display setup</b>
+    <label>pixels/cm <input type="number" id="ppcm" min="10" max="200" step="0.1"></label>
+    <label>viewing distance (cm) <input type="number" id="vdist" min="10" max="300" step="1"></label>
+    <button id="calib">Calibrate with a credit card</button>
+    <span id="pxdeg"></span>
+    <div id="barwrap">Resize the bar until it matches the width of a credit card (8.56 cm), then press Done.<br>
+      <input type="range" id="barrange" min="150" max="900" step="1" style="width:300px"> <button id="bardone">Done</button>
+      <div id="bar"></div></div>
+  </div>
+
+  <div class="participant">
+    <div class="instr" id="instr">The experimenter starts each trial (here: <b>Start trial</b>). A 1-s warning beep sounds with the fixation dot on; then the episode runs.
+      Attend to your immediate impression and keep fixating the dot. Watch for as long as you can maintain your first steady interpretation, and
+      press <b>Space</b> (or the button) as soon as it switches to a second one. Pressing ends the display at once; otherwise it ends after 10.7 s. Afterwards describe the interpretation(s).</div>
+    <div class="prow">
+      <button id="start">Start trial</button>
+      <button id="resp" class="key">Interpretation switched (Space)</button>
+      <button id="stop" style="display:none">Stop demonstration</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Experimenter parameters</h2>
+    <div class="grid">
+      <div class="ctrl">Stage
+        <div class="seg" id="stage">
+          <button data-v="test" class="on">Test episode</button>
+          <button data-v="demo">Preliminary demonstrations / pretest</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="ctrl">Arrangement (one per subject; applies to episodes 4–9 and to the circular demonstration T)
+        <div class="seg" id="arr">
+          <button data-v="ferris" class="on">Ferris wheel (upright)</button>
+          <button data-v="roulette">Roulette (radially erect)</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid" id="testCtl" style="margin-top:12px">
+      <div class="ctrl">Mode
+        <div class="seg" id="mode">
+          <button data-v="free" class="on">Free episode selection</button>
+          <button data-v="block">Run block (3 episodes)</button>
+        </div>
+      </div>
+      <div class="ctrl" id="epCtl">Episode
+        <div class="seg" id="ep"></div>
+      </div>
+      <div class="ctrl" id="blkCtl" style="display:none">Group (block)
+        <div class="seg" id="grp">
+          <button data-v="0" class="on">Episodes 1–3</button>
+          <button data-v="1">Episodes 4–6</button>
+          <button data-v="2">Episodes 7–9</button>
+        </div>
+      </div>
+      <div class="ctrl" id="sqCtl" style="display:none">Order within block (cyclic Latin square row; assumption)
+        <div class="seg" id="sq">
+          <button data-v="0" class="on">Row 1</button>
+          <button data-v="1">Row 2</button>
+          <button data-v="2">Row 3</button>
+        </div>
+      </div>
+      <div class="ctrl">Vocabulary
+        <div class="seg" id="vocab">
+          <button data-v="english" class="on">English letters</button>
+          <button data-v="hebrew">Hebrew letters</button>
+          <button data-v="lines">Line segments</button>
+        </div>
+      </div>
+      <div class="ctrl" id="blkInfo" style="display:none"><button id="blkReset">Restart block</button></div>
+    </div>
+    <div class="grid" id="demoCtl" style="margin-top:12px; display:none">
+      <div class="ctrl">Demonstration
+        <div class="seg" id="demo">
+          <button data-v="pretest" class="on">Letter-recognition pretest (6 trials, 150 ms)</button>
+          <button data-v="draw">150-ms flash of array 1 of episode 4 (to be drawn)</button>
+          <button data-v="beta">Horizontal beta: E between Z and H locations</button>
+          <button data-v="circ">Counterclockwise circular motion of T</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <b>Reconstruction of Navon, D. (1976), <i>J. Exp. Psychol.: Human Perception &amp; Performance</i> 2(1), 130–138.</b>
+    Only the displays and the observer's response key are reproduced; no motion path, interpretation or result is drawn. Observers saw each
+    episode once (naive undergraduates).
+    <table>
+      <tr><th>Parameter</th><th>Paper value</th><th>Page</th></tr>
+      <tr><td>Array duration</td><td>150 ms (about; plotting took 1–3 ms)</td><td>p.131, 134</td></tr>
+      <tr><td>Interarray and intercycle blank</td><td>30 ms (about); screen blank, fixation dot stays</td><td>p.131, 134</td></tr>
+      <tr><td>Cycle</td><td>2 arrays (episodes 1–6) or 6 arrays (episodes 7–9), repeated</td><td>p.131–132</td></tr>
+      <tr><td>Episode length</td><td>until key press (immediate termination) or 10.7 s</td><td>p.134</td></tr>
+      <tr><td>Warning</td><td>1-s beep before each trial; small dot visible from beep onset until display end; trial starts at beep offset</td><td>p.133</td></tr>
+      <tr><td>Element size</td><td>about 4 mm = 0°30′ (longer side)</td><td>p.133</td></tr>
+      <tr><td>Circle through the 6 elements (ep. 4–9)</td><td>about 60 mm; whole field about 7°40′</td><td>p.133</td></tr>
+      <tr><td>Viewing distance</td><td>about 45 cm; dim booth lit enough to read/write</td><td>p.133</td></tr>
+      <tr><td>Display</td><td>Tektronix oscilloscope, phosphor decay 0.9 ms; brightness enough for perfect recognition</td><td>p.133</td></tr>
+      <tr><td>Diamond</td><td>ep. 5 and 9 (one diamond): about 3 times the average letter size; ep. 8 (five diamonds): letter-sized (Fig. 3)</td><td>p.131–132, Fig. 3</td></tr>
+      <tr><td>Ep. 4–6 (circle of six, two arrays)</td><td>array 2 locations lie halfway (30°) between neighbouring array 1 locations on the circle</td><td>p.131</td></tr>
+      <tr><td>Ep. 7–9 (circle of six, six arrays)</td><td>same 6 locations in every array; elements shifted one location per array (Fig. 3)</td><td>p.131–132</td></tr>
+      <tr><td>Ferris wheel / roulette</td><td>elements upright / each erect with respect to the radius to the centre</td><td>p.132–133, Fig. 4</td></tr>
+      <tr><td>Response</td><td>key press at the switch from first to second interpretation; afterwards verbal report (Erector-set Ferris wheel to demonstrate)</td><td>p.133–134</td></tr>
+      <tr><td>Timing as realised here</td><td>Refresh rate measured at load; every duration (150 ms, 30 ms, 1 s warning, 10.7 s cap) is converted to a whole number of frames and scheduled by counting frames; realised values shown in the display line under the canvas</td><td>this page</td></tr>
+      <tr><td>Pretest</td><td>6 letter-recognition trials (150 ms, one upright English letter at one array-1 location of ep. 4; position unannounced in first 3, announced in last 3); then 150-ms array 1 of ep. 4 to be drawn; then beta demonstration (E between Z and H locations) and counterclockwise circular demonstration (T through the 6 locations)</td><td>p.134</td></tr>
+      <tr><td>Design</td><td>9 episodes in 3 blocks (1–3, 4–6, 7–9); vocabulary x group by 3x3 Graeco-Latin square; one arrangement per subject. 'Run block' mode runs one group's 3 episodes once each, one Start per episode, in an order from a 3x3 cyclic Latin square (exact squares not given in the paper: assumption; cyclic rows 1-2-3, 2-3-1, 3-1-2 used). The preliminary stage is run separately. Free episode selection is also available.</td><td>p.133</td></tr>
+    </table>
+    <span class="a">Not specified in the paper (assumptions here):
+    element positions for episodes 1–3 (corners of a square, set at ±3.0° from centre); diamond shape (rhombus 0.6 wide to 1 tall as in Fig. 2); Hebrew stroke shapes (my approximation of Fig. 2);
+    thin vector strokes (1.5 px) and letter width; display colour (white on black) and luminance; fixation dot size (about 0.1°) and position (centre); beep pitch (880 Hz);
+    timing and duration of the preliminary demonstrations (150/30 ms assumed, run until the experimenter stops them; the paper says until the subject could experience steady motion);
+    pretest letters (six different letters in random order, random location among the six array-1 locations of episode 4); stroke width scales with the display setup (about 0.05°, minimum 1.2 px); the 1-s beep is also played before demonstrations and the flash/beta/circular demonstrations use English letters (the paper does not say); the demonstration T moves at the episode rate; the pretest and drawing flash are shown at the same display setup; default pixels/cm 37.8 and the viewing distance 45 cm (paper) can be changed in Display setup.
+    The paper notes array 1 of the one-diamond around-the-clock episode had a slight plotting defect (bottom edge of the diamond trimmed and drawn at the top; p.132 footnote); it is not reproduced.</span>
+  </div>
+
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+let PX = 30, R = 0, EL = 0, W = 560, H = 560, CX = 280, CY = 280, LW = 1.5, DOTR = 3;
+const disp = { ppcm:37.8, dist:45 };
+try { const o = JSON.parse(localStorage.getItem('am_display')||'null'); if (o && o.ppcm>0) disp.ppcm=o.ppcm; if (o && o.dist>0) disp.dist=o.dist; } catch(e) {}
+function saveDisp() { try { localStorage.setItem('am_display', JSON.stringify({ppcm:disp.ppcm, dist:disp.dist})); } catch(e) {} }
+function layout() {
+  PX = disp.ppcm * disp.dist * Math.tan(Math.PI/180);   // px per degree
+  R = 3.83 * PX; EL = 0.5 * PX;
+  const side = Math.ceil(9 * PX);
+  const dpr = window.devicePixelRatio || 1;
+  c.width = Math.round(side*dpr); c.height = Math.round(side*dpr);
+  c.style.width = side+'px'; c.style.height = side+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  W = H = side; CX = CY = side/2;
+  LW = Math.max(1.2, 0.05*PX); DOTR = Math.max(1.5, 0.05*PX);
+  $('pxdeg').textContent = PX.toFixed(1) + ' px/deg; circle through the elements (radius 3.83 deg) = ' + (2*disp.dist*Math.tan(3.83*Math.PI/180)).toFixed(2) + ' cm diameter at ' + disp.dist + ' cm (paper: about 6 cm at 45 cm)';
+}
+const ARRAY_MS = 150, ISI_MS = 30, MAX_MS = 10700, BEEP_MS = 1000;
+const $ = id => document.getElementById(id);
+
+// Stroke figures (Fig. 2), unit box x in [-.4,.4], y in [-.5,.5] (y up), scaled by element height EL.
+// English and line-segment shapes follow Fig. 2; Hebrew shapes are my approximation of the printed figures (assumption).
+const STROKES = {
+  english: {
+    E:[[[.3,.5],[-.3,.5],[-.3,-.5],[.3,-.5]],[[-.3,0],[.2,0]]],
+    Z:[[[-.3,.5],[.3,.5],[-.3,-.5],[.3,-.5]]],
+    M:[[[-.35,-.5],[-.35,.5],[0,0],[.35,.5],[.35,-.5]]],
+    T:[[[-.35,.5],[.35,.5]],[[0,.5],[0,-.5]]],
+    L:[[[-.3,.5],[-.3,-.5],[.3,-.5]]],
+    H:[[[-.3,.5],[-.3,-.5]],[[.3,.5],[.3,-.5]],[[-.3,0],[.3,0]]]
+  },
+  hebrew: {
+    E:[[[-.4,.5],[-.4,-.5],[.4,-.5],[.4,.5]],[[0,.5],[0,-.5]]],
+    Z:[[[-.3,.5],[.3,.5],[.3,-.5]],[[-.3,-.5],[-.1,-.5]]],
+    M:[[[-.3,.5],[.3,.5],[.3,-.5],[-.3,-.5],[-.3,.5]],[[-.3,.5],[-.3,.1]]],
+    T:[[[-.35,.5],[.35,.5],[.35,-.5]]],
+    L:[[[-.3,.5],[.3,.5],[.3,-.5]],[[-.3,.5],[-.3,-.1]],[[-.3,-.5],[-.3,-.35]]],
+    H:[[[-.3,.5],[-.3,-.5],[.3,-.5],[.3,.5]],[[0,.5],[0,0]]]
+  }
+};
+// line segments: angle of stroke in degrees from horizontal (Fig. 2)
+const LINES = { E:0, Z:90, M:-30, T:65, L:25, H:-65 };
+
+// ---- arrays: each element {id, x, y (deg, +y up), ang (position angle for roulette, or null)} ----
+const D = 3.0;
+function pos(a, r) { const t = a*Math.PI/180; return [r*Math.cos(t), r*Math.sin(t)]; }
+function hexEl(id, ang) { const p = pos(ang, 3.83); return {id, x:p[0], y:p[1], ang}; }
+function sq(id, sx, sy) { return {id, x:sx*D, y:sy*D, ang:null}; }
+
+function episodeArrays(n) {
+  if (n===1) return [[sq('Z',-1,1), sq('E',1,1)], [sq('E',-1,-1), sq('Z',1,-1)]];
+  if (n===2) return [[sq('Z',-1,1), sq('E',1,-1)], [sq('Z',1,1), sq('E',-1,-1)]];
+  if (n===3) return [[sq('Z',-1,1), sq('E',1,-1)], [sq('E',1,1), sq('Z',-1,-1)]];
+  if (n>=4 && n<=6) {
+    const base = {T:90, M:30, Z:-30, E:-90, H:-150, L:150};
+    const ids = Object.keys(base);
+    const mk = off => ids.map(k => hexEl(n===5 && k==='T' ? 'D' : (n===6 ? 'T' : k), base[k]+off));
+    return [mk(0), mk(30)];
+  }
+  // around the clock: slot order (counterclockwise from upper left)
+  const slots = [150,210,270,330,30,90];
+  const arrs = [];
+  for (let k=0; k<6; k++) {
+    const a = [];
+    for (let j=0; j<6; j++) {
+      let id;
+      if (n===7 || n===9) {
+        const first = ['T','L','H','E','Z','M'];
+        id = first[(j-k+12)%6];
+        if (n===9 && id==='H') id = 'D';
+      } else {
+        id = ((j-k+12)%6 === 2) ? 'E' : 'd';
+      }
+      a.push(hexEl(id, slots[j]));
+    }
+    arrs.push(a);
+  }
+  return arrs;
+}
+
+// ---- drawing ----
+const FG = '#f2f2f2';
+function drawElement(el, vocab, roulette) {
+  const x = CX + el.x*PX, y = CY - el.y*PX;
+  const rot = (roulette && el.ang!==null) ? (el.ang-90)*Math.PI/180 : 0;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-rot);
+  ctx.strokeStyle = FG; ctx.lineWidth = LW; ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+  if (el.id === 'D' || el.id === 'd') {
+    const h = (el.id === 'D' ? 3 : 1) * EL / 2;   // D: 3x letter size (eps 5, 9); d: letter size (ep 8)
+    ctx.beginPath(); ctx.moveTo(0,-h); ctx.lineTo(h*0.6,0); ctx.lineTo(0,h); ctx.lineTo(-h*0.6,0); ctx.closePath(); ctx.stroke();
+  } else if (vocab === 'lines') {
+    const t = LINES[el.id]*Math.PI/180, l = EL/2;
+    ctx.beginPath(); ctx.moveTo(-l*Math.cos(t), l*Math.sin(t)); ctx.lineTo(l*Math.cos(t), -l*Math.sin(t)); ctx.stroke();
+  } else {
+    ctx.beginPath();
+    STROKES[vocab][el.id].forEach(p => p.forEach((q,k) => k ? ctx.lineTo(q[0]*EL, -q[1]*EL) : ctx.moveTo(q[0]*EL, -q[1]*EL)));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawDot() { ctx.fillStyle = '#d8d8d8'; ctx.beginPath(); ctx.arc(CX, CY, DOTR, 0, 7); ctx.fill(); }
+function clear() { ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H); }
+
+// ---- state ----
+// Timing is counted in display frames, assuming a 60 Hz display: 150 ms = 9 frames, 30 ms = 2 frames (33.3 ms),
+// 1-s beep = 60 frames, 10.7-s cap = 642 frames. Dropped frames are not detected.
+let F_ON = 9, F_OFF = 2, F_BEEP = 60, F_MAX = 642, frameMs = 1000/60;
+const log = [];   // responses collected internally only
+const st = { mode:'free', grp:0, sq:0, stage:'test', ep:4, vocab:'english', arr:'ferris', demo:'pretest' };
+let blkK = 0;
+const blkEps = () => [0,1,2].map(i => st.grp*3 + ((i + st.sq) % 3) + 1);
+let run = null, raf = 0, audio = null, pretestN = 0, pretestOrder = [];
+
+function setTiming() {
+  const fr = ms => Math.max(1, Math.round(ms/frameMs));
+  F_ON = fr(ARRAY_MS); F_OFF = fr(ISI_MS); F_BEEP = fr(BEEP_MS); F_MAX = fr(MAX_MS);
+  const r = n => (n*frameMs).toFixed(1);
+  const bad = [[ARRAY_MS,'150 ms'],[ISI_MS,'30 ms'],[BEEP_MS,'1 s'],[MAX_MS,'10.7 s']].filter(p => Math.abs(p[0]/frameMs - Math.round(p[0]/frameMs)) > 0.05).map(p=>p[1]);
+  $('disp').innerHTML = 'Display: ' + (1000/frameMs).toFixed(1) + ' Hz (' + frameMs.toFixed(2) + ' ms/frame). Realised: array ' + F_ON + ' fr = ' + r(F_ON) + ' ms; blank ' + F_OFF + ' fr = ' + r(F_OFF) +
+    ' ms; warning ' + F_BEEP + ' fr = ' + r(F_BEEP) + ' ms; cap ' + F_MAX + ' fr = ' + r(F_MAX) + ' ms.' +
+    (bad.length ? ' <span class="warn">Warning: ' + bad.join(', ') + ' is not a whole number of frames at this rate.</span>' : '');
+}
+function measureRefresh(done) {
+  const t = []; let n = 0;
+  function f(ts) { t.push(ts); if (++n < 62) requestAnimationFrame(f); else {
+    const d = []; for (let i=1;i<t.length;i++) d.push(t[i]-t[i-1]); d.sort((a,b)=>a-b);
+    const m = d[Math.floor(d.length/2)]; if (m > 2 && m < 60) frameMs = m; done(); } }
+  requestAnimationFrame(f);
+}
+function beep() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = 880; g.gain.value = 0.05; o.connect(g); g.connect(audio.destination);
+    o.start(); o.stop(audio.currentTime + F_BEEP*frameMs/1000);
+  } catch(e) {}
+}
+function slotsFor4() {
+  const names = {90:'top',30:'upper right',[-30]:'lower right',[-90]:'bottom',[-150]:'lower left',150:'upper left'};
+  return [90,30,-30,-90,-150,150].map(a => Object.assign(hexEl('E',a), {name:names[a]}));
+}
+function curEp() { return (st.mode==='block') ? blkEps()[Math.min(blkK,2)] : st.ep; }
+function blkStatus() {
+  if (st.mode!=='block' || st.stage!=='test') return '';
+  if (blkK>=3) return 'Block complete (3 of 3 episodes run). Press "Restart block" to run again.';
+  return 'Block: episode ' + (blkK+1) + ' of 3 (order ' + blkEps().join(', ') + '); next episode to start: ' + blkEps()[blkK];
+}
+function framesFor() {
+  const roulette = st.arr === 'roulette';
+  if (st.stage === 'test')
+    return { ep: curEp(), arrays: episodeArrays(curEp()), vocab: st.vocab, roulette: roulette && curEp()>=4, cap:true };
+  const slots4 = episodeArrays(4)[0];
+  if (st.demo === 'beta') {
+    const Zp = slots4.find(e=>e.id==='Z'), Hp = slots4.find(e=>e.id==='H');
+    return { arrays: [[{id:'E',x:Zp.x,y:Zp.y,ang:null}], [{id:'E',x:Hp.x,y:Hp.y,ang:null}]], vocab:'english', roulette:false, cap:false };
+  }
+  const ccw = [150,210,270,330,30,90];   // counterclockwise through the array-1 locations of episode 4
+  return { arrays: ccw.map(a => [hexEl('T', a)]), vocab:'english', roulette: roulette, cap:false };
+}
+
+function start() {
+  $('start').blur();
+  $('stop').style.display = (st.stage==='demo' && (st.demo==='beta'||st.demo==='circ')) ? '' : 'none';
+  cancelAnimationFrame(raf);
+  $('status').textContent = '';
+  if (st.stage === 'test' && st.mode==='block' && blkK>=3) { $('status').textContent = blkStatus(); return; }
+  let drawRoulette = false;
+  if (st.stage === 'demo' && (st.demo === 'pretest' || st.demo === 'draw')) {
+    let arrays, label = '';
+    if (st.demo === 'draw') {
+      arrays = [episodeArrays(4)[0]];
+      drawRoulette = (st.arr === 'roulette');   // paper silent on the arrangement for this flash; assumption: follow the chosen one
+    } else {
+      if (pretestN % 6 === 0) pretestOrder = ['E','Z','M','T','L','H'].sort(() => Math.random()-0.5);
+      const slot = slotsFor4()[Math.floor(Math.random()*6)];
+      const announced = (pretestN % 6) >= 3;
+      arrays = [[{id:pretestOrder[pretestN%6], x:slot.x, y:slot.y, ang:null}]];
+      label = 'Pretest trial ' + (pretestN%6+1) + ' of 6' + (announced ? ' - position announced: ' + slot.name : ' - position not announced');
+      pretestN++;
+    }
+    run = { kind:'flash', frame:0, arrays, vocab:'english', roulette:drawRoulette };
+    $('status').textContent = label;
+  } else {
+    run = Object.assign({ kind:'seq', frame:0 }, framesFor());
+  }
+  beep();
+  raf = requestAnimationFrame(tick);
+}
+
+function tick() {
+  if (!run) return;
+  const f = run.frame++;
+  clear();
+  if (f < F_BEEP) { drawDot(); raf = requestAnimationFrame(tick); return; }
+  const fe = f - F_BEEP;
+  if (run.kind === 'flash') {
+    if (fe < F_ON) { run.arrays[0].forEach(el => drawElement(el, run.vocab, run.roulette)); drawDot(); raf = requestAnimationFrame(tick); return; }
+    endTrial(st.demo === 'draw' ? 'Flash over. The observer draws schematically what was shown.' : 'Flash over. The observer names the letter.');
+    return;
+  }
+  if (run.cap && fe >= F_MAX) { log.push({ep:run.ep, vocab:st.vocab, arr:st.arr, ended:'cap'}); endTrial('Display ended (no key press). The observer describes the interpretation(s).', true); return; }
+  const per = F_ON + F_OFF;
+  if (fe % per < F_ON) run.arrays[Math.floor(fe/per) % run.arrays.length].forEach(el => drawElement(el, run.vocab, run.roulette));
+  drawDot();
+  raf = requestAnimationFrame(tick);
+}
+
+function endTrial(msg, counted) {
+  cancelAnimationFrame(raf); run = null; clear();
+  if (counted && st.mode==='block' && st.stage==='test') { blkK++; msg += ' ' + blkStatus(); }
+  $('status').textContent = msg;
+}
+function respond() {
+  if (run && run.kind === 'seq' && run.cap && run.frame > F_BEEP) {
+    const fr = run.frame - F_BEEP;
+    log.push({ep:run.ep, vocab:st.vocab, arr:st.arr, frames:fr, ms:fr*frameMs});
+    endTrial('Response recorded; display terminated. The observer describes the interpretation(s).', true);
+  }
+}
+function stop() { endTrial('Demonstration stopped by the experimenter.'); }
+
+document.getElementById('start').onclick = start;
+document.getElementById('resp').onclick = respond;
+document.getElementById('stop').onclick = stop;
+window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); respond(); } });
+window.addEventListener('keyup', e => { if (e.code === 'Space') e.preventDefault(); });
+
+// ---- controls ----
+function seg(id, key, num) {
+  document.querySelectorAll('#'+id+' button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#'+id+' button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); st[key] = (num || id==='grp' || id==='sq') ? +b.dataset.v : b.dataset.v;
+    if (id==='mode' || id==='grp' || id==='sq' || id==='stage' || id==='vocab' || id==='arr') blkK = 0;
+    if (id==='mode') { const bk = st.mode==='block'; $('epCtl').style.display = bk?'none':''; $('blkCtl').style.display = bk?'':'none'; $('sqCtl').style.display = bk?'':'none'; $('blkInfo').style.display = bk?'':'none'; }
+    if (id==='stage') {
+      document.getElementById('testCtl').style.display = st.stage==='test' ? 'flex' : 'none';
+      document.getElementById('demoCtl').style.display = st.stage==='demo' ? 'flex' : 'none';
+    }
+    cancelAnimationFrame(raf); run = null; clear(); drawDot(); document.getElementById('status').textContent = blkStatus();
+    if (id==='demo' || id==='stage') { pretestN = 0; $('stop').style.display = 'none'; }
+    b.blur();
+  });
+}
+const epBox = document.getElementById('ep');
+for (let i=1; i<=9; i++) {
+  const b = document.createElement('button'); b.dataset.v = i; b.textContent = i;
+  if (i===4) b.classList.add('on'); epBox.appendChild(b);
+}
+['stage','mode','ep','grp','sq','vocab','arr','demo'].forEach(id => seg(id, id, id==='ep'));
+$('blkReset').onclick = () => { blkK = 0; $('status').textContent = blkStatus(); };
+$('ppcm').value = disp.ppcm; $('vdist').value = disp.dist;
+function applyDisp() {
+  const p = parseFloat($('ppcm').value), d = parseFloat($('vdist').value);
+  if (p>0) disp.ppcm = p; if (d>0) disp.dist = d;
+  saveDisp(); layout(); clear(); drawDot();
+}
+$('ppcm').onchange = applyDisp; $('vdist').onchange = applyDisp;
+$('calib').onclick = () => { $('barwrap').style.display = 'block'; $('barrange').value = Math.round(8.56*disp.ppcm); $('bar').style.width = $('barrange').value + 'px'; };
+$('barrange').oninput = () => { $('bar').style.width = $('barrange').value + 'px'; };
+$('bardone').onclick = () => { $('ppcm').value = (+$('barrange').value/8.56).toFixed(2); $('barwrap').style.display = 'none'; applyDisp(); };
+layout(); clear(); drawDot(); setTiming();
+measureRefresh(() => { setTiming(); });
+</script>
+</body>
+</html>

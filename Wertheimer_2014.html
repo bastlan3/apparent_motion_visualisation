@@ -2,69 +2,155 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wertheimer (1912/2012) — Phi Motion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wertheimer (1912) — Successive two-line exposure</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:#aaa; }
-canvas { background:#f0f0f0; display:block; }
-.controls { margin-top:18px; display:flex; align-items:center; gap:24px; font-size:13px; flex-wrap:wrap; justify-content:center; }
-input[type=range] { width:180px; accent-color:#888; }
-button { background:#333; color:#ddd; border:1px solid #555; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:13px; }
-.regime { margin-top:8px; font-size:13px; color:#aaa; min-height:20px; }
-.meta { margin-top:12px; font-size:11px; color:#555; max-width:540px; text-align:center; line-height:1.5; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; min-height:100vh; font-family:sans-serif; color:#aaa; padding:16px; }
+a.back { align-self:flex-start; color:#8ab; font-size:13px; text-decoration:none; margin-bottom:12px; }
+canvas { background:#f0f0f0; display:block; max-width:100%; }
+.controls { margin-top:14px; display:flex; align-items:center; gap:18px; font-size:13px; flex-wrap:wrap; justify-content:center; }
+button, select, input[type=number] { background:#333; color:#ddd; border:1px solid #555; padding:5px 12px; border-radius:4px; font-size:13px; }
+button { cursor:pointer; }
+button:disabled { opacity:.4; cursor:default; }
+input[type=number] { width:70px; padding:3px 6px; }
+.small { font-size:12px; color:#888; margin-top:8px; text-align:center; max-width:600px; }
+.warn { color:#d9a441; }
+details.setup { margin-top:14px; font-size:12px; color:#888; max-width:600px; width:100%; }
+details.setup summary { cursor:pointer; color:#aaa; }
+.setup .row { margin-top:8px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+#bar { height:18px; width:323px; background:#777; border:1px solid #aaa; resize:horizontal; overflow:hidden; min-width:60px; max-width:100%; }
+.methods { margin-top:20px; font-size:12px; color:#888; max-width:600px; line-height:1.5; }
+.methods h2 { font-size:13px; color:#aaa; margin-bottom:6px; }
+.methods td { padding:2px 10px 2px 0; vertical-align:top; }
+.methods td:first-child { color:#aaa; white-space:nowrap; }
 </style>
 </head>
 <body>
+<a class="back" href="index.html">← back to experiments</a>
 <canvas id="c" width="540" height="300"></canvas>
-<div class="regime" id="regime"></div>
 <div class="controls">
-  <button id="btn">Pause</button>
-  <label>ISI: <span id="lbl">60</span> ms &nbsp;<input type="range" id="isi" min="0" max="300" value="60" step="5"></label>
+  <button id="go">Present (practice)</button>
+  <label>Interval (ms): <select id="lvl"></select></label>
+  <button id="blk">Run block</button>
+  <button id="next" disabled>Next trial</button>
+  <span id="stat"></span>
 </div>
-<div class="meta">Wertheimer (1912). Two vertical bars alternating — ISI determines percept: simultaneity → pure phi motion → beta motion → succession.</div>
+<div class="small" id="real"></div>
+<div class="small warn" id="warn"></div>
+<details class="setup">
+<summary>Display setup (pixels per cm, viewing distance)</summary>
+<div class="row">Resize this bar (drag its bottom-right corner) to the width of a credit card (8.56 cm):</div>
+<div class="row"><div id="bar"></div></div>
+<div class="row">
+  <label>Distance (cm): <input type="number" id="dist" min="20" max="200" step="1" value="57"></label>
+  <span id="ppcm"></span>
+  <button id="save">Apply</button>
+</div>
+</details>
+<div class="methods">
+<h2>Methods</h2>
+<p style="margin-bottom:8px">The source paper (Wertheimer 1912, via the 2014 reconstruction) was not available when this page was built, so no value or page reference could be checked. Only the following is taken as established from secondary knowledge: two stimuli (lines) were exposed one after the other at two separate positions, the time interval between them was varied by the experimenter, and observers gave free verbal descriptions. Every numeric value below is an ASSUMPTION, not a value from the paper.</p>
+<table>
+<tr><td>Stimulus</td><td>Two vertical bars, 0.2 x 3 deg, dark (#111) on light grey (#f0f0f0). Shape, size, contrast: ASSUMPTION.</td></tr>
+<tr><td>Positions</td><td>Centres 6 deg apart, same height; first at left, second at right. ASSUMPTION.</td></tr>
+<tr><td>Viewing distance</td><td>57 cm. ASSUMPTION (paper value unknown). Screen scale from the Display setup control (default 37.8 px/cm); stimuli are drawn in degrees.</td></tr>
+<tr><td>Exposure</td><td>80 ms per bar, rounded to a whole number of frames at the measured refresh rate. ASSUMPTION.</td></tr>
+<tr><td>Interval</td><td>Blank between offset of bar 1 and onset of bar 2 (ISI, not SOA). Levels 0, 30, 60, 100, 150, 200, 400 ms: ASSUMPTION; each converted to whole frames at the measured rate. Realised values are shown in the display line.</td></tr>
+<tr><td>Timing</td><td>Refresh rate measured at load (median of ~60 requestAnimationFrame intervals); sequence scheduled by counting frames.</td></tr>
+<tr><td>Trial</td><td>Block: each interval level 2 times (ASSUMPTION), random order. A trial is one exposure pair (bar 1, blank, bar 2, blank field); it ends when the experimenter presses Next trial after the observer's verbal report. Inter-trial blank field of 1 s. ASSUMPTION.</td></tr>
+<tr><td>Fixation</td><td>None shown; unspecified.</td></tr>
+<tr><td>Response</td><td>Free verbal report by the observer in the original; no response interface on this page. Trial order and levels are logged internally only.</td></tr>
+<tr><td>Not specified here</td><td>Luminance, field size, observers' instructions, total number of trials, other figures (e.g. line plus angle), other separations and orientations.</td></tr>
+</table>
+</div>
 <script>
-const c=document.getElementById('c');
-const ctx=c.getContext('2d');
-const CX=c.width/2, CY=c.height/2;
-const FRAME_MS=80;
-const BW=8, BH=120; // bar dimensions
-const LX=CX-120, RX=CX+120;
-let isiMs=60, running=true, phase='f1', phaseStart=performance.now();
+const c=document.getElementById('c'), ctx=c.getContext('2d');
+const BW_DEG=0.2, BH_DEG=3, SEP_DEG=6, FIELD_W_DEG=12, FIELD_H_DEG=6;
+const EXPO_MS=80, LEVELS_MS=[0,30,60,100,150,200,400], REPS=2, ITI_MS=1000;
+const $=id=>document.getElementById(id);
+let ppcm=37.8, dist=57, ppd=0, period=1000/60, measured=false;
+let frames=null, fi=0, running=false, onDone=null;
+let queue=[], log=[], trialLvl=null, inBlock=false;
 
-function regime(isi) {
-  if(isi<15) return 'Simultaneity — both seen at once';
-  if(isi<40) return 'Pure phi motion — motion without object';
-  if(isi<150) return 'Beta motion — object appears to move';
-  return 'Succession — two separate flashes';
+try{const s=JSON.parse(localStorage.getItem('am_display')||'null');
+  if(s){if(s.ppcm>5&&s.ppcm<400)ppcm=s.ppcm; if(s.dist>=20&&s.dist<=200)dist=s.dist;}}catch(e){}
+
+function geom(){
+  ppd=ppcm*2*dist*Math.tan(Math.PI/360);
+  c.width=Math.round(FIELD_W_DEG*ppd); c.height=Math.round(FIELD_H_DEG*ppd);
+  $('dist').value=dist;
+  $('bar').style.width=(8.56*ppcm)+'px';
+  $('ppcm').textContent=ppcm.toFixed(1)+' px/cm, '+ppd.toFixed(1)+' px/deg';
+  draw(false,false);
 }
-
-function draw(left, right) {
-  ctx.fillStyle='#f0f0f0'; ctx.fillRect(0,0,c.width,c.height);
-  ctx.fillStyle='#111';
-  if(left) ctx.fillRect(LX-BW/2, CY-BH/2, BW, BH);
-  if(right) ctx.fillRect(RX-BW/2, CY-BH/2, BW, BH);
+function draw(l,r){
+  ctx.fillStyle='#f0f0f0';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#111';
+  const bw=Math.max(1,Math.round(BW_DEG*ppd)), bh=Math.round(BH_DEG*ppd);
+  const cx=c.width/2, cy=c.height/2, dx=SEP_DEG*ppd/2;
+  if(l)ctx.fillRect(Math.round(cx-dx-bw/2),Math.round(cy-bh/2),bw,bh);
+  if(r)ctx.fillRect(Math.round(cx+dx-bw/2),Math.round(cy-bh/2),bw,bh);
 }
-
-function tick(now) {
-  if(!running){requestAnimationFrame(tick);return;}
-  const e=now-phaseStart;
-  // At very short ISI, both show simultaneously
-  const showBoth = isiMs < 15;
-  const dur={f1:FRAME_MS,isi1:isiMs,f2:FRAME_MS,isi2:isiMs};
-  if(e>=dur[phase]){phaseStart=now;const o=['f1','isi1','f2','isi2'];phase=o[(o.indexOf(phase)+1)%4];}
-
-  if(showBoth) draw(true,true);
-  else if(phase==='f1') draw(true,false);
-  else if(phase==='f2') draw(false,true);
-  else draw(false,false);
-
-  document.getElementById('regime').textContent = regime(isiMs);
+const nf=ms=>Math.max(0,Math.round(ms/period));
+function fmt(n){return (n*period).toFixed(1);}
+function buildLevels(){
+  const sel=$('lvl'); sel.innerHTML='';
+  LEVELS_MS.forEach(ms=>{const o=document.createElement('option');o.value=ms;o.textContent=ms;sel.appendChild(o);});
+}
+function updReal(){
+  const l=+$('lvl').value, e=nf(EXPO_MS), i=nf(l);
+  $('real').textContent='Display: '+(1000/period).toFixed(1)+' Hz'+(measured?' (measured)':' (measuring...)')+
+   '; exposure '+e+' frames = '+fmt(e)+' ms; interval '+i+' frames = '+fmt(i)+' ms.';
+  const bad=[];
+  if(Math.abs(e*period-EXPO_MS)>0.5)bad.push('exposure '+EXPO_MS+' ms');
+  LEVELS_MS.forEach(m=>{if(Math.abs(nf(m)*period-m)>0.5)bad.push(m+' ms');});
+  $('warn').textContent=bad.length?'Not a whole number of frames at this refresh rate: '+bad.join(', ')+' (rounded to nearest frame).':'';
+}
+function measure(){
+  const t=[];
+  function step(ts){t.push(ts); if(t.length<62){requestAnimationFrame(step);return;}
+    const d=[];for(let i=1;i<t.length;i++)d.push(t[i]-t[i-1]);
+    d.sort((a,b)=>a-b); const m=d[d.length>>1];
+    if(m>3&&m<100){period=m;} measured=true; updReal(); requestAnimationFrame(tick);}
+  requestAnimationFrame(step);
+}
+function play(lvlMs,done){
+  const e=nf(EXPO_MS), i=nf(lvlMs), s=[];
+  for(let k=0;k<e;k++)s.push(1);for(let k=0;k<i;k++)s.push(0);for(let k=0;k<e;k++)s.push(2);
+  s.push(3); frames=s; fi=0; running=true; onDone=done;
+}
+function tick(){
+  if(running){
+    const v=frames[fi++];
+    if(v===3){draw(false,false);running=false;const d=onDone;onDone=null;if(d)d();}
+    else draw(v===1,v===2);
+  }
   requestAnimationFrame(tick);
 }
-
-document.getElementById('isi').addEventListener('input',e=>{isiMs=+e.target.value;document.getElementById('lbl').textContent=isiMs;});
-document.getElementById('btn').addEventListener('click',()=>{running=!running;document.getElementById('btn').textContent=running?'Pause':'Play';if(running)phaseStart=performance.now();});
-requestAnimationFrame(tick);
+function setBusy(b){$('go').disabled=b;$('blk').disabled=b;}
+$('go').onclick=()=>{if(running||inBlock)return;play(+$('lvl').value,()=>{});};
+$('blk').onclick=()=>{
+  if(running||inBlock)return;
+  queue=[];LEVELS_MS.forEach(l=>{for(let r=0;r<REPS;r++)queue.push(l);});
+  for(let k=queue.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[queue[k],queue[j]]=[queue[j],queue[k]];}
+  log=[];inBlock=true;setBusy(true);runTrial();
+};
+function runTrial(){
+  if(!queue.length){inBlock=false;setBusy(false);$('stat').textContent='Block complete.';return;}
+  trialLvl=queue.shift();
+  $('stat').textContent='Trial '+(log.length+1)+' of '+(LEVELS_MS.length*REPS);
+  $('next').disabled=true;
+  setTimeout(()=>play(trialLvl,()=>{$('next').disabled=false;}),ITI_MS);
+}
+$('next').onclick=()=>{if($('next').disabled)return;log.push({isi_ms_nominal:trialLvl,t:Date.now()});$('next').disabled=true;runTrial();};
+$('lvl').onchange=updReal;
+$('save').onclick=()=>{
+  const w=$('bar').getBoundingClientRect().width; if(w>20)ppcm=w/8.56;
+  const d=+$('dist').value; if(d>=20&&d<=200)dist=d;
+  try{localStorage.setItem('am_display',JSON.stringify({ppcm:ppcm,dist:dist}));}catch(e){}
+  geom();
+};
+buildLevels();geom();updReal();measure();
 </script>
 </body>
 </html>
