@@ -75,14 +75,15 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
       <legend>Cost of motion</legend>
       <label for="mode" class="hint">Where the costs come from</label>
       <select id="mode">
-        <option value="jnd" selected>JND: edge Fisher information (no free parameter)</option>
+        <option value="jnd" selected>1/JND²: edge Fisher information (no free parameter)</option>
+        <option value="jndcost">JND²: cost grows with the JND (no free parameter)</option>
         <option value="paper">1/ℓ and 1/w (paper default)</option>
         <option value="manual">Manual</option>
       </select>
       <span class="hint" id="modeNote"></span>
       <div class="ctl" id="cl_box"><label for="cl">c_ℓ: motion perpendicular to the length</label><output id="cl_o"></output><input type="range" id="cl" min="0.02" max="3" step="0.01" value="0.25"></div>
       <div class="ctl" id="cw_box"><label for="cw">c_w: motion perpendicular to the width</label><output id="cw_o"></output><input type="range" id="cw" min="0.02" max="3" step="0.01" value="1"></div>
-      <div class="ctl" id="cr_box"><label for="crl">c_θ: rotation (log scale)</label><output id="crl_o"></output><input type="range" id="crl" min="-2" max="3" step="0.05" value="0"></div>
+      <div class="ctl" id="cr_box"><label for="crl">c_θ: rotation (log scale)</label><output id="crl_o"></output><input type="range" id="crl" min="-3" max="3" step="0.05" value="0"></div>
     </fieldset>
     <fieldset>
       <legend>Start pose (flash 1)</legend>
@@ -232,11 +233,14 @@ const SOLVE_KEYS = ["L", "W", "cl", "cw", "crl", "x0", "y0", "t0", "x1", "y1", "
    which leaves the geodesics unchanged, so there is no free parameter. */
 function derivedCosts(mode, L, W) {
   if (mode === "jnd") return { cl: 2 * L, cw: 2 * W, cr: (L * L * L + W * W * W) / 6 };
+  // the same edge model with the exponent flipped: motion is cheap where it is easy to discriminate
+  if (mode === "jndcost") return { cl: 1 / (2 * L), cw: 1 / (2 * W), cr: 6 / (L * L * L + W * W * W) };
   if (mode === "paper") return { cl: 1 / L, cw: 1 / W, cr: null };
   return null;
 }
 const MODE_NOTE = {
   jnd: "Cost = 1/JND²: along the length 2w, across it 2ℓ, rotation (ℓ³+w³)/6.",
+  jndcost: "Cost = JND²: along the length 1/2w, across it 1/2ℓ, rotation 6/(ℓ³+w³).",
   paper: "c_ℓ = 1/ℓ, c_w = 1/w; c_θ set by hand.",
   manual: "All three costs set by hand.",
 };
