@@ -77,6 +77,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
       <select id="mode">
         <option value="jnd" selected>1/JND²: edge Fisher information (no free parameter)</option>
         <option value="jndcost">JND²: cost grows with the JND (no free parameter)</option>
+        <option value="jndstraight">JND² translation, c_θ that keeps pure translations straight</option>
         <option value="paper">1/ℓ and 1/w (paper default)</option>
         <option value="manual">Manual</option>
       </select>
@@ -231,16 +232,36 @@ const SOLVE_KEYS = ["L", "W", "cl", "cw", "crl", "x0", "y0", "t0", "x1", "y1", "
      rotation: ∫ s² ds over each edge                            → (ℓ³ + w³)/6
    Cross terms vanish by symmetry, and JND_i ∝ 1/√G_ii. The noise level only scales G as a whole,
    which leaves the geodesics unchanged, so there is no free parameter. */
+/* Straight-translation rotation cost. In a pure translation of length d at angle α to the long axis, the cheapest
+   path turns by at most d²·|c_∥ − c_⊥|·sin 2α / (16 c_θ) (small-angle Euler–Lagrange solution, checked by brute
+   force). Requiring that turn to stay below the orientation JND ε for every α gives c_θ = d²·|c_∥ − c_⊥| / (16 ε).
+   ε is Heeley & Buchanan-Smith (1998): √(σ_i² + (b/r)²), r = ℓ/w, σ_i = 1.23°, b = 6.48° (vertical bars).
+   Jumps exactly along the costlier axis instead flip below about d²·|Δc|·(1 + 0.2(R − 1))/π², so take the larger. */
+function orientationJnd(L, W) {
+  const r = Math.max(L, W) / Math.min(L, W);
+  return Math.hypot(1.23, 6.48 / r) * DEG;
+}
+function straightRotationCost(L, W, cAlong, cAcross, jump) {
+  const dc = Math.abs(cAlong - cAcross), R = Math.max(cAlong, cAcross) / Math.min(cAlong, cAcross);
+  const oblique = jump * jump * dc / (16 * orientationJnd(L, W));
+  const axis = jump * jump * dc * (1 + 0.2 * (R - 1)) / (Math.PI * Math.PI);
+  return Math.max(oblique, axis, 1e-3);
+}
 function derivedCosts(mode, L, W) {
   if (mode === "jnd") return { cl: 2 * L, cw: 2 * W, cr: (L * L * L + W * W * W) / 6 };
   // the same edge model with the exponent flipped: motion is cheap where it is easy to discriminate
   if (mode === "jndcost") return { cl: 1 / (2 * L), cw: 1 / (2 * W), cr: 6 / (L * L * L + W * W * W) };
+  if (mode === "jndstraight") {
+    const jump = Math.hypot(+$("x1").value - +$("x0").value, +$("y1").value - +$("y0").value);
+    return { cl: 1 / (2 * L), cw: 1 / (2 * W), cr: straightRotationCost(L, W, 1 / (2 * W), 1 / (2 * L), jump) };
+  }
   if (mode === "paper") return { cl: 1 / L, cw: 1 / W, cr: null };
   return null;
 }
 const MODE_NOTE = {
   jnd: "Cost = 1/JND²: along the length 2w, across it 2ℓ, rotation (ℓ³+w³)/6.",
   jndcost: "Cost = JND²: along the length 1/2w, across it 1/2ℓ, rotation 6/(ℓ³+w³).",
+  jndstraight: "Translation as JND² (1/2w, 1/2ℓ). Rotation c_θ = d²·|Δc| / (16·JND_θ), so a pure translation of this jump length turns less than one orientation JND in any direction.",
   paper: "c_ℓ = 1/ℓ, c_w = 1/w; c_θ set by hand.",
   manual: "All three costs set by hand.",
 };
